@@ -24,6 +24,11 @@ const userSchema = new Schema(
             lowercase: true,
             trim: true,
         },
+        role: {
+            type: String,
+            enum: ["admin", "user", "company"],
+            default: "user",
+        },
         birthday: {
             type: Date,
         },
