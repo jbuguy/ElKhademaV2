@@ -1,20 +1,20 @@
 import mongoose, { Schema } from "mongoose";
 
 const postSchema = new Schema(
-    {
-        name: {
-            type: String,
-            required: true,
-        },
-        content: {
-            type: String,
-        },
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
+  {
+    content: {
+      type: String,
     },
-    { timestamps: true }
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
+    likes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }]
+  },
+  { timestamps: true }
 );
-export const Post = mongoose.model("post", postSchema);
+export const Post = mongoose.model("Post", postSchema);
