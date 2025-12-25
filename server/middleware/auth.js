@@ -1,16 +1,18 @@
-const auth = (req, res, next) => {
-    const authHeader = req.headers.authorization;
+import jwt from "jsonwebtoken";
+import { User } from "../models/user.model.js";
 
-    if (!authHeader || !authHeader.startsWith("Bearer "))
-        return res.status(401).json({ message: "Unauthorized" });
-
-    const token = authHeader.split(" ")[1];
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-        next();
-    } catch (err) {
-        return res.status(401).json({ message: "Invalid token" });
-    }
+export const requireAuth = async (req, res, next) => {
+  const { authorization } = req.headers;
+  if (!authorization) {
+    return res.status(401).json({ error: "authorization token required" });
+  }
+  const token = authorization.split(" ")[1];
+  try {
+    const { _id } = jwt.verify(token, process.env.SECRET);
+    req.user = await User.findById(_id).select("_id");
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
 };

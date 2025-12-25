@@ -1,8 +1,9 @@
 import { Router } from "express"
 import { addComment, addPost, deletePost, getAllPosts, getComments, getPost, updatePost } from "../controllers/postController.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
-
+router.use(requireAuth);
 router.route("/").get(getAllPosts);
 router.route("/").post(addPost);
 router.route("/:id").delete(deletePost);
