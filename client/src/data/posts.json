@@ -1,0 +1,139 @@
+[
+  {
+    "_id": "665f1a1a1a1a1a1a1a1a1a01",
+    "content": "This is my first post!",
+    "userId": "u001",
+    "username": "john_doe",
+    "userProfilePicture": "https://i.pravatar.cc/150?img=1",
+
+    "likes": ["u002", "u003", "u004"],
+    "likesCount": 3,
+    "likedByCurrentUser": true,
+
+    "comments": [
+      {
+        "_id": "c001",
+        "content": "Nice post!",
+        "userId": "u002",
+        "username": "alice",
+        "userProfilePicture": "https://i.pravatar.cc/150?img=2",
+        "createdAt": "2025-01-10T12:30:00.000Z"
+      },
+      {
+        "_id": "c002",
+        "content": "Welcome 👋",
+        "userId": "u003",
+        "username": "bob",
+        "userProfilePicture": "https://i.pravatar.cc/150?img=3",
+        "createdAt": "2025-01-10T13:00:00.000Z"
+      }
+    ],
+
+    "createdAt": "2025-01-10T12:00:00.000Z",
+    "updatedAt": "2025-01-10T12:00:00.000Z"
+  },
+
+  {
+    "_id": "665f1a1a1a1a1a1a1a1a1a02",
+    "content": "Learning MongoDB & Mongoose 🚀",
+    "userId": "u002",
+    "username": "alice",
+    "userProfilePicture": "https://i.pravatar.cc/150?img=2",
+
+    "likes": ["u001"],
+    "likesCount": 1,
+    "likedByCurrentUser": false,
+
+    "comments": [],
+
+    "createdAt": "2025-01-11T09:15:00.000Z",
+    "updatedAt": "2025-01-11T09:15:00.000Z"
+  },
+
+  {
+    "_id": "665f1a1a1a1a1a1a1a1a1a03",
+    "content": "React hooks finally make sense 😄",
+    "userId": "u003",
+    "username": "bob",
+    "userProfilePicture": "https://i.pravatar.cc/150?img=3",
+
+    "likes": ["u001", "u002", "u004"],
+    "likesCount": 3,
+    "likedByCurrentUser": true,
+
+    "comments": [
+      {
+        "_id": "c003",
+        "content": "Same here 😂",
+        "userId": "u004",
+        "username": "sarah",
+        "userProfilePicture": "https://i.pravatar.cc/150?img=4",
+        "createdAt": "2025-01-12T15:40:00.000Z"
+      }
+    ],
+
+    "createdAt": "2025-01-12T15:00:00.000Z",
+    "updatedAt": "2025-01-12T15:00:00.000Z"
+  },
+
+  {
+    "_id": "665f1a1a1a1a1a1a1a1a1a04",
+    "content": "Backend devs deserve more love ❤️",
+    "userId": "u004",
+    "username": "sarah",
+    "userProfilePicture": "https://i.pravatar.cc/150?img=4",
+
+    "likes": ["u001", "u002"],
+    "likesCount": 2,
+    "likedByCurrentUser": false,
+
+    "comments": [
+      {
+        "_id": "c004",
+        "content": "Facts 💯",
+        "userId": "u001",
+        "username": "john_doe",
+        "userProfilePicture": "https://i.pravatar.cc/150?img=1",
+        "createdAt": "2025-01-13T10:10:00.000Z"
+      }
+    ],
+
+    "createdAt": "2025-01-13T10:00:00.000Z",
+    "updatedAt": "2025-01-13T10:00:00.000Z"
+  },
+
+  {
+    "_id": "665f1a1a1a1a1a1a1a1a1a05",
+    "content": "Dark mode or light mode?",
+    "userId": "u001",
+    "username": "john_doe",
+    "userProfilePicture": "https://i.pravatar.cc/150?img=1",
+
+    "likes": ["u002", "u003", "u004"],
+    "likesCount": 3,
+    "likedByCurrentUser": true,
+
+    "comments": [
+      {
+        "_id": "c005",
+        "content": "Dark mode always 🌙",
+        "userId": "u002",
+        "username": "alice",
+        "userProfilePicture": "https://i.pravatar.cc/150?img=2",
+        "createdAt": "2025-01-14T18:20:00.000Z"
+      },
+      {
+        "_id": "c006",
+        "content": "Light mode hurts my eyes 😅",
+        "userId": "u003",
+        "username": "bob",
+        "userProfilePicture": "https://i.pravatar.cc/150?img=3",
+        "createdAt": "2025-01-14T18:45:00.000Z"
+      }
+    ],
+
+    "createdAt": "2025-01-14T18:00:00.000Z",
+    "updatedAt": "2025-01-14T18:00:00.000Z"
+  }
+]
+
