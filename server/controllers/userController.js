@@ -21,10 +21,11 @@ export const registerUser = async (req, res) => {
     const exist = await User.findOne({ email });
     if (exist)
       return res.status(404).json({ error: "email must be unique" });
-    const user = await User.create({ email, password });
+    const user = await User.create({ email, password, username: email });
     const token = generateToken(user);
     res.status(200).json({ token, email: user.email, _id: user._id });
   } catch (error) {
     res.status(500).json({ error: error.message });
+    console.log(error);
   }
 };
