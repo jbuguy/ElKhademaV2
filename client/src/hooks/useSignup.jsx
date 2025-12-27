@@ -1,16 +1,16 @@
-import { useState } from "react"
-import { useAuthContext } from "../hooks/useAuthContext.js";
-import api from "../utils/api.js"
+import { useState } from "react";
+import { useAuthContext } from "./useAuthContext";
+import api from "../utils/api";
 
-export const useLogin = () => {
+export const useSignup = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(null);
   const { dispatch } = useAuthContext();
-  const login = async (email, password) => {
+  const signup = async (email, password) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post("/user/login", { email, password });
+      const res = await api.post("/user/signup", { email, password });
       localStorage.setItem("user", JSON.stringify(res.data));
       dispatch({ type: "LOGIN", payload: res.data });
     } catch (error) {
@@ -18,6 +18,6 @@ export const useLogin = () => {
     } finally {
       setIsLoading(false);
     }
-  }
-  return { login, isLoading, error };
-}
+  };
+  return { signup, isLoading, error };
+};
