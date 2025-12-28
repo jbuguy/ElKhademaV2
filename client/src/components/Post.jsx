@@ -2,14 +2,35 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { BiCommentDetail, BiSend } from "react-icons/bi";
 import { FaRegThumbsUp, FaThumbsUp } from "react-icons/fa6";
+import Comments from "./Comments";
+import api from "../utils/api";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function Post({ post }) {
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(post.likedByCurrentUser);
   const [likes, setLikes] = useState(post.likesCount);
-  const toggleLiked = () => {
+  const { user } = useAuthContext();
+  const toggleLiked = async () => {
     setIsLiked(prev => !prev);
-    setLikes(prev => (isLiked ? prev - 1 : prev + 1));
+    if (isLiked) {
+      const res = await api.post(`/post/${post._id}/like`, {
+        headers: {
+          authorization: `Bearer ${user.token}`,
+        },
+      });
+      setLikes(res.data.totalLikes);
+      setIsLiked(res.data.liked);
+    } else {
+      const res = await api.delete(`/post/${post._id}/like`, {
+        headers: {
+          authorization: `Bearer ${user.token}`,
+        },
+      });
+      setLikes(res.data.totalLikes);
+      setIsLiked(res.data.liked);
+    }
+
   }
   return (
     <div className="bg-white rounded m-2 p-4  shadow">
@@ -25,15 +46,15 @@ export default function Post({ post }) {
 
       <hr className="border-0 h-px bg-gray-300 my-2" />
 
-      <div className="flex justify-between items-center text-gray-600 mt-2">
-        <button className="flex items-center gap-1" onClick={toggleLiked}>
-          {isLiked ? <FaThumbsUp className="text-blue-500" /> : <FaRegThumbsUp />} {likes}
+      <div className="flex justify-around items-center text-gray-600 mt-2">
+        <button className="flex items-center gap-1 cursor-pointer" onClick={toggleLiked}>
+          {isLiked ? <FaThumbsUp className="text-blue-500" /> : <FaRegThumbsUp />} {likes} likes
         </button>
-        <button onClick={() => setCommentsVisible(prev => !prev)}>
-          <BiCommentDetail />
+        <button className="flex items-center gap-1 cursor-pointer " onClick={() => setCommentsVisible(prev => !prev)}>
+          <BiCommentDetail /> comment
         </button>
-        <button>
-          <BiSend />
+        <button className="flex items-center gap-1 cursor-pointer ">
+          <BiSend /> share
         </button>
       </div>
 
