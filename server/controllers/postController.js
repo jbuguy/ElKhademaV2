@@ -44,3 +44,15 @@ export const getComments = async (req, res) => {
   const comments = Comment.find({ postId: id });
   res.status(200).json(comments)
 }
+export const addLike = async (req, res) => {
+  const { id } = req.params;
+  const userid = req.user.id;
+  const response = await Post.findByIdAndUpdate(id, { $addToSet: { likes: userid } }, { new: true });
+  res.status(200).json({ totalLikes: response.likes.length, liked: true })
+};
+export const deleteLike = async (req, res) => {
+  const { id } = req.params;
+  const userid = req.user.id;
+  const response = await Post.findByIdAndUpdate(id, { $pull: { likes: userid } }, { new: true });
+  res.status(200).json({ totalLikes: response.likes.length, liked: true })
+}
