@@ -13,8 +13,18 @@ const postSchema = new Schema(
     likes: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-    }]
+    }],
+    media: [{
+      url: {
+        type: String,
+        required: true
+      },
+      type: {
+        type: String, enum: ["image", "video", "pdf"]
+      }
+    }],
   },
+
   { timestamps: true }
 );
 export const Post = mongoose.model("Post", postSchema);

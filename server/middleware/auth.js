@@ -8,8 +8,8 @@ export const requireAuth = async (req, res, next) => {
   }
   const token = authorization.split(" ")[1];
   try {
-    const { _id } = verifyToken(token);
-    req.user = await User.findById(_id).select("_id");
+    const { id } = verifyToken(token);
+    req.user = await User.findById(id).select("_id");
     next();
   } catch (error) {
     console.error(error);

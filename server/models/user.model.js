@@ -11,6 +11,9 @@ const userSchema = new Schema(
       minLength: 1,
       maxLength: 30,
     },
+    profilePic: {
+      type: String,
+    },
     password: {
       type: "string",
       required: true,
@@ -49,4 +52,4 @@ userSchema.methods.comparePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
 
-export const User = mongoose.model("user", userSchema);
+export const User = mongoose.model("User", userSchema);
