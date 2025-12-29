@@ -25,7 +25,7 @@ export const registerUser = async (req, res) => {
     if (exist)
       return res.status(404).json({ error: "email must be unique" });
     const profilePic = "https://i.pravatar.cc/150?img=1";
-    const user = await User.create({ email, password, username: email });
+    const user = await User.create({ email, password, username: email, profilePic });
     const token = generateToken(user);
     res.status(200).json({ token, email: user.email, username: user.username, profilePic: user.profilePic, _id: user._id });
   } catch (error) {
