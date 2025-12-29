@@ -5,6 +5,7 @@ import postRouter from "./routes/postRoute.js";
 import dotenv from "dotenv";
 import cors from "cors";
 import mediaRouter from "./routes/media.js";
+import conversationRouter from "./routes/conversationRoute.js";
 
 dotenv.config();
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/api/user", userRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/post", postRouter);
+app.use("/api/conversation", conversationRouter);
 
 connectDB().then(() => {
   app.listen(8080);

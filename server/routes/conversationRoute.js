@@ -8,3 +8,4 @@ router.post("/:id/messages", sendMessage);
 router.put("/:id/messages/:slug", editMessage);
 router.post("/", createConversation);
 router.get("/", getAllConversations);
+export default router;
