@@ -10,7 +10,7 @@ export function NavBar() {
   };
   return (
     <header>
-      <div class="container">
+      <div className="container">
         <Link to="/">
           <h1>ElKadema</h1>
         </Link>
