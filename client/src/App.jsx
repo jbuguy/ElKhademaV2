@@ -5,6 +5,7 @@ import Home from "./pages/Home.jsx"
 import Login from "./pages/login.jsx"
 import Signup from "./pages/Signup.jsx"
 import Profile from "./pages/Profile.jsx"
+import ChatWidget from "./components/ChatWidget.jsx"
 
 function App() {
   const { user } = useAuthContext();
@@ -21,6 +22,7 @@ function App() {
         </Routes>
 
       </div>
+      <ChatWidget />
     </BrowserRouter>
   )
 }
