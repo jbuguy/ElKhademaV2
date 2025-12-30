@@ -32,9 +32,6 @@ const userSchema = new Schema(
       enum: ["admin", "user", "company"],
       default: "user",
     },
-    birthday: {
-      type: Date,
-    },
     active: {
       type: Boolean,
       required: false,

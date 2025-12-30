@@ -2,15 +2,18 @@ import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { BiCommentDetail, BiSend } from "react-icons/bi";
 import { FaRegThumbsUp, FaThumbsUp } from "react-icons/fa6";
+import { Link } from "react-router";
 import Comments from "./Comments";
 import api from "../utils/api";
 import { useAuthContext } from "../hooks/useAuthContext";
 import MediaGrid from "./MediaGrid";
+import Toast from "./Toast";
 
 export default function Post({ post }) {
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(post.liked);
   const [likes, setLikes] = useState(post.totalLikes);
+  const [showToast, setShowToast] = useState(false);
   const { user } = useAuthContext();
   const [comments, setComments] = useState([]);
   useEffect(() => {
@@ -50,13 +53,32 @@ export default function Post({ post }) {
     setComments(prev => [...prev, res.data]);
   }
 
+  const handleShare = async () => {
+    try {
+      await api.post(`/post/${post._id}/share`, {}, {
+        headers: { authorization: `Bearer ${user.token}` }
+      });
+      setShowToast(true);
+    } catch (error) {
+      console.error("Error sharing post:", error);
+    }
+  };
+
   return (
     <div className="bg-white rounded m-2 p-4  shadow">
+      {post.sharedFrom && (
+        <div className="flex items-center gap-2 mb-2 text-gray-600 text-sm">
+          <BiSend className="text-blue-500" />
+          <span><strong>{post.userId.displayName || post.userId.username}</strong> shared this</span>
+        </div>
+      )}
       <div className="flex gap-4 items-center">
-        <img src={post?.userId?.profilePic} alt={`${post?.userId?.username} profile`} className="rounded-full h-10" />
-        <span className="font-bold">{post.userId.username}</span>
+        <img src={post.sharedFrom ? post.sharedFrom.userId.profilePic : post?.userId?.profilePic} alt="profile" className="rounded-full h-10" />
+        <Link to={`/profile/${post.sharedFrom ? post.sharedFrom.userId.username : post.userId.username}`} className="font-bold hover:underline">
+          {post.sharedFrom ? (post.sharedFrom.userId.displayName || post.sharedFrom.userId.username) : (post.userId.displayName || post.userId.username)}
+        </Link>
         <span className="font-thin text-gray-600 text-sm">
-          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+          {formatDistanceToNow(new Date(post.sharedFrom ? post.sharedFrom.createdAt : post.createdAt), { addSuffix: true })}
         </span>
       </div>
 
@@ -71,12 +93,11 @@ export default function Post({ post }) {
         <button className="flex items-center gap-1 cursor-pointer " onClick={() => setCommentsVisible(true)}>
           <BiCommentDetail /> comment
         </button>
-        <button className="flex items-center gap-1 cursor-pointer ">
+        <button className="flex items-center gap-1 cursor-pointer" onClick={handleShare}>
           <BiSend /> share
         </button>
       </div>
 
-      {commentsVisible && <Comments comments={comments} addComment={addComment} />}
-    </div>
+      {commentsVisible && <Comments comments={comments} addComment={addComment} />}      {showToast && <Toast message="You have shared a post" onClose={() => setShowToast(false)} />}    </div>
   )
 }

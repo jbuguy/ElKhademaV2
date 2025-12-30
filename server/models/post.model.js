@@ -23,6 +23,11 @@ const postSchema = new Schema(
         type: String, enum: ["image", "video", "pdf"]
       }
     }],
+    sharedFrom: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null
+    },
   },
 
   { timestamps: true }

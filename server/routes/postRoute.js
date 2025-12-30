@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { addComment, addLike, addPost, deleteLike, deletePost, getAllPosts, getComments, getPost, updatePost } from "../controllers/postController.js";
+import { addComment, addLike, addPost, deleteLike, deletePost, getAllPosts, getComments, getPost, sharePost, updatePost } from "../controllers/postController.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
@@ -13,6 +13,7 @@ router.route("/:id/comments").get(getComments);
 router.route("/:id/comments").post(addComment);
 router.route("/:id/like").post(addLike);
 router.route("/:id/like").delete(deleteLike);
+router.route("/:id/share").post(sharePost);
 // TODO:missing routes to add likes and managing a feed and post per user
 
 export default router;
