@@ -9,14 +9,17 @@ import conversationRouter from "./routes/conversationRoute.js";
 
 dotenv.config();
 const app = express();
-
-app.use(cors({ origin: "http://localhost:5173" }));
+if (process.env.NODE_ENV == "development") {
+  app.use(cors({ origin: "http://localhost:5173" }));
+}
 app.use(express.json());
 app.use("/api/user", userRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/post", postRouter);
 app.use("/api/conversation", conversationRouter);
-
+if (process.env.NODE_ENV == "production") {
+  app.use(express.static("../client/dist"));
+}
 connectDB().then(() => {
   app.listen(8080);
-});
+});  

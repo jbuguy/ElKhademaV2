@@ -35,7 +35,7 @@ export const sendMessage = async (req, res) => {
   if (!isMember) {
     return res.status(403).json({ error: "Access denied" });
   }
-  const message = await Message.create({ userId, content, media, conversationId: id }).lean();
+  const message = await Message.create({ userId, content, media, conversationId: id });
   conversation.lastMessage = message._id;
   await conversation.save();
   res.status(201).json(message);
