@@ -2,6 +2,18 @@ import { Comment } from "../models/comment.js";
 import { Post } from "../models/post.model.js";
 import { Profile } from "../models/profile.model.js";
 
+// Helper function to get display name from profile
+const getDisplayName = (profile) => {
+  if (!profile) return "";
+  if (profile.profileType === 'company') {
+    return profile.companyName || "";
+  }
+  // For users and admins
+  const firstName = profile.firstName || "";
+  const lastName = profile.lastName || "";
+  return `${firstName} ${lastName}`.trim() || "";
+};
+
 export const addPost = async (req, res) => {
   const { content, media } = req.body;
   const userId = req.user.id;
@@ -11,7 +23,7 @@ export const addPost = async (req, res) => {
   // Get display name from profile
   const profile = await Profile.findOne({ userId });
   const postObj = post.toObject();
-  postObj.userId.displayName = profile?.displayName || "";
+  postObj.userId.displayName = getDisplayName(profile);
   
   res.status(200).json(postObj);
 }
@@ -36,7 +48,7 @@ export const getAllPosts = async (req, res) => {
   const profiles = await Profile.find({ userId: { $in: allUserIds } }).lean();
   const profileMap = {};
   profiles.forEach(p => {
-    profileMap[p.userId.toString()] = p.displayName || "";
+    profileMap[p.userId.toString()] = getDisplayName(p);
   });
   
   const postsWithLikes = posts.map(post => {
@@ -104,7 +116,7 @@ export const addComment = async (req, res) => {
   // Get display name from profile
   const profile = await Profile.findOne({ userId });
   const commentObj = comment.toObject();
-  commentObj.userId.displayName = profile?.displayName || "";
+  commentObj.userId.displayName = getDisplayName(profile);
 
   res.status(201).json(commentObj);
 };
@@ -117,7 +129,7 @@ export const getComments = async (req, res) => {
   const profiles = await Profile.find({ userId: { $in: userIds } }).lean();
   const profileMap = {};
   profiles.forEach(p => {
-    profileMap[p.userId.toString()] = p.displayName || "";
+    profileMap[p.userId.toString()] = getDisplayName(p);
   });
   
   const commentsWithDisplayNames = comments.map(comment => ({
@@ -165,12 +177,12 @@ export const sharePost = async (req, res) => {
     // Get display name for current user
     const profile = await Profile.findOne({ userId });
     const sharedPostObj = sharedPost.toObject();
-    sharedPostObj.userId.displayName = profile?.displayName || "";
+    sharedPostObj.userId.displayName = getDisplayName(profile);
     
     // Get display name for original poster
     if (sharedPost.sharedFrom && sharedPost.sharedFrom.userId) {
       const originalProfile = await Profile.findOne({ userId: sharedPost.sharedFrom.userId._id });
-      sharedPostObj.sharedFrom.userId.displayName = originalProfile?.displayName || "";
+      sharedPostObj.sharedFrom.userId.displayName = getDisplayName(originalProfile);
     }
     
     res.status(201).json(sharedPostObj);
