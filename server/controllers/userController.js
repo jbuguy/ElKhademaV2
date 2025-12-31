@@ -3,6 +3,18 @@ import { Profile } from "../models/profile.model.js";
 import { Post } from "../models/post.model.js";
 import { generateToken } from "../utils/jwt.js";
 
+// Helper function to get display name from profile
+const getDisplayName = (profile) => {
+  if (!profile) return "";
+  if (profile.profileType === 'company') {
+    return profile.companyName || "";
+  }
+  // For users and admins
+  const firstName = profile.firstName || "";
+  const lastName = profile.lastName || "";
+  return `${firstName} ${lastName}`.trim() || "";
+};
+
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -20,14 +32,17 @@ export const loginUser = async (req, res) => {
 };
 export const registerUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role = "user" } = req.body;
     const exist = await User.findOne({ email });
     if (exist)
       return res.status(404).json({ error: "email must be unique" });
-    const profilePic = "https://i.pravatar.cc/150?img=1";
-    const user = await User.create({ email, password, username: email, profilePic });
+    const user = await User.create({ email, password, username: email, role });
+    
+    // Create profile immediately with profileType matching role and email locked to signup email
+    await Profile.create({ userId: user._id, profileType: role, email: email });
+    
     const token = generateToken(user);
-    res.status(200).json({ token, email: user.email, username: user.username, profilePic: user.profilePic, _id: user._id });
+    res.status(200).json({ token, email: user.email, username: user.username, profilePic: user.profilePic, role: user.role, _id: user._id });
   } catch (error) {
     res.status(500).json({ error: error.message });
     console.log(error);
@@ -77,7 +92,7 @@ export const getProfilePosts = async (req, res) => {
     const profiles = await Profile.find({ userId: { $in: allUserIds } }).lean();
     const profileMap = {};
     profiles.forEach(p => {
-      profileMap[p.userId.toString()] = p.displayName || "";
+      profileMap[p.userId.toString()] = getDisplayName(p);
     });
 
     const postsWithLikes = posts.map(post => {
@@ -114,12 +129,14 @@ export const getProfilePosts = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { displayName, description, pastJobs, education, skills, location, phoneNumber, birthday, profilePic } = req.body;
+    const { firstName, lastName, companyName, description, pastJobs, education, skills, location, phoneNumber, birthday, profilePic, gender, foundedDate, founderName, companyDescription, industry, companySize, website } = req.body;
+    
 
-    console.log("Received profilePic:", profilePic);
 
     const updateData = {};
-    if (displayName !== undefined) updateData.displayName = displayName;
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (companyName !== undefined) updateData.companyName = companyName;
     if (description !== undefined) updateData.description = description;
     if (pastJobs !== undefined) updateData.pastJobs = pastJobs;
     if (education !== undefined) updateData.education = education;
@@ -128,8 +145,16 @@ export const updateProfile = async (req, res) => {
     if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
     if (birthday !== undefined) updateData.birthday = birthday;
     if (profilePic !== undefined) updateData.profilePic = profilePic;
-
-    console.log("UpdateData:", updateData);
+    if (gender !== undefined) updateData.gender = gender;
+    if (foundedDate !== undefined) updateData.foundedDate = foundedDate;
+    if (founderName !== undefined) updateData.founderName = founderName;
+    if (companyDescription !== undefined) updateData.companyDescription = companyDescription;
+    if (industry !== undefined) updateData.industry = industry;
+    if (companySize !== undefined) updateData.companySize = companySize;
+    if (website !== undefined) updateData.website = website;
+    
+    // Mark profile as complete on first save
+    updateData.isProfileComplete = true;
 
     // Update profile picture in User model if provided
     if (profilePic !== undefined) {

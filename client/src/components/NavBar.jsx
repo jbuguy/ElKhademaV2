@@ -15,7 +15,15 @@ export function NavBar() {
       if (user && user.username) {
         try {
           const res = await api.get(`/user/profile/${user.username}`);
-          setDisplayName(res.data.profile.displayName || "");
+          const profile = res.data.profile;
+          // Get display name based on profile type
+          let name = "";
+          if (profile.profileType === 'company') {
+            name = profile.companyName || "";
+          } else {
+            name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim();
+          }
+          setDisplayName(name);
           setProfilePic(res.data.user.profilePic || "");
         } catch (error) {
           console.error("Error fetching profile:", error);

@@ -8,10 +8,20 @@ const profileSchema = new Schema(
       required: true,
       unique: true,
     },
-    displayName: {
+    firstName: {
       type: String,
       trim: true,
       maxLength: 50,
+    },
+    lastName: {
+      type: String,
+      trim: true,
+      maxLength: 50,
+    },
+    companyName: {
+      type: String,
+      trim: true,
+      maxLength: 100,
     },
     description: {
       type: String,
@@ -29,6 +39,44 @@ const profileSchema = new Schema(
     profilePic: {
       type: String,
       default: "https://i.pravatar.cc/150?img=1",
+    },
+    email: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female"],
+    },
+    profileType: {
+      type: String,
+      enum: ["user", "admin", "company"],
+      default: "user",
+    },
+    // Company-specific fields
+    foundedDate: {
+      type: Date,
+    },
+    founderName: {
+      type: String,
+    },
+    companyDescription: {
+      type: String,
+      maxLength: 1000,
+    },
+    industry: {
+      type: String,
+    },
+    companySize: {
+      type: String,
+    },
+    website: {
+      type: String,
     },
     pastJobs: [{
       title: String,
