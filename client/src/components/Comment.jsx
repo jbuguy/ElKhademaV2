@@ -16,4 +16,4 @@ export default function Comment({ comment }) {
       </div>
     </div>
   </div>)
-}
+}  
