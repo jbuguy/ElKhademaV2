@@ -4,7 +4,7 @@ import { Message } from "../models/message.model.js";
 export const getConversation = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
-  const conversation = await Conversation.findById(id).populate("members", "username profilePic").populate("lastMessage", "userId content media");
+  const conversation = await Conversation.findById(id).populate("members", "displayName profilePic").populate("lastMessage", "userId content media");
   if (!conversation)
     return res.status(404).json({ error: "conversation not found" });
   const isMember = conversation.members.some(
@@ -12,13 +12,13 @@ export const getConversation = async (req, res) => {
   );
   if (!isMember)
     return res.status(404).json({ error: "conversation not found" });
-  const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
+  const messages = await Message.find({ conversationId: conversation._id }).populate("userId", "profilePic").sort({ createdAt: 1 });
   res.status(200).json({ conversation, messages });
 }
 export const getAllConversations = async (req, res) => {
   const userId = req.user.id;
   const conversations = await Conversation.find({ members: { $in: [userId] } })
-    .populate("members", "username profilePic")
+    .populate("members", "displayName profilePic")
     .populate("lastMessage", "userId content media")
     .sort({ updatedAt: -1 })
     .lean();
@@ -52,6 +52,6 @@ export const createConversation = async (req, res) => {
   const userId = req.user.id;
   const { members } = req.body;
   const uniqueMembers = [...new Set([...members, userId])];
-  const conversation = await Conversation.create({ members: uniqueMembers }).populate("members", "username profilePic");
+  const conversation = await Conversation.create({ members: uniqueMembers });
   res.status(201).json(conversation);
 }
