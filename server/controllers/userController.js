@@ -54,12 +54,12 @@ export const getProfileByUsername = async (req, res) => {
     const { username } = req.params;
     const user = await User.findOne({ username }).select('-password');
     if (!user) return res.status(404).json({ error: "User not found" });
-    
+
     let profile = await Profile.findOne({ userId: user._id });
     if (!profile) {
       profile = await Profile.create({ userId: user._id });
     }
-    
+
     res.status(200).json({ user, profile });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -71,7 +71,7 @@ export const getProfilePosts = async (req, res) => {
     const { username } = req.params;
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ error: "User not found" });
-    
+
     const userId = req.user?.id;
     const posts = await Post.find({ userId: user._id })
       .populate("userId", "username profilePic")
@@ -81,20 +81,20 @@ export const getProfilePosts = async (req, res) => {
       })
       .sort({ createdAt: -1 })
       .lean();
-    
+
     // Get all profiles for display names
     const userIds = [user._id];
     const sharedUserIds = posts
       .filter(p => p.sharedFrom && p.sharedFrom.userId)
       .map(p => p.sharedFrom.userId._id);
     const allUserIds = [...new Set([...userIds, ...sharedUserIds])];
-    
+
     const profiles = await Profile.find({ userId: { $in: allUserIds } }).lean();
     const profileMap = {};
     profiles.forEach(p => {
       profileMap[p.userId.toString()] = getDisplayName(p);
     });
-    
+
     const postsWithLikes = posts.map(post => {
       const postData = {
         ...post,
@@ -105,7 +105,7 @@ export const getProfilePosts = async (req, res) => {
         liked: userId ? post.likes?.some(id => id.toString() === userId.toString()) || false : false,
         totalLikes: post.likes?.length || 0,
       };
-      
+
       // Add display name to sharedFrom user if exists
       if (post.sharedFrom && post.sharedFrom.userId) {
         postData.sharedFrom = {
@@ -116,7 +116,7 @@ export const getProfilePosts = async (req, res) => {
           }
         };
       }
-      
+
       return postData;
     });
 
@@ -131,6 +131,8 @@ export const updateProfile = async (req, res) => {
     const userId = req.user.id;
     const { firstName, lastName, companyName, description, pastJobs, education, skills, location, phoneNumber, birthday, profilePic, gender, foundedDate, founderName, companyDescription, industry, companySize, website } = req.body;
     
+
+
     const updateData = {};
     if (firstName !== undefined) updateData.firstName = firstName;
     if (lastName !== undefined) updateData.lastName = lastName;
@@ -168,7 +170,7 @@ export const updateProfile = async (req, res) => {
       { new: true, upsert: true }
     );
     console.log("Profile updated:", profile);
-    
+
     res.status(200).json(profile);
   } catch (error) {
     res.status(500).json({ error: error.message });
