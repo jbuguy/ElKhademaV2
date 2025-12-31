@@ -25,7 +25,6 @@ export const useSignup = () => {
   };
   const signupCompany = async (email, password, role = "company",companyData) => {
     setIsLoading(true);
-    console.log("saye")
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {setIsLoading(false);throw new Error("Invalid email format");}
@@ -61,16 +60,21 @@ export const useSignup = () => {
       throw new Error("Invalid Website URL. Make sure it starts with http:// or https://");
     }
     const res = await api.post("/user/signup", { email, password, role });
-    console.log("data:",res.data)
     localStorage.setItem("user", JSON.stringify(res.data));
     dispatch({ type: "LOGIN", payload: res.data });
 
     // adding directly the data for the company
-    companyData._id = res.data._id;
-    await api.post("/profile", companyData)
+    try{
+    const payload ={...companyData}
+    await api.put("/user/profile", payload, {
+      headers: {
+        Authorization: `Bearer ${res.data.token}`,
+      }
+    })
+  }catch(error){
     setIsLoading(false);
-    navigate("/", { replace: true });
-
+    throw new Error(error);
+  }
 
   };
   return { signup,signupCompany, isLoading, error };
