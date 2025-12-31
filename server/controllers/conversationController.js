@@ -4,7 +4,7 @@ import { Message } from "../models/message.model.js";
 export const getConversation = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
-  const conversation = await Conversation.findById(id).populate("members", "displayName profilePic").populate("lastMessage", "userId content media");
+  const conversation = await Conversation.findById(id).populate("members", "username profilePic").populate("lastMessage", "userId content media");
   if (!conversation)
     return res.status(404).json({ error: "conversation not found" });
   const isMember = conversation.members.some(
@@ -18,7 +18,7 @@ export const getConversation = async (req, res) => {
 export const getAllConversations = async (req, res) => {
   const userId = req.user.id;
   const conversations = await Conversation.find({ members: { $in: [userId] } })
-    .populate("members", "displayName profilePic")
+    .populate("members", "username profilePic")
     .populate("lastMessage", "userId content media")
     .sort({ updatedAt: -1 })
     .lean();
