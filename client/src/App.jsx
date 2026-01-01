@@ -5,15 +5,23 @@ import Home from "./pages/Home.jsx"
 import Login from "./pages/login.jsx"
 import Signup from "./pages/Signup.jsx"
 import Profile from "./pages/Profile.jsx"
+import Jobs from "./pages/jobs.jsx"
 
 import EditProfile from "./pages/EditProfile.jsx"
 
 import ChatWidget from "./components/ChatWidget.jsx"
 
 function AppContent() {
-  const { user } = useAuthContext();
+  const { user , authIsReady } = useAuthContext();
   const location = useLocation();
   const hideNavbar = location.pathname === '/profile/editprofile';
+  if (!authIsReady) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="text-xl font-bold text-[#1aac83]"><h1>Loading...</h1></div>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -26,6 +34,7 @@ function AppContent() {
           <Route path="/profile" element={user ? <Profile /> : <Navigate to='/login' />} />
           <Route path="/profile/editprofile" element={user ? <EditProfile /> : <Navigate to='/login' />} />
           <Route path="/profile/:username" element={<Profile />} />
+          <Route path="/jobs" element={user ? <Jobs /> :<Navigate to="/login"/>}/>
         </Routes>
         <ChatWidget />
       </div>
