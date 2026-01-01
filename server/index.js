@@ -6,20 +6,22 @@ import dotenv from "dotenv";
 import cors from "cors";
 import mediaRouter from "./routes/media.js";
 import conversationRouter from "./routes/conversationRoute.js";
+import jobsRouter from "./routes/jobsRoute.js";
 
 dotenv.config();
 const app = express();
 if (process.env.NODE_ENV == "development") {
-  app.use(cors({ origin: "http://localhost:5173" }));
+    app.use(cors({ origin: "http://localhost:5173" }));
 }
 app.use(express.json());
 app.use("/api/user", userRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/post", postRouter);
 app.use("/api/conversation", conversationRouter);
+app.use("/api/jobs", jobsRouter);
 if (process.env.NODE_ENV == "production") {
-  app.use(express.static("../client/dist"));
+    app.use(express.static("../client/dist"));
 }
 connectDB().then(() => {
-  app.listen(8080);
-});  
+    app.listen(8080);
+});
