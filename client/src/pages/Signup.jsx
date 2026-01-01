@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, X, Upload } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { ImageUpload } from "../components/ImageUpload";
 
 const uploadMedia = async (file) => {
   return new Promise((resolve) => {
@@ -57,25 +58,6 @@ const FormField = ({ label, name, type = "text", value, onChange, options, maxLe
     )}
   </div>
 );
-
-const ImageUpload = ({ preview, label, isLoading, onChange, buttonLabel }) => (
-  <div style={{ marginBottom: '24px' }}>
-    <label style={labelStyle}>{label}</label>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-      <div style={{ width: '96px', height: '96px', borderRadius: '50%', backgroundColor: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        {preview ? <img src={preview} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Upload style={{ color: '#9ca3af' }} size={32} />}
-      </div>
-      <div style={{ flex: 1 }}>
-        <input type="file" id={label} accept="image/*" onChange={onChange} disabled={isLoading} style={{ display: 'none' }} />
-        <label htmlFor={label} style={{ ...buttonStyle('#0d9488', isLoading), display: 'inline-block' }} onMouseEnter={(e) => !isLoading && (e.target.style.backgroundColor = '#0f766e')} onMouseLeave={(e) => !isLoading && (e.target.style.backgroundColor = '#0d9488')}>
-          {isLoading ? "Uploading..." : buttonLabel}
-        </label>
-        <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>JPG, PNG (max 5MB)</p>
-      </div>
-    </div>
-  </div>
-);
-
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
