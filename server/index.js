@@ -10,7 +10,7 @@ import conversationRouter from "./routes/conversationRoute.js";
 dotenv.config();
 const app = express();
 if (process.env.NODE_ENV == "development") {
-  app.use(cors({ origin: "http://localhost:5173" }));
+  app.use(cors({ origin: "http://localhost:5174" }));
 }
 app.use(express.json());
 app.use("/api/user", userRouter);
