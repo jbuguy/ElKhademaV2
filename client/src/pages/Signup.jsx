@@ -1,345 +1,421 @@
-
-import { useState } from "react"
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { ImageUpload } from "../components/ImageUpload";
 import { useSignup } from "../hooks/useSignup";
-import { ChevronLeft, ChevronRight , AlertCircle, CheckCircle, X } from 'lucide-react';
+
+const uploadMedia = async (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve({ secure_url: e.target.result });
+    reader.readAsDataURL(file);
+  });
+};
+
+const commonInputStyle = {
+  width: '100%',
+  padding: '8px 12px',
+  border: '1px solid #d1d5db',
+  borderRadius: '6px',
+  fontSize: '14px',
+  boxSizing: 'border-box'
+};
+
+const labelStyle = {
+  display: 'block',
+  color: '#374151',
+  fontSize: '14px',
+  fontWeight: '500',
+  marginBottom: '8px'
+};
+
+const buttonStyle = (bg = '#0d9488', disabled = false) => ({
+  padding: '8px 16px',
+  backgroundColor: bg,
+  color: 'white',
+  border: 'none',
+  borderRadius: '6px',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  opacity: disabled ? 0.5 : 1,
+  transition: 'background-color 0.3s'
+});
+
+// FormField supports string and { value, label } options
+const FormField = ({ label, name, type = "text", value, onChange, options = [], maxLength, placeholder }) => (
+  <div style={{ marginBottom: '16px' }}>
+    <label style={labelStyle}>{label}</label>
+    {type === 'select' ? (
+      <select name={name} value={value} onChange={onChange} style={commonInputStyle}>
+        <option value="">Select {label}</option>
+        {options.map((opt, index) => {
+          const optionValue = typeof opt === 'object' ? opt.value : opt;
+          const optionLabel = typeof opt === 'object'
+            ? (opt.label || opt.value)
+            : opt.charAt(0).toUpperCase() + opt.slice(1);
+
+          return (
+            <option key={optionValue || index} value={optionValue}>
+              {optionLabel}
+            </option>
+          );
+        })}
+      </select>
+    ) : type === 'textarea' ? (
+      <>
+        <textarea
+          name={name}
+          value={value}
+          onChange={onChange}
+          maxLength={maxLength}
+          rows={4}
+          style={{ ...commonInputStyle, resize: 'none' }}
+        />
+        <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+          {value.length}/{maxLength} characters
+        </p>
+      </>
+    ) : (
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        style={commonInputStyle}
+      />
+    )}
+  </div>
+);
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("user");
-  const [companyData,setCompanyData] =useState({
-    companyName: '',
-    foundedDate: '',
-    founderName: '',
-    companyDescription: '',
-    industry: '',
-    companySize: '',
-    website: ''
-  });
-  const size = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'];
-  const industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing', 'Other'];
-
   const [currentPage, setCurrentPage] = useState(0);
-
   const [notification, setNotification] = useState(null);
+  const [passwordError, setPasswordError] = useState("");
+  const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
+  const [uploadingCompanyProfilePic, setUploadingCompanyProfilePic] = useState(false);
+
+  // Hover states
+  const [isNextHovered, setIsNextHovered] = useState(false);
+  const [isBackHovered, setIsBackHovered] = useState(false);
+  const [isSignupHovered, setIsSignupHovered] = useState(false);
+
+  const [userData, setUserData] = useState({
+    firstName: '', lastName: '', phoneNumber: '', birthday: '', location: '', gender: '', profilePic: '', profilePicPreview: ''
+  });
+
+  const [companyData, setCompanyData] = useState({
+    companyName: '', foundedDate: '', founderName: '', companyDescription: '', industry: '', companySize: '', website: '', profilePic: '', profilePicPreview: ''
+  });
+
+  const sizes = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'];
+  const sizeOptions = sizes.map(s => ({ value: s, label: `${s} employees` }));
+
+  const industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing', 'Other'];
+  const genders = ['male', 'female'];
+  const { signup, signupCompany, isLoading, error } = useSignup();
+  // Live password validation
+  useEffect(() => {
+    if (!password && !confirmPassword) {
+      setPasswordError("");
+      return;
+    }
+
+    if (password.length > 0 && password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+    } else if (confirmPassword && password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+    } else {
+      setPasswordError("");
+    }
+  }, [password, confirmPassword]);
+
   const showNotification = (message, type) => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 4000);
   };
 
+  const handleMediaUpload = async (e, isCompany) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const nextPage = () => {
-    
-    if (currentPage < 3) {
-      setCurrentPage(currentPage + 1);
+    try {
+      isCompany ? setUploadingCompanyProfilePic(true) : setUploadingProfilePic(true);
+      const result = await uploadMedia(file);
+
+      if (result.secure_url) {
+        if (isCompany) {
+          setCompanyData({ ...companyData, profilePic: result.secure_url, profilePicPreview: result.secure_url });
+        } else {
+          setUserData({ ...userData, profilePic: result.secure_url, profilePicPreview: result.secure_url });
+        }
+        showNotification(`${isCompany ? 'Company logo' : 'Profile picture'} uploaded successfully`, "success");
+      } else {
+        showNotification(`Failed to upload ${isCompany ? 'company logo' : 'profile picture'}`, "error");
+      }
+    } catch (error) {
+      showNotification("Upload failed", "error");
+    } finally {
+      isCompany ? setUploadingCompanyProfilePic(false) : setUploadingProfilePic(false);
     }
   };
 
-  const prevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-  const handleInputChange = (e) => {
-      setCompanyData({
-        ...companyData,
-        [e.target.name]: e.target.value
-      });
-    };
-
-  const handleAccountTypeChange = (type) => {
-    setRole(type);
-    setCurrentPage(0);
-  };
   const isFormValid = () => {
-    if (!email || !password) return false;
-
+    if (!email || !password || !confirmPassword || passwordError) return false;
     if (role === "user") {
-      return true
+      return userData.firstName && userData.lastName;
     }
-
     if (role === "company") {
       return (
-        companyData.foundedDate &&
+        companyData.companyName &&
         companyData.founderName &&
-        companyData.companyDescription &&
+        companyData.foundedDate &&
         companyData.industry &&
         companyData.companySize &&
-        companyData.website&&
-        companyData.companyName
+        companyData.website &&
+        companyData.companyDescription
       );
     }
     return false;
   };
-  const { signup, signupCompany , isLoading, error } = useSignup();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
 
-    if (role==="user"){
-    try {
-      await signup(email, password, role);
-    } catch (error) {
-      showNotification(error,"error")
-    }}else if(role==="company"){
-      try {
-      await signupCompany(email, password, role,companyData);
-    } catch (error) {
-      showNotification(error.message ,"error");
-    }
-    }
+  const getMaxPage = () => (role === "user" ? 1 : role === "company" ? 3 : 0);
 
+  const handleInputChange = (e, isCompany) => {
+    const { name, value } = e.target;
+    isCompany
+      ? setCompanyData({ ...companyData, [name]: value })
+      : setUserData({ ...userData, [name]: value });
   };
+
+  const Notification = ({ notif }) => notif ? (
+    <div style={{
+      marginBottom: '16px',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '12px',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      backgroundColor: notif.type === 'error' ? '#fef2f2' : '#f0fdf4',
+      border: `1px solid ${notif.type === 'error' ? '#fecaca' : '#86efac'}`
+    }}>
+      {notif.type === 'error' ? <AlertCircle style={{ color: '#ef4444', flexShrink: 0, marginTop: '4px' }} size={24} /> :
+        <CheckCircle style={{ color: '#22c55e', flexShrink: 0, marginTop: '4px' }} size={24} />}
+      <p style={{ flex: 1, fontSize: '14px', fontWeight: '600', color: notif.type === 'error' ? '#991b1b' : '#166534' }}>
+        {notif.message}
+      </p>
+      <button type="button" onClick={() => setNotification(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+        <X size={20} style={{ color: notif.type === 'error' ? '#f87171' : '#86efac' }} />
+      </button>
+    </div>
+  ) : null;
+
   return (
-    <form className="login" onSubmit={(e)=>{handleSubmit(e)}}>
-      {/* Progress Indicator */}
-      {role==="company"&&
-                <div className="flex justify-center mb-6">
-                  {[0, 1, 2 ,3].map((page) => (
-                    <div
-                      key={page}
-                      className={`h-2 w-2 rounded-full mx-1 transition-all ${
-                        currentPage === page ? 'bg-teal-600 w-8' : 'bg-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>}
-      {/* Notifications */}
-      {notification && (
-          <div className={`mb-4 flex items-start gap-3 px-4 py-3 rounded-lg animate-slide-down ${
-            notification.type === 'error' 
-              ? 'bg-red-50 border border-red-200' 
-              : 'bg-green-50 border border-green-200'
-          }`}>
-            {notification.type === 'error' ? (
-              <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={24} />
-            ) : (
-              <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={24} />
-            )}
-            <div className="flex-1">
-              <p className={`text-sm font-semibold ${
-                notification.type === 'error' ? 'text-red-800' : 'text-green-800'
-              }`}>
-                {notification.message}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setNotification(null)}
-              className={`flex-shrink-0 ${
-                notification.type === 'error' ? 'text-red-400 hover:text-red-600' : 'text-green-400 hover:text-green-600'
-              }`}
-            >
-              <X size={20} />
-            </button>
+    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px 10px', backgroundColor: '#ffffff' }}>
+      <div style={{ maxWidth: '300px', margin: '0 auto' }}>
+        {(role === "company" || role === "user") && getMaxPage() > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px', gap: '8px' }}>
+            {Array.from({ length: getMaxPage() + 1 }).map((_, page) => (
+              <div
+                key={page}
+                style={{
+                  height: '8px',
+                  width: currentPage === page ? '32px' : '8px',
+                  borderRadius: '9999px',
+                  backgroundColor: currentPage === page ? '#0d9488' : '#d1d5db',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+            ))}
           </div>
         )}
-      {/* ==========================================
-      adding a carousel to insert more information to the componay
-       ===============================================*/}
-            <div className="mb-6">
-              <div className="border-t border-gray-200 pt-6">
-                
 
-                {/* Carousel Container */}
-                <div className="overflow-hidden">
-                  <div
-                    className="flex transition-transform duration-300 ease-in-out"
-                    style={{ transform: `translateX(-${currentPage * 100}%)` }}
-                  >
-                    {/* Page number 0 default for user */}
-                    <div className="w-full flex-shrink-0 px-1">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">create an account</h3>
-                      <label >Email:</label>
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                      <label >password:</label>
-                      <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
-                      
-                      <label>Account Type:</label>
-                      <div style={{ display: 'flex', gap: '20px', margin: '10px 0' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                          <input 
-                            type="radio" 
-                            value="user" 
-                            checked={role === "user"} 
-                            onChange={e => handleAccountTypeChange(e.target.value)}
-                          />
-                          User
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                          <input 
-                            type="radio" 
-                            value="company" 
-                            checked={role === "company"} 
-                            onChange={e => handleAccountTypeChange(e.target.value)}
-                          />
-                          Company
-                        </label>
-                      </div>
-                    </div>
-                    {/* Page 1: Basic Company Info */}
-                    <div className="w-full flex-shrink-0 px-1">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Company Details</h3>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                          Company Name:
-                        </label>
-                        <input
-                          type="text"
-                          name="companyName"
-                          value={companyData.companyName}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                          Founder Name:
-                        </label>
-                        <input
-                          type="text"
-                          name="founderName"
-                          value={companyData.founderName}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                          Founded Date:
-                        </label>
-                        <input
-                          type="date"
-                          name="foundedDate"
-                          value={companyData.foundedDate}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        />
-                      </div>
-                    </div>
+        <Notification notif={notification} />
 
-                    {/* Page 2: Industry & Size */}
-                    <div className="w-full flex-shrink-0 px-1">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Business Information</h3>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                          Industry:
-                        </label>
-                        <select
-                          name="industry"
-                          value={companyData.industry}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Select Industry</option>
-                          {industries.map((ind) => (
-                            <option key={ind} value={ind}>{ind}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                          Company Size:
-                        </label>
-                        <select
-                          name="companySize"
-                          value={companyData.companySize}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Select Size</option>
-                          {size.map((size) => (
-                            <option key={size} value={size}>{size} employees</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+        <div style={{ marginBottom: '24px', borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
+          <div style={{ overflow: 'hidden' }}>
+            <div style={{
+              display: 'flex',
+              transform: `translateX(-${currentPage * 100}%)`,
+              transition: 'transform 0.3s ease-in-out'
+            }}>
+              {/* Page 0: Credentials + Role */}
+              <div style={{ width: '100%', flexShrink: 0, padding: '0 4px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#1f2937' }}>
+                  Create an Account
+                </h3>
+                <FormField label="Email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
 
-                    {/* Page 3: Description & Website */}
-                    <div className="w-full flex-shrink-0 px-1">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Additional Details</h3>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                          Company Description:
-                        </label>
-                        <textarea
-                          name="companyDescription"
-                          value={companyData.companyDescription}
-                          onChange={handleInputChange}
-                          maxLength={1000}
-                          rows={4}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          {companyData.companyDescription.length}/1000 characters
-                        </p>
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                          Website:
-                        </label>
+                <FormField
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                />
+
+                <FormField
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+
+                {passwordError && (
+                  <p style={{ color: '#ef4444', fontSize: '14px', marginTop: '-8px', marginBottom: '16px' }}>
+                    {passwordError}
+                  </p>
+                )}
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={labelStyle}>Account Type:</label>
+                  <div style={{ display: 'flex', gap: '20px', margin: '10px 0' }}>
+                    {['user', 'company'].map(type => (
+                      <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
                         <input
-                          type="url"
-                          name="website"
-                          value={companyData.website}
-                          onChange={handleInputChange}
-                          placeholder="https://example.com"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          type="radio"
+                          value={type}
+                          checked={role === type}
+                          onChange={(e) => { setRole(e.target.value); setCurrentPage(0); }}
                         />
-                      </div>
-                    </div>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </label>
+                    ))}
                   </div>
                 </div>
-
-                {/* Navigation Buttons */}
-                <div className="flex justify-between mt-6">
-                {role==="company" && currentPage >0 ?(
-                  <button
-                    type="button"
-                    onClick={prevPage}
-                    disabled={currentPage === 0}
-                    className={`flex items-center px-4 py-2 rounded-md transition-colors `}
-                    style={{backgroundColor:
-                      currentPage === 0 
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }}
-                  >
-                    <ChevronLeft size={20} />
-                    <span className="ml-1">Back</span>
-                  </button>
-                ):<span></span>}
-                  {role==="company"&&currentPage < 3 ? (
-                    <button
-                      type="button"
-                      onClick={nextPage}
-                      className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
-                    >
-                      <span className="mr-1">Next</span>
-                      <ChevronRight size={20} />
-                    </button>
-                  ) : null}
-                </div>
               </div>
+
+              {/* Rest of the pages remain the same */}
+              {role === "user" && (
+                <div style={{ width: '100%', flexShrink: 0, padding: '0 4px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#1f2937' }}>
+                    Personal Information
+                  </h3>
+                  <ImageUpload
+                    preview={userData.profilePicPreview}
+                    label="profilePic"
+                    isLoading={uploadingProfilePic}
+                    onChange={(e) => handleMediaUpload(e, false)}
+                    buttonLabel="Choose Picture"
+                  />
+                  <FormField label="First Name" name="firstName" value={userData.firstName} onChange={(e) => handleInputChange(e, false)} />
+                  <FormField label="Last Name" name="lastName" value={userData.lastName} onChange={(e) => handleInputChange(e, false)} />
+                  <FormField label="Gender" name="gender" type="select" value={userData.gender} onChange={(e) => handleInputChange(e, false)} options={genders} />
+                  <FormField label="Birthday" name="birthday" type="date" value={userData.birthday} onChange={(e) => handleInputChange(e, false)} />
+                  <FormField label="Phone Number" name="phoneNumber" type="tel" value={userData.phoneNumber} onChange={(e) => handleInputChange(e, false)} placeholder="+1 (555) 123-4567" />
+                  <FormField label="Location" name="location" value={userData.location} onChange={(e) => handleInputChange(e, false)} placeholder="City, Country" />
+                </div>
+              )}
+
+              {role === "company" && (
+                <>
+                  <div style={{ width: '100%', flexShrink: 0, padding: '0 4px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#1f2937' }}>
+                      Company Details
+                    </h3>
+                    <ImageUpload
+                      preview={companyData.profilePicPreview}
+                      label="companyProfilePic"
+                      isLoading={uploadingCompanyProfilePic}
+                      onChange={(e) => handleMediaUpload(e, true)}
+                      buttonLabel="Choose Logo"
+                    />
+                    <FormField label="Company Name" name="companyName" value={companyData.companyName} onChange={(e) => handleInputChange(e, true)} />
+                    <FormField label="Founder Name" name="founderName" value={companyData.founderName} onChange={(e) => handleInputChange(e, true)} />
+                    <FormField label="Founded Date" name="foundedDate" type="date" value={companyData.foundedDate} onChange={(e) => handleInputChange(e, true)} />
+                  </div>
+
+                  <div style={{ width: '100%', flexShrink: 0, padding: '0 4px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#1f2937' }}>
+                      Business Information
+                    </h3>
+                    <FormField label="Industry" name="industry" type="select" value={companyData.industry} onChange={(e) => handleInputChange(e, true)} options={industries} />
+                    <FormField label="Company Size" name="companySize" type="select" value={companyData.companySize} onChange={(e) => handleInputChange(e, true)} options={sizeOptions} />
+                  </div>
+
+                  <div style={{ width: '100%', flexShrink: 0, padding: '0 4px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#1f2937' }}>
+                      Additional Details
+                    </h3>
+                    <FormField label="Company Description" name="companyDescription" type="textarea" value={companyData.companyDescription} onChange={(e) => handleInputChange(e, true)} maxLength={1000} />
+                    <FormField label="Website" name="website" type="url" value={companyData.website} onChange={(e) => handleInputChange(e, true)} placeholder="https://example.com" />
+                  </div>
+                </>
+              )}
             </div>
+          </div>
 
+          {/* Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+            {currentPage > 0 && (
+              <button
+                type="button"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                style={{
+                  ...buttonStyle('#e5e7eb'),
+                  color: '#374151',
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: isBackHovered ? '#d1d5db' : '#e5e7eb'
+                }}
+                onMouseEnter={() => setIsBackHovered(true)}
+                onMouseLeave={() => setIsBackHovered(false)}
+              >
+                <ChevronLeft size={20} />
+                <span style={{ marginLeft: '4px' }}>Back</span>
+              </button>
+            )}
 
-
-
-        {/* ========== Submit Button ===========*/}
-      
-      <button type="submit" className="container"
- disabled={isLoading || !isFormValid()}
- style={{ opacity: (isLoading || !isFormValid()) ? 0.6 : 1, cursor: (isLoading || !isFormValid()) ? 'not-allowed' : 'pointer' }}>
-  <div 
-      className="row px-4 py-1  text-white rounded-md hover:bg-teal-700 transition-colors" style={{backgroundColor:'#1aac83'}}
-      >
-        <span className=" col-1 self-center">Sign Up</span>
-        </div></button>
-      {error && (
-        <div className="error">
-          {error?.response.data?.error}
+            {currentPage < getMaxPage() && (
+              <button
+                type="button"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                style={{
+                  ...buttonStyle('#0d9488'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginLeft: 'auto',
+                  backgroundColor: isNextHovered ? '#0f766e' : '#0d9488'
+                }}
+                onMouseEnter={() => setIsNextHovered(true)}
+                onMouseLeave={() => setIsNextHovered(false)}
+              >
+                <span style={{ marginRight: '4px' }}>Next</span>
+                <ChevronRight size={20} />
+              </button>
+            )}
+          </div>
         </div>
-      )}
-    </form>
-  )
+
+        <button
+          onClick={() => {
+            if (isFormValid()) {
+              if (role === "user") {
+                signup(email, password, "user");
+              } else if (role === "company") {
+                signupCompany(email, password, "company", companyData);
+              }
+              showNotification(role === 'user' ? 'User signup successful!' : 'Company signup successful!', 'success')
+            }
+          }}
+          disabled={!isFormValid()}
+          style={{
+            ...buttonStyle('#1aac83', !isFormValid()),
+            width: '100%',
+            fontSize: '16px',
+            fontWeight: '600',
+            backgroundColor: isFormValid() ? (isSignupHovered ? '#0f766e' : '#1aac83') : undefined
+          }}
+          onMouseEnter={() => setIsSignupHovered(true)}
+          onMouseLeave={() => setIsSignupHovered(false)}
+        >
+          Sign Up
+        </button>
+      </div>
+    </div>
+  );
 }
