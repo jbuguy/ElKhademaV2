@@ -45,6 +45,9 @@ export function NavBar() {
         <nav>
           {user ? (
             <div>
+              <Link to="/jobs">
+              <span style={{cursor: 'pointer'}}>Jobs</span>
+              </Link>
               <Link to="/profile">
                 <img src={profilePic || user.profilePic || "https://via.placeholder.com/40"} alt="profile" style={{width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px', cursor: 'pointer'}} />
               </Link>
