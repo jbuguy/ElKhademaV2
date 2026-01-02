@@ -5,7 +5,7 @@ import Home from "./pages/Home.jsx"
 import Login from "./pages/login.jsx"
 import Signup from "./pages/Signup.jsx"
 import Profile from "./pages/Profile.jsx"
-// import Jobs from "./pages/jobs.jsx"
+import Jobs from "./pages/jobs.jsx"
 
 import EditProfile from "./pages/EditProfile.jsx"
 
@@ -34,7 +34,7 @@ function AppContent() {
           <Route path="/profile" element={user ? <Profile /> : <Navigate to='/login' />} />
           <Route path="/profile/editprofile" element={user ? <EditProfile /> : <Navigate to='/login' />} />
           <Route path="/profile/:username" element={<Profile />} />
-          {/* <Route path="/jobs" element={user ? <Jobs /> :<Navigate to="/login"/>}/> */}
+          <Route path="/jobs" element={user ? <Jobs /> : <Navigate to="/login" />} />
         </Routes>
         <ChatWidget />
       </div>
