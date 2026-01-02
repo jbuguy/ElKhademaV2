@@ -1,6 +1,7 @@
 import { Comment } from "../models/comment.js";
 import { Post } from "../models/post.model.js";
 import { Profile } from "../models/profile.model.js";
+import { createNotification } from "./notificationController.js";
 
 // Helper function to get display name from profile
 const getDisplayName = (profile) => {
@@ -118,6 +119,13 @@ export const addComment = async (req, res) => {
   const commentObj = comment.toObject();
   commentObj.userId.displayName = getDisplayName(profile);
 
+  // Create notification for post owner
+  const post = await Post.findById(id);
+  if (post) {
+    console.log('Creating comment notification:', post.userId, userId, id);
+    await createNotification(post.userId, userId, 'comment', id);
+  }
+
   res.status(201).json(commentObj);
 };
 export const getComments = async (req, res) => {
@@ -146,6 +154,13 @@ export const addLike = async (req, res) => {
   const { id } = req.params;
   const userid = req.user.id;
   const response = await Post.findByIdAndUpdate(id, { $addToSet: { likes: userid } }, { new: true });
+  
+  // Create notification for post owner
+  if (response) {
+    console.log('Creating like notification:', response.userId, userid, id);
+    await createNotification(response.userId, userid, 'like', id);
+  }
+  
   res.status(200).json({ totalLikes: response.likes.length, liked: true })
 };
 export const sharePost = async (req, res) => {
@@ -183,6 +198,12 @@ export const sharePost = async (req, res) => {
     if (sharedPost.sharedFrom && sharedPost.sharedFrom.userId) {
       const originalProfile = await Profile.findOne({ userId: sharedPost.sharedFrom.userId._id });
       sharedPostObj.sharedFrom.userId.displayName = getDisplayName(originalProfile);
+    }
+
+    // Create notification for original post owner
+    if (originalPost.userId._id.toString() !== userId.toString()) {
+      console.log('Creating share notification:', originalPost.userId._id, userId, id);
+      await createNotification(originalPost.userId._id, userId, 'share', id);
     }
 
     res.status(201).json(sharedPostObj);
