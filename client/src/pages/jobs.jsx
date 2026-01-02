@@ -1,6 +1,7 @@
-import { Search, MapPin, Bell, Mail, User, ChevronDown, LayoutGrid, List } from 'lucide-react';
+import { Search, MapPin} from 'lucide-react';
 import { useState } from "react"
 import { useAuthContext } from '../hooks/useAuthContext';
+import { Link } from "react-router";
 
 
 
@@ -54,11 +55,11 @@ const SearchBar = () => (
     </div>
   </div>
 );
-const JobCard = ({ job }) => (
+export const JobCard = ({ job }) => (
   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition mb-4">
     <div className="flex justify-between items-start mb-4">
       <div className="flex gap-4">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl ${job.color}`}>
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl`} style={{backgroundColor: job.color}}>
           {job.logo}
         </div>
         <div>
@@ -66,7 +67,7 @@ const JobCard = ({ job }) => (
           <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
             <span className="font-medium">{job.company}</span>
             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-            <span className="flex items-center gap-1"><MapPin size={12}/> {job.location}</span>
+            <span className="flex items-center gap-1"><MapPin size={12}/> {job.location ? job.location : job.city+", "+job.country}</span>
           </div>
         </div>
       </div>
@@ -85,10 +86,11 @@ const JobCard = ({ job }) => (
           </span>
         ))}
       </div>
-      <span className="text-xs text-gray-400 font-medium">{job.date}</span>
+      <span className="text-xs text-gray-400 font-medium">{job.deadline}</span>
     </div>
   </div>
 );
+
  const FilterSection = ({ title, children }) => (
   <div className="mb-8">
     <h4 className="font-bold text-gray-800 mb-4">{title}</h4>
@@ -115,9 +117,9 @@ const Checkbox = ({ label, checked, onChange }) => (
           <h3 className="text-2xl font-bold mb-2">Looking to Hire?</h3>
           <p className="text-white/90">Post your job opportunity and connect with top talent</p>
         </div>
-        <button className="bg-white text-[#1aac83] hover:bg-gray-50 px-8 py-3 rounded-lg font-semibold transition-colors shadow-md whitespace-nowrap">
+        <Link to="/jobs/Create"><button className="bg-white text-[#1aac83] hover:bg-gray-50 px-8 py-3 rounded-lg font-semibold transition-colors shadow-md whitespace-nowrap">
           Post a Job
-        </button>
+        </button></Link>
       </div>
     </div>
   );
@@ -133,9 +135,9 @@ export default function Jobs() {
       salary: "$3k - $5k",
       description: "UX designers measure and optimise applications to improve ease of use (usability), and create the best user experience by exploring many different approaches to solve end-users' problems.",
       tags: ["Remote", "Full Time", "UX"],
-      date: "12 Jan, 2021",
+      deadline: "12 Jan, 2021",
       logo: "Dr",
-      color: "bg-pink-500"
+      color: "pink"
     },
     {
       id: 2,
@@ -145,9 +147,9 @@ export default function Jobs() {
       salary: "$3,5k",
       description: "We are looking for a UX Designer to design software and platforms that meet people's needs. You will combine interfaces and workflows to enhance user experience.",
       tags: ["Remote", "Senior", "Figma", "UX"],
-      date: "11 Jan, 2021",
+      deadline: "11 Jan, 2021",
       logo: "Tw",
-      color: "bg-blue-400"
+      color: "blue"
     },{
       id: 3,
       title: "Senior UX Designer",
@@ -156,9 +158,9 @@ export default function Jobs() {
       salary: "$3k - $5k",
       description: "UX designers measure and optimise applications to improve ease of use (usability), and create the best user experience by exploring many different approaches to solve end-users' problems.",
       tags: ["Remote", "Full Time", "UX"],
-      date: "12 Jan, 2021",
+      deadline: "12 Jan, 2021",
       logo: "Dr",
-      color: "bg-pink-500"
+      color: "pink"
     },{
       id: 4,
       title: "Senior UX Designer",
@@ -167,9 +169,9 @@ export default function Jobs() {
       salary: "$3k - $5k",
       description: "UX designers measure and optimise applications to improve ease of use (usability), and create the best user experience by exploring many different approaches to solve end-users' problems.",
       tags: ["Remote", "Full Time", "UX"],
-      date: "12 Jan, 2021",
+      deadline: "12 Jan, 2021",
       logo: "Dr",
-      color: "bg-pink-500"
+      color: "pink"
     },{
       id: 5,
       title: "Senior UX Designer",
@@ -178,9 +180,9 @@ export default function Jobs() {
       salary: "$3k - $5k",
       description: "UX designers measure and optimise applications to improve ease of use (usability), and create the best user experience by exploring many different approaches to solve end-users' problems.",
       tags: ["Remote", "Full Time", "UX"],
-      date: "12 Jan, 2021",
+      deadline: "12 Jan, 2021",
       logo: "Dr",
-      color: "bg-pink-500"
+      color: "pink"
     },{
       id: 6,
       title: "Senior UX Designer",
@@ -189,9 +191,9 @@ export default function Jobs() {
       salary: "$3k - $5k",
       description: "UX designers measure and optimise applications to improve ease of use (usability), and create the best user experience by exploring many different approaches to solve end-users' problems.",
       tags: ["Remote", "Full Time", "UX"],
-      date: "12 Jan, 2021",
+      deadline: "12 Jan, 2021",
       logo: "Dr",
-      color: "bg-pink-500"
+      color: "pink"
     },{
       id: 7,
       title: "Senior UX Designer",
@@ -200,9 +202,9 @@ export default function Jobs() {
       salary: "$3k - $5k",
       description: "UX designers measure and optimise applications to improve ease of use (usability), and create the best user experience by exploring many different approaches to solve end-users' problems.",
       tags: ["Remote", "Full Time", "UX"],
-      date: "12 Jan, 2021",
+      deadline: "12 Jan, 2021",
       logo: "Dr",
-      color: "bg-pink-500"
+      color: "pink"
     },
   ];
 
