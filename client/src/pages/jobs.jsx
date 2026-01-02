@@ -219,9 +219,6 @@ export default function Jobs() {
 
   return (
     <>
-            <div className="flex items-center">
-  <Checkbox label="Test" />
-</div>
     {user.role==="company" && <CreateJobCTA />}
     <div className="min-h-screen bg-[#fafbfc] font-sans">
       <Hero />
@@ -231,10 +228,10 @@ export default function Jobs() {
         
         <div className="md:col-span-3">
           <FilterSection title="Job Type">
-            <Checkbox label="Full Time Job" checked={filters.fullTime} onChange={() => setFilters({...filters, fullTime: !filters.fullTime})} />
-            <Checkbox label="Part Time Job" checked={filters.partTime} onChange={() => setFilters({...filters, partTime: !filters.partTime})} />
-            <Checkbox label="Internship Job" checked={filters.internship} onChange={() => setFilters({...filters, internship: !filters.internship})} />
-            <Checkbox label="Remote Job" checked={filters.remote} onChange={() => setFilters({...filters, remote: !filters.remote})} />
+            <Checkbox label="Full Time" checked={filters.fullTime} onChange={() => setFilters({...filters, fullTime: !filters.fullTime})} />
+            <Checkbox label="Part Time" checked={filters.partTime} onChange={() => setFilters({...filters, partTime: !filters.partTime})} />
+            <Checkbox label="Internship" checked={filters.internship} onChange={() => setFilters({...filters, internship: !filters.internship})} />
+            <Checkbox label="Remote" checked={filters.remote} onChange={() => setFilters({...filters, remote: !filters.remote})} />
             <Checkbox label="Contract" checked={filters.contract} onChange={() => setFilters({...filters, contract: !filters.contract})} />
           </FilterSection>
 
