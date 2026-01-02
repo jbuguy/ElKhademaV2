@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { loginUser, registerUser, getProfileByUsername, getProfilePosts, updateProfile } from "../controllers/userController.js";
+import {
+    loginUser,
+    registerUser,
+    getProfileByUsername,
+    getProfilePosts,
+    updateProfile,
+} from "../controllers/userController.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
