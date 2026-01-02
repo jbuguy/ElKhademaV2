@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuthContext } from "../hooks/useAuthContext.js";
 import {
     Briefcase,
     MapPin,
@@ -9,9 +10,9 @@ import {
     FileText,
     Award,
 } from "lucide-react";
-import JobCard from "./jobs";
+import { JobCard } from "./jobs";
 const Hero = () => (
-    <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-8 px-4">
+    <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-8 px-4 rounded-t-xl">
         <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold mb-2">Post a Job</h1>
             <p className="text-teal-100">
@@ -36,6 +37,7 @@ const BasicInfoForm = ({ job, handleChange }) => (
                     type="text"
                     value={job.title}
                     onChange={handleChange}
+                    name="title"
                     maxLength={100}
                     placeholder="e.g., Senior UX Designer"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -48,6 +50,7 @@ const BasicInfoForm = ({ job, handleChange }) => (
                 </label>
                 <select
                     value={job.category}
+                    name="category"
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
@@ -69,6 +72,7 @@ const BasicInfoForm = ({ job, handleChange }) => (
                 </label>
                 <textarea
                     value={job.description}
+                    name="description"
                     onChange={handleChange}
                     rows={6}
                     placeholder="Describe the role, what the candidate will do, and what makes this opportunity exciting..."
@@ -93,6 +97,7 @@ const JobDetailsForm = ({ job, handleChange }) => (
                 <select
                     value={job.jobType}
                     onChange={handleChange}
+                    name="jobType"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                     <option value="Full Time">Full Time</option>
@@ -110,6 +115,7 @@ const JobDetailsForm = ({ job, handleChange }) => (
                 </label>
                 <select
                     value={job.experienceLevel}
+                    name="experienceLevel"
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
@@ -129,6 +135,7 @@ const JobDetailsForm = ({ job, handleChange }) => (
                 <input
                     type="date"
                     value={job.deadline}
+                    name="deadline"
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
@@ -139,19 +146,21 @@ const JobDetailsForm = ({ job, handleChange }) => (
 const JobLocationForm = ({ job, handleChange }) => (
     <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-2">
             <MapPin className="w-5 h-5 text-teal-600" />
             Location
-        </h2>
-
-        <div className="space-y-4">
+            </div>
             <div className="flex items-center gap-2">
+                <label htmlFor="isRemote" className="relative inline-flex items-center cursor-pointer">
                 <input
                     type="checkbox"
                     id="isRemote"
+                    name="isRemote"
                     checked={job.isRemote}
                     onChange={handleChange}
-                    className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                    className="sr-only peer"
                 />
+    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>                </label>
                 <label
                     htmlFor="isRemote"
                     className="text-sm font-medium text-gray-700"
@@ -159,6 +168,10 @@ const JobLocationForm = ({ job, handleChange }) => (
                     This is a remote position
                 </label>
             </div>
+        </h2>
+
+        <div className="space-y-4">
+            
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -168,6 +181,7 @@ const JobLocationForm = ({ job, handleChange }) => (
                     <input
                         type="text"
                         value={job.city}
+                        name="city"
                         onChange={handleChange}
                         placeholder="e.g., San Francisco"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -180,6 +194,7 @@ const JobLocationForm = ({ job, handleChange }) => (
                     </label>
                     <input
                         type="text"
+                        name="country"
                         value={job.country}
                         onChange={handleChange}
                         placeholder="e.g., USA"
@@ -194,6 +209,7 @@ const JobLocationForm = ({ job, handleChange }) => (
                 </label>
                 <input
                     type="text"
+                    name="address"
                     value={job.address}
                     onChange={handleChange}
                     placeholder="Full address"
@@ -227,29 +243,39 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-teal-600" />
                 Salary Information
-            </h2>
-
-            <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        id="hideSalary"
-                        checked={job.hideSalary}
-                        onChange={(e) => {
-                            handleChange(e);
-                            formatSalary();
-                        }}
-                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-                    />
+                </div>
+                <div className="flex items-center gap-3">
                     <label
                         htmlFor="hideSalary"
-                        className="text-sm font-medium text-gray-700"
+                        className="relative inline-flex items-center cursor-pointer"
+                    >
+                        <input
+                            type="checkbox"
+                            name="hideSalary"
+                            id="hideSalary"
+                            checked={job.hideSalary}
+                            onChange={(e) => {
+                                handleChange(e);
+                                formatSalary();
+                            }}
+                            className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                    </label>
+                    <label
+                        htmlFor="hideSalary"
+                        className="text-sm font-medium text-gray-700 cursor-pointer"
                     >
                         Hide salary from job listing
                     </label>
                 </div>
+            </h2>
+
+            <div className="space-y-4">
+                
 
                 {!job.hideSalary && (
                     <>
@@ -260,6 +286,7 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                 </label>
                                 <input
                                     type="number"
+                                    name="salaryMin"
                                     value={job.salaryMin}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -276,6 +303,7 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                 </label>
                                 <input
                                     type="number"
+                                    name="salaryMax"
                                     value={job.salaryMax}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -292,6 +320,7 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                 </label>
                                 <select
                                     value={job.currency}
+                                    name="currency"
                                     onChange={(e) => {
                                         handleChange(e);
                                         formatSalary();
@@ -303,6 +332,7 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                     <option value="GBP">GBP</option>
                                     <option value="CAD">CAD</option>
                                     <option value="AUD">AUD</option>
+                                    <option value="TND">TND</option>
                                 </select>
                             </div>
                         </div>
@@ -314,6 +344,7 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                 </label>
                                 <select
                                     value={job.period}
+                                    name="period"
                                     onChange={(e) => {
                                         handleChange(e);
                                         formatSalary();
@@ -328,16 +359,20 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                             </div>
 
                             <div className="flex items-center pt-7">
+                            <label htmlFor="isNegotiable" className="relative inline-flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
+                                    name="isNegotiable"
                                     id="isNegotiable"
                                     checked={job.isNegotiable}
                                     onChange={(e) => {
                                         handleChange(e);
                                         formatSalary();
                                     }}
-                                    className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                                    className="sr-only peer"
                                 />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                                </label>
                                 <label
                                     htmlFor="isNegotiable"
                                     className="ml-2 text-sm font-medium text-gray-700"
@@ -483,7 +518,7 @@ const TagsForm = ({ job, setJob }) => {
                     type="text"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) =>
+                    onKeyUp={(e) =>
                         e.key === "Enter" && (e.preventDefault(), addTag())
                     }
                     placeholder="e.g., React, Figma, Design Systems"
@@ -543,7 +578,7 @@ const SkillsForm = ({ job, setJob }) => {
                     type="text"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyPress={(e) =>
+                    onKeyUp={(e) =>
                         e.key === "Enter" && (e.preventDefault(), addSkill())
                     }
                     placeholder="e.g., User Research, Prototyping"
@@ -577,7 +612,7 @@ const SkillsForm = ({ job, setJob }) => {
 };
 const Previewjob = ({ job }) => (
     <div className="lg:col-span-1">
-        <div className="sticky top-8">
+        <div className="sticky top-50 ">
             <h2 className="text-xl font-semibold mb-4">Preview</h2>
 
             <JobCard key={job.id} job={job} />
@@ -631,20 +666,29 @@ const SubmitButtons = ({ job, setJob }) => {
     );
 };
 export default function JobCreation() {
+    const { user } = useAuthContext();
     const [job, setJob] = useState({
-        title: "",
-        description: "",
-        category: "",
+        title: "Title",
+        company: user.username,
+        logo: user.username.slice(0, 2).toUpperCase(),
+        color: `hsl(${
+            Array.from(user.username.slice(0, 2)).reduce(
+                (acc, char) => acc + char.charCodeAt(0),
+                0
+            ) % 360
+        }, 70%, 50%)`,
+        description: "Description",
+        category: "Category",
         jobType: "Full Time",
         experienceLevel: "Mid Level",
-        deadline: "",
-        city: "",
-        country: "",
+        deadline: "deadline",
+        city: "City",
+        country: "Country",
         isRemote: false,
-        address: "",
-        salaryMin: "",
-        salaryMax: "",
-        salary: "",
+        address: "address",
+        salaryMin: "Salary Min",
+        salaryMax: "Salary Max",
+        salary: "Salary",
         currency: "USD",
         period: "yearly",
         isNegotiable: false,
@@ -663,7 +707,7 @@ export default function JobCreation() {
             [name]: type === "checkbox" ? checked : value,
         }));
     };
-
+    console.log(job);
     return (
         <div className="min-h-screen bg-gray-50">
             <Hero />
@@ -671,12 +715,28 @@ export default function JobCreation() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
                         <div className="space-y-6">
-                            <BasicInfoForm job={job} handleChange={handleChange} />
-                            <JobDetailsForm job={job} handleChange={handleChange} />
-                            <JobLocationForm job={job} handleChange={handleChange} />
-                            <JobSalaryForm job={job} setJob={setJob} handleChange={handleChange} />
+                            <BasicInfoForm
+                                job={job}
+                                handleChange={handleChange}
+                            />
+                            <JobDetailsForm
+                                job={job}
+                                handleChange={handleChange}
+                            />
+                            <JobLocationForm
+                                job={job}
+                                handleChange={handleChange}
+                            />
+                            <JobSalaryForm
+                                job={job}
+                                setJob={setJob}
+                                handleChange={handleChange}
+                            />
                             <JobRequirements job={job} setJob={setJob} />
-                            <JobResponsibilitiesForm job={job} setJob={setJob} />
+                            <JobResponsibilitiesForm
+                                job={job}
+                                setJob={setJob}
+                            />
                             <div className="bg-white rounded-lg shadow-sm p-6">
                                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                                     <Tag className="w-5 h-5 text-teal-600" />
