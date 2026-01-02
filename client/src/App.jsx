@@ -6,6 +6,7 @@ import Login from "./pages/login.jsx"
 import Signup from "./pages/Signup.jsx"
 import Profile from "./pages/Profile.jsx"
 import Jobs from "./pages/jobs.jsx"
+import MessagePage from "./pages/messages.jsx"
 
 import EditProfile from "./pages/EditProfile.jsx"
 
@@ -35,6 +36,8 @@ function AppContent() {
           <Route path="/profile/editprofile" element={user ? <EditProfile /> : <Navigate to='/login' />} />
           <Route path="/profile/:username" element={<Profile />} />
           <Route path="/jobs" element={user ? <Jobs /> : <Navigate to="/login" />} />
+          <Route path="/messages" element={user ? <MessagePage /> : <Navigate to="/login" />} />
+          <Route path="/messages/:conversationId" element={user ? <MessagePage /> : <Navigate to="/login" />} />
         </Routes>
         <ChatWidget />
       </div>
