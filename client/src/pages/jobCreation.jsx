@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useAuthContext } from "../hooks/useAuthContext.js";
 import {
     Briefcase,
@@ -11,6 +11,7 @@ import {
     Award,
 } from "lucide-react";
 import { JobCard } from "./jobs";
+import { useJobCreation } from "../hooks/useJobCreation.js";
 const Hero = () => (
     <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-8 px-4 rounded-t-xl">
         <div className="max-w-7xl mx-auto">
@@ -143,109 +144,115 @@ const JobDetailsForm = ({ job, handleChange }) => (
         </div>
     </div>
 );
-const JobLocationForm = ({ job, handleChange }) => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <div className="flex-1 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-teal-600" />
-            Location
-            </div>
-            <div className="flex items-center gap-2">
-                <label htmlFor="isRemote" className="relative inline-flex items-center cursor-pointer">
-                <input
-                    type="checkbox"
-                    id="isRemote"
-                    name="isRemote"
-                    checked={job.isRemote}
-                    onChange={handleChange}
-                    className="sr-only peer"
-                />
-    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>                </label>
-                <label
-                    htmlFor="isRemote"
-                    className="text-sm font-medium text-gray-700"
-                >
-                    This is a remote position
-                </label>
-            </div>
-        </h2>
-
-        <div className="space-y-4">
-            
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        City *
-                    </label>
-                    <input
-                        type="text"
-                        value={job.city}
-                        name="city"
-                        onChange={handleChange}
-                        placeholder="e.g., San Francisco"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Country *
-                    </label>
-                    <input
-                        type="text"
-                        name="country"
-                        value={job.country}
-                        onChange={handleChange}
-                        placeholder="e.g., USA"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
-                </div>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address (Optional)
-                </label>
-                <input
-                    type="text"
-                    name="address"
-                    value={job.address}
-                    onChange={handleChange}
-                    placeholder="Full address"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-            </div>
-        </div>
-    </div>
-);
-const JobSalaryForm = ({ job, setJob, handleChange }) => {
-    const formatSalary = () => {
-        if (job.hideSalary) handleSalary("Not disclosed");
-        if (!job.salaryMin && !job.salaryMax) handleSalary("Not disclosed");
-        const format = (num) =>
-            num >= 1000 ? `$${(num / 1000).toFixed(0)}k` : `$${num}`;
-        if (job.salaryMin && job.salaryMax)
-            handleSalary(
-                `${format(parseInt(job.salaryMin))} - ${format(
-                    parseInt(job.salaryMax)
-                )}`
-            );
-        if (job.salaryMin)
-            handleSalary(`From ${format(parseInt(job.salaryMin))}`);
-        if (job.salaryMax)
-            handleSalary(`Up to ${format(parseInt(job.salaryMax))}`);
-        handleSalary("Not disclosed");
-    };
-    const handleSalary = (value) => {
-        setJob((prev) => ({ ...prev, salary: value }));
-    };
+const JobLocationForm = ({ job, handleChange }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <div className="flex-1 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-teal-600" />
-                Salary Information
+                    <MapPin className="w-5 h-5 text-teal-600" />
+                    Location
+                </div>
+                <div className="flex items-center gap-2">
+                    <label
+                        htmlFor="isRemote"
+                        className="relative inline-flex items-center cursor-pointer"
+                    >
+                        <input
+                            type="checkbox"
+                            id="isRemote"
+                            name="location.isRemote"
+                            checked={job.location.isRemote}
+                            onChange={handleChange}
+                            className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>{" "}
+                    </label>
+                    <label
+                        htmlFor="isRemote"
+                        className="text-sm font-medium text-gray-700"
+                    >
+                        This is a remote position
+                    </label>
+                </div>
+            </h2>
+
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            City *
+                        </label>
+                        <input
+                            type="text"
+                            value={job.location.city}
+                            name="location.city"
+                            onChange={handleChange}
+                            placeholder="e.g., San Francisco"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Country *
+                        </label>
+                        <input
+                            type="text"
+                            name="location.country"
+                            value={job.location.country}
+                            onChange={handleChange}
+                            placeholder="e.g., USA"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Address (Optional)
+                    </label>
+                    <input
+                        type="text"
+                        name="location.address"
+                        value={job.location.address}
+                        onChange={handleChange}
+                        placeholder="Full address"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+const JobSalaryForm = ({ job, handleChange, setJob }) => {
+    useEffect(() => {
+    const { Min, Max, currency } = job.salary;
+
+    const format = (num) => {
+      if (!num) return "";
+      return num >= 1000 ? `${(num / 1000).toFixed(0)}k` : num;
+    };
+
+    let calculatedRange = "Not disclosed";
+
+    if (Min || Max) {
+      calculatedRange = `${currency} ${format(Min) || "0"} - ${format(Max) || "0"}`;
+    }
+
+    setJob((prev) => ({
+      ...prev,
+      salary: {
+        ...prev.salary,
+        salaryRange: calculatedRange,
+      },
+    }));
+    }, [job.salary.Min, job.salary.Max, job.salary.currency]);
+    return (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-teal-600" />
+                    Salary Information
                 </div>
                 <div className="flex items-center gap-3">
                     <label
@@ -254,12 +261,11 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                     >
                         <input
                             type="checkbox"
-                            name="hideSalary"
+                            name="salary.hideSalary"
                             id="hideSalary"
-                            checked={job.hideSalary}
+                            checked={job.salary.hideSalary}
                             onChange={(e) => {
                                 handleChange(e);
-                                formatSalary();
                             }}
                             className="sr-only peer"
                         />
@@ -275,9 +281,7 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
             </h2>
 
             <div className="space-y-4">
-                
-
-                {!job.hideSalary && (
+                {!job.salary.hideSalary && (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
@@ -286,11 +290,10 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                 </label>
                                 <input
                                     type="number"
-                                    name="salaryMin"
-                                    value={job.salaryMin}
+                                    name="salary.Min"
+                                    value={job.salary.Min}
                                     onChange={(e) => {
                                         handleChange(e);
-                                        formatSalary();
                                     }}
                                     placeholder="50000"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -303,11 +306,10 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                 </label>
                                 <input
                                     type="number"
-                                    name="salaryMax"
-                                    value={job.salaryMax}
+                                    name="salary.Max"
+                                    value={job.salary.Max}
                                     onChange={(e) => {
                                         handleChange(e);
-                                        formatSalary();
                                     }}
                                     placeholder="80000"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -319,11 +321,10 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                     Currency
                                 </label>
                                 <select
-                                    value={job.currency}
-                                    name="currency"
+                                    value={job.salary.currency}
+                                    name="salary.currency"
                                     onChange={(e) => {
                                         handleChange(e);
-                                        formatSalary();
                                     }}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 >
@@ -343,11 +344,10 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                                     Period
                                 </label>
                                 <select
-                                    value={job.period}
-                                    name="period"
+                                    value={job.salary.period}
+                                    name="salary.period"
                                     onChange={(e) => {
                                         handleChange(e);
-                                        formatSalary();
                                     }}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 >
@@ -359,18 +359,20 @@ const JobSalaryForm = ({ job, setJob, handleChange }) => {
                             </div>
 
                             <div className="flex items-center pt-7">
-                            <label htmlFor="isNegotiable" className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    name="isNegotiable"
-                                    id="isNegotiable"
-                                    checked={job.isNegotiable}
-                                    onChange={(e) => {
-                                        handleChange(e);
-                                        formatSalary();
-                                    }}
-                                    className="sr-only peer"
-                                />
+                                <label
+                                    htmlFor="isNegotiable"
+                                    className="relative inline-flex items-center cursor-pointer"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        name="salary.isNegotiable"
+                                        id="isNegotiable"
+                                        checked={job.salary.isNegotiable}
+                                        onChange={(e) => {
+                                            handleChange(e);
+                                        }}
+                                        className="sr-only peer"
+                                    />
                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
                                 </label>
                                 <label
@@ -521,6 +523,7 @@ const TagsForm = ({ job, setJob }) => {
                     onKeyUp={(e) =>
                         e.key === "Enter" && (e.preventDefault(), addTag())
                     }
+                    style={{margin:"0px"}}
                     placeholder="e.g., React, Figma, Design Systems"
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
@@ -582,6 +585,7 @@ const SkillsForm = ({ job, setJob }) => {
                         e.key === "Enter" && (e.preventDefault(), addSkill())
                     }
                     placeholder="e.g., User Research, Prototyping"
+                    style={{margin:"0px"}}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
                 <button
@@ -627,72 +631,107 @@ const Previewjob = ({ job }) => (
     </div>
 );
 const SubmitButtons = ({ job, setJob }) => {
-    const handleSubmit = () => {
+    const { createjob } = useJobCreation();
+    const [notification, setNotification] = useState({
+        show: false,
+        message: "",
+        type: "",
+    });
+
+    const handleSubmit = async () => {
         if (
             !job.title ||
             !job.category ||
-            !job.description ||
-            !job.city ||
-            !job.country
+            !job.description 
         ) {
-            alert("Please fill in all required fields (marked with *)");
+            setNotification({
+                show: true,
+                message: "Please fill in all required fields (*)",
+                type: "error",
+            });
             return;
         }
-        setJob((prev) => ({ ...prev, status: "Posted" }));
-        console.log("Job Posted:", job);
-        alert("Job posted successfully! Check console for data.");
+        try {
+            console.log("Job Posted:", job);
+            await createjob(job);
+            setNotification({
+                show: true,
+                message: "Job posted successfully!",
+                type: "success",
+            });
+
+            setTimeout(() => {
+                setNotification({ show: false, message: "", type: "" });
+            }, 3000);
+        } catch (err) {
+            setNotification({ show: true, message: err, type: "error" });
+        }
     };
 
-    const handleSaveDraft = () => {
-        setJob((prev) => ({ ...prev, status: "Drafted" }));
-        console.log("Draft Saved:", job);
-        alert("Draft saved successfully! Check console for data.");
-    };
     return (
-        <div className="flex gap-4">
-            <button
-                onClick={handleSubmit}
-                className="flex-1 bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-medium transition-colors"
-            >
-                Publish Job
-            </button>
-            <button
-                onClick={handleSaveDraft}
-                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-            >
-                Save as Draft
-            </button>
-        </div>
+        <>
+            <div className="relative">
+                {notification.show && (
+                    <div
+                        className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-lg z-50 text-white font-semibold transition-all duration-500 
+                    ${
+                        notification.type === "success"
+                            ? "bg-green-800"
+                            : "bg-red-800"
+                    }`}
+                    >
+                        {notification.message}
+                    </div>
+                )}
+            </div>
+            <div className="flex gap-4">
+                <button
+                    onClick={() => {
+                        setJob((prev) => ({ ...prev, status: "published" }));
+                        handleSubmit();
+                    }}
+                    className="flex-1 bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-medium transition-colors"
+                >
+                    Publish Job
+                </button>
+                <button
+                    onClick={() => {
+                        setJob((prev) => ({ ...prev, status: "draft" }));
+                        handleSubmit();
+                    }}
+                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                >
+                    Save as Draft
+                </button>
+            </div>
+        </>
     );
 };
 export default function JobCreation() {
     const { user } = useAuthContext();
     const [job, setJob] = useState({
         title: "Title",
-        company: user.username,
-        logo: user.username.slice(0, 2).toUpperCase(),
-        color: `hsl(${
-            Array.from(user.username.slice(0, 2)).reduce(
-                (acc, char) => acc + char.charCodeAt(0),
-                0
-            ) % 360
-        }, 70%, 50%)`,
+        postedBy: user._id,
         description: "Description",
         category: "Category",
         jobType: "Full Time",
         experienceLevel: "Mid Level",
         deadline: "deadline",
-        city: "City",
-        country: "Country",
-        isRemote: false,
-        address: "address",
-        salaryMin: "Salary Min",
-        salaryMax: "Salary Max",
-        salary: "Salary",
-        currency: "USD",
-        period: "yearly",
-        isNegotiable: false,
-        hideSalary: false,
+        location: {
+            city: "City",
+            country: "Country",
+            isRemote: false,
+            address: "address",
+        },
+        salary: {
+            Min: "",
+            Max: "",
+            salaryRange: "",
+            currency: "USD",
+            period: "yearly",
+            isNegotiable: false,
+            hideSalary: false,
+        },
         requirements: [""],
         responsibilities: [""],
         tags: [],
@@ -702,12 +741,25 @@ export default function JobCreation() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setJob((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
+        const finalValue = type === "checkbox" ? checked : value;
+
+        setJob((prev) => {
+            if (name.includes(".")) {
+                const [parent, child] = name.split(".");
+                return {
+                    ...prev,
+                    [parent]: {
+                        ...prev[parent], 
+                        [child]: finalValue,
+                    },
+                };
+            }
+            return {
+                ...prev,
+                [name]: finalValue,
+            };
+        });
     };
-    console.log(job);
     return (
         <div className="min-h-screen bg-gray-50">
             <Hero />

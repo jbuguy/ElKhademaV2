@@ -5,6 +5,7 @@ import {
     getProfileByUsername,
     getProfilePosts,
     updateProfile,
+    getProfileById,
 } from "../controllers/userController.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -14,5 +15,7 @@ router.route("/login").post(loginUser);
 router.route("/signup").post(registerUser);
 router.route("/profile/:username").get(getProfileByUsername);
 router.route("/profile/:username/posts").get(getProfilePosts);
+router.route("/profile/id/:id").get(getProfileById);
 router.route("/profile").put(requireAuth, updateProfile);
+
 export default router;
