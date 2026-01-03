@@ -9,6 +9,7 @@ import Jobs from "./pages/jobs.jsx"
 import MessagePage from "./pages/messages.jsx"
 import JobCreation from "./pages/jobCreation.jsx"
 import EditProfile from "./pages/EditProfile.jsx"
+import JobView from "./pages/JobView.jsx"
 
 import ChatWidget from "./components/ChatWidget.jsx"
 
@@ -38,7 +39,8 @@ function AppContent() {
           <Route path="/jobs" element={user ? <Jobs /> : <Navigate to="/login" />} /> 
           <Route path="/messages" element={user ? <MessagePage /> : <Navigate to="/login" />} />
           <Route path="/messages/:conversationId" element={user ? <MessagePage /> : <Navigate to="/login" />} />
-          <Route path="/jobs/Create" element={user ? (user.role==="company" ? <JobCreation /> : <Navigate to="/jobs" />) : <Navigate to="/login" />} />
+          <Route path="/jobs/form" element={user ? (user.role==="company" ? <JobCreation /> : <Navigate to="/jobs" />) : <Navigate to="/login" />} />
+          <Route path="/jobs/:jobId" element={user ? <JobView /> : <Navigate to="/login" />} />
         </Routes>
         <ChatWidget />
       </div>
