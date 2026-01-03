@@ -2,6 +2,8 @@ import { User } from "../models/user.model.js";
 import { Profile } from "../models/profile.model.js";
 import { Post } from "../models/post.model.js";
 import { generateToken } from "../utils/jwt.js";
+import crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
 
 /* =========================
    AUTH
@@ -106,6 +108,74 @@ export const getProfileById = async (req, res) => {
 
         res.status(200).json({ user, profile });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Google OAuth token verification and login/signup
+export const googleAuth = async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        if (!idToken) return res.status(400).json({ error: "Missing idToken" });
+
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, email_verified, name, picture } = payload;
+
+        if (!email || !email_verified)
+            return res
+                .status(400)
+                .json({ error: "Google account email not verified" });
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            const base =
+                email
+                    .split("@")[0]
+                    .replace(/[^a-zA-Z0-9_-]/g, "")
+                    .toLowerCase() || "user";
+            let username = base;
+            let suffix = 1;
+            while (await User.findOne({ username })) {
+                username = `${base}${suffix}`;
+                suffix += 1;
+            }
+
+            const randomPassword = crypto.randomBytes(12).toString("hex");
+            user = await User.create({
+                email,
+                username,
+                password: randomPassword,
+                profilePic: picture,
+                active: true,
+            });
+
+            await Profile.create({
+                userId: user._id,
+                email,
+                profilePic: picture,
+                displayName: name,
+            });
+        }
+
+        const token = generateToken(user);
+
+        res.status(200).json({
+            token,
+            email: user.email,
+            username: user.username,
+            profilePic: user.profilePic,
+            role: user.role,
+            _id: user._id,
+        });
+    } catch (error) {
+        console.error("Google auth error:", error);
         res.status(500).json({ error: error.message });
     }
 };

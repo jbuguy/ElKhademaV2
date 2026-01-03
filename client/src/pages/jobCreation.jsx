@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../hooks/useAuthContext.js";
 import {
     Briefcase,
@@ -13,7 +13,7 @@ import {
 import { JobCard } from "./jobs";
 import { useJobCreation } from "../hooks/useJobCreation.js";
 const Hero = () => (
-    <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-8 px-4 rounded-t-xl">
+    <div className="bg-linear-to-r from-teal-500 to-teal-600 text-white py-8 px-4 rounded-t-xl">
         <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold mb-2">Post a Job</h1>
             <p className="text-teal-100">
@@ -226,26 +226,28 @@ const JobLocationForm = ({ job, handleChange }) => {
 };
 const JobSalaryForm = ({ job, handleChange, setJob }) => {
     useEffect(() => {
-    const { Min, Max, currency } = job.salary;
+        const { Min, Max, currency } = job.salary;
 
-    const format = (num) => {
-      if (!num) return "";
-      return num >= 1000 ? `${(num / 1000).toFixed(0)}k` : num;
-    };
+        const format = (num) => {
+            if (!num) return "";
+            return num >= 1000 ? `${(num / 1000).toFixed(0)}k` : num;
+        };
 
-    let calculatedRange = "Not disclosed";
+        let calculatedRange = "Not disclosed";
 
-    if (Min || Max) {
-      calculatedRange = `${currency} ${format(Min) || "0"} - ${format(Max) || "0"}`;
-    }
+        if (Min || Max) {
+            calculatedRange = `${currency} ${format(Min) || "0"} - ${
+                format(Max) || "0"
+            }`;
+        }
 
-    setJob((prev) => ({
-      ...prev,
-      salary: {
-        ...prev.salary,
-        salaryRange: calculatedRange,
-      },
-    }));
+        setJob((prev) => ({
+            ...prev,
+            salary: {
+                ...prev.salary,
+                salaryRange: calculatedRange,
+            },
+        }));
     }, [job.salary.Min, job.salary.Max, job.salary.currency]);
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -523,7 +525,7 @@ const TagsForm = ({ job, setJob }) => {
                     onKeyUp={(e) =>
                         e.key === "Enter" && (e.preventDefault(), addTag())
                     }
-                    style={{margin:"0px"}}
+                    style={{ margin: "0px" }}
                     placeholder="e.g., React, Figma, Design Systems"
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
@@ -585,7 +587,7 @@ const SkillsForm = ({ job, setJob }) => {
                         e.key === "Enter" && (e.preventDefault(), addSkill())
                     }
                     placeholder="e.g., User Research, Prototyping"
-                    style={{margin:"0px"}}
+                    style={{ margin: "0px" }}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
                 <button
@@ -639,11 +641,7 @@ const SubmitButtons = ({ job, setJob }) => {
     });
 
     const handleSubmit = async () => {
-        if (
-            !job.title ||
-            !job.category ||
-            !job.description 
-        ) {
+        if (!job.title || !job.category || !job.description) {
             setNotification({
                 show: true,
                 message: "Please fill in all required fields (*)",
@@ -749,7 +747,7 @@ export default function JobCreation() {
                 return {
                     ...prev,
                     [parent]: {
-                        ...prev[parent], 
+                        ...prev[parent],
                         [child]: finalValue,
                     },
                 };

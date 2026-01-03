@@ -6,6 +6,7 @@ import {
     getProfilePosts,
     updateProfile,
     getProfileById,
+    googleAuth,
 } from "../controllers/userController.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -13,6 +14,7 @@ const router = Router();
 
 router.route("/login").post(loginUser);
 router.route("/signup").post(registerUser);
+router.route("/google").post(googleAuth);
 router.route("/profile/:username").get(getProfileByUsername);
 router.route("/profile/:username/posts").get(getProfilePosts);
 router.route("/profile/id/:id").get(getProfileById);
