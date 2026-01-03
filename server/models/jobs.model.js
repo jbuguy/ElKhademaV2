@@ -145,4 +145,4 @@ jobsSchema.virtual("salaryRange").get(function () {
 // Create text index for efficient search across multiple fields
 jobsSchema.index({ title: "text", description: "text", tags: "text" });
 
-export const Post = mongoose.model("Jobs", jobsSchema);
+export const Jobs = mongoose.model("Jobs", jobsSchema);
