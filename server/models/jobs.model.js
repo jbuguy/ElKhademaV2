@@ -56,8 +56,8 @@ const jobsSchema = new Schema(
         },
 
         salary: {
-            min: { type: Number },
-            max: { type: Number },
+            min: { type: Number, default: "0" },
+            max: { type: Number, default: "0" },
             currency: {
                 type: String,
                 default: "USD",
@@ -129,11 +129,12 @@ const jobsSchema = new Schema(
         },
     },
     {
-        timestamps: true, // Automatically adds createdAt and updatedAt
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
 );
 
-// Virtual for formatted salary (e.g., "$50k - $80k") - useful for frontend display
 jobsSchema.virtual("salaryRange").get(function () {
     if (!this.salary.min && !this.salary.max) return "Not disclosed";
     const format = (num) => (num >= 1000 ? `${(num / 1000).toFixed(0)}k` : num);
@@ -142,7 +143,6 @@ jobsSchema.virtual("salaryRange").get(function () {
     } ${format(this.salary.min)} - ${format(this.salary.max)}`;
 });
 
-// Create text index for efficient search across multiple fields
 jobsSchema.index({ title: "text", description: "text", tags: "text" });
 
-export const Post = mongoose.model("Jobs", jobsSchema);
+export const Jobs = mongoose.model("Jobs", jobsSchema);
