@@ -81,8 +81,6 @@ export const JobCard = ({ job }) => {
         if (!job?.postedBy) return;
 
         const fetchProfile = async () => {
-            console.log(posterProfile?.profile);
-
             try {
                 console.log("Fetching profile for username:", job.postedBy);
                 const { data } = await api.get(
@@ -142,11 +140,15 @@ export const JobCard = ({ job }) => {
                         </div>
                     </div>
                 </div>
+
                 <div className="font-bold text-gray-800">
                     {!job.salary.hideSalary
                         ? job.salary.salaryRange
                         : "Not disclosed"}
                 </div>
+
+                <div className="font-bold text-gray-800">{!job.salary.hideSalary ? job.salaryRange : "Not disclosed"}</div>
+
             </div>
 
             <p className="text-gray-500 text-sm leading-relaxed mb-6">
@@ -205,7 +207,7 @@ const CreateJobCTA = () => (
                     Post your job opportunity and connect with top talent
                 </p>
             </div>
-            <Link to="/jobs/Create">
+            <Link to="/jobs/form">
                 <button className="bg-white text-[#1aac83] hover:bg-gray-50 px-8 py-3 rounded-lg font-semibold transition-colors shadow-md whitespace-nowrap">
                     Post a Job
                 </button>
@@ -622,10 +624,10 @@ export default function Jobs() {
                                 Showing {total} results
                             </p>
                             <div className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                <div class="form-group">
-                                    <label for="sortby">Sort by</label>
+                                <div className="form-group">
+                                    <label htmlFor="sortby">Sort by</label>
                                     <select
-                                        class="form-control"
+                                        className="form-control"
                                         name="sortby"
                                         id="sortby"
                                     >

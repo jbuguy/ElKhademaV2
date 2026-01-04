@@ -1,6 +1,7 @@
 import { Comment } from "../models/comment.js";
 import { Post } from "../models/post.model.js";
 import { Profile } from "../models/profile.model.js";
+import { createNotification } from "./notificationController.js";
 
 const getDisplayName = (profile) => {
     if (!profile) return "";
@@ -118,7 +119,14 @@ export const addComment = async (req, res) => {
     const commentObj = comment.toObject();
     commentObj.userId.displayName = getDisplayName(profile);
 
-    res.status(201).json(commentObj);
+  // Create notification for post owner
+  const post = await Post.findById(id);
+  if (post) {
+    console.log('Creating comment notification:', post.userId, userId, id);
+    await createNotification(post.userId, userId, 'comment', id);
+  }
+
+  res.status(201).json(commentObj);
 };
 export const getComments = async (req, res) => {
     const { id } = req.params;
@@ -145,14 +153,17 @@ export const getComments = async (req, res) => {
     res.status(200).json(commentsWithDisplayNames);
 };
 export const addLike = async (req, res) => {
-    const { id } = req.params;
-    const userid = req.user.id;
-    const response = await Post.findByIdAndUpdate(
-        id,
-        { $addToSet: { likes: userid } },
-        { new: true }
-    );
-    res.status(200).json({ totalLikes: response.likes.length, liked: true });
+  const { id } = req.params;
+  const userid = req.user.id;
+  const response = await Post.findByIdAndUpdate(id, { $addToSet: { likes: userid } }, { new: true });
+  
+  // Create notification for post owner
+  if (response) {
+    console.log('Creating like notification:', response.userId, userid, id);
+    await createNotification(response.userId, userid, 'like', id);
+  }
+  
+  res.status(200).json({ totalLikes: response.likes.length, liked: true })
 };
 export const sharePost = async (req, res) => {
     try {
@@ -202,14 +213,21 @@ export const sharePost = async (req, res) => {
         console.error("Error sharing post:", error);
         res.status(500).json({ error: error.message });
     }
-};
-export const deleteLike = async (req, res) => {
-    const { id } = req.params;
-    const userid = req.user.id;
-    const response = await Post.findByIdAndUpdate(
-        id,
-        { $pull: { likes: userid } },
-        { new: true }
-    );
-    res.status(200).json({ totalLikes: response.likes.length, liked: false });
-};
+
+    // Create notification for original post owner
+    if (originalPost.userId._id.toString() !== userId.toString()) {
+      console.log('Creating share notification:', originalPost.userId._id, userId, id);
+      await createNotification(originalPost.userId._id, userId, 'share', id);
+    }
+
+    res.status(201).json(sharedPostObj);
+  } catch (error) {
+    console.error("Error sharing post:", error);
+    res.status(500).json({ error: error.message });
+  }
+}; export const deleteLike = async (req, res) => {
+  const { id } = req.params;
+  const userid = req.user.id;
+  const response = await Post.findByIdAndUpdate(id, { $pull: { likes: userid } }, { new: true });
+  res.status(200).json({ totalLikes: response.likes.length, liked: false })
+}
