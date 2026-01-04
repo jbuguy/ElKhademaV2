@@ -1,5 +1,5 @@
-import { Search, MapPin } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { Search, MapPin, ChevronUp, ChevronDown } from "lucide-react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { Link } from "react-router";
 import api from "../utils/api.js";
@@ -29,7 +29,13 @@ const Hero = () => (
     </div>
 );
 
-const SearchBar = () => (
+const SearchBar = ({
+    searchTerm,
+    setSearchTerm,
+    locationTerm,
+    setLocationTerm,
+    onSearch,
+}) => (
     <div className="max-w-6xl mx-auto -mt-8 px-4 relative z-20">
         <div className="bg-white rounded-lg shadow-lg p-3 flex flex-col md:flex-row items-center gap-4">
             <div className="flex-1 flex items-center justify-center gap-3 px-4 border-b md:border-b-0 md:border-r border-gray-200 py-2 w-auto">
@@ -41,7 +47,8 @@ const SearchBar = () => (
                     type="text"
                     placeholder="UX Designer"
                     className="w-auto outline-none text-gray-700 font-medium"
-                    defaultValue="UX Designer"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             <div className="flex-1 flex items-center gap-3 px-4 py-2 w-full">
@@ -53,10 +60,13 @@ const SearchBar = () => (
                     type="text"
                     placeholder="Location"
                     className="w-full outline-none text-gray-700 font-medium"
-                    defaultValue="San Francisco, USA"
+                    value={locationTerm}
+                    onChange={(e) => setLocationTerm(e.target.value)}
                 />
             </div>
             <button
+                type="button"
+                onClick={() => onSearch()}
                 style={{ marginTop: "10px", marginBottom: "20px" }}
                 className="bg-[#286ed6] hover:bg-[#286ed6] text-white font-semibold px-10 py-3 rounded transition shadow-md w-full md:w-auto"
             >
@@ -71,10 +81,11 @@ export const JobCard = ({ job }) => {
         if (!job?.postedBy) return;
 
         const fetchProfile = async () => {
-
             try {
                 console.log("Fetching profile for username:", job.postedBy);
-                const { data } = await api.get(`/user/profile/id/${job.postedBy}`);
+                const { data } = await api.get(
+                    `/user/profile/id/${job.postedBy}`
+                );
                 setPosterProfile(data);
             } catch (error) {
                 console.error("Error fetching profile:", error);
@@ -102,7 +113,11 @@ export const JobCard = ({ job }) => {
                         style={{ backgroundColor: color }}
                     >
                         {posterProfile?.profile.profilePic ? (
-                            <img src={posterProfile.profile.profilePic} alt="Logo" className="w-full h-full object-cover" />
+                            <img
+                                src={posterProfile.profile.profilePic}
+                                alt="Logo"
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
                             job.postedBy.slice(0, 2).toUpperCase()
                         )}
@@ -112,17 +127,28 @@ export const JobCard = ({ job }) => {
                             {job.title}
                         </h3>
                         <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                            <span className="font-medium">{posterProfile?.profile.companyName}</span>
+                            <span className="font-medium">
+                                {posterProfile?.profile.companyName}
+                            </span>
                             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                             <span className="flex items-center gap-1">
                                 <MapPin size={12} />{" "}
-
-                                    {job.location.city + ", " + job.location.country}
+                                {job.location.city +
+                                    ", " +
+                                    job.location.country}
                             </span>
                         </div>
                     </div>
                 </div>
+
+                <div className="font-bold text-gray-800">
+                    {!job.salary.hideSalary
+                        ? job.salary.salaryRange
+                        : "Not disclosed"}
+                </div>
+
                 <div className="font-bold text-gray-800">{!job.salary.hideSalary ? job.salaryRange : "Not disclosed"}</div>
+
             </div>
 
             <p className="text-gray-500 text-sm leading-relaxed mb-6">
@@ -192,15 +218,6 @@ const CreateJobCTA = () => (
 export default function Jobs() {
     const { user } = useAuthContext();
 
-    const [jobs, setJobs] = useState(null);
-    useEffect(() => {
-        api.get("/jobs", {
-            headers: {
-                authorization: `Bearer ${user.token}`,
-            },
-        }).then((res) => setJobs(res.data));
-    }, []);
-
     const [filters, setFilters] = useState({
         fullTime: true,
         partTime: true,
@@ -212,12 +229,114 @@ export default function Jobs() {
         senior: true,
     });
 
+    const [jobs, setJobs] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(20);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [locationTerm, setLocationTerm] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const SALARY_MIN = 0;
+    const SALARY_MAX = 200000;
+    const [salaryRange, setSalaryRange] = useState({ min: 200, max: 4960 });
+    const salaryDebounceRef = useRef(null);
+    const [activeThumb, setActiveThumb] = useState(null); // 'min' | 'max' | null
+
+    const fetchJobs = async (opts = {}) => {
+        if (!user) return;
+        setLoading(true);
+        try {
+            const params = {
+                page: opts.page || page,
+                limit,
+            };
+
+            if (searchTerm) params.q = searchTerm;
+            if (locationTerm) params.location = locationTerm;
+
+            const jobTypes = [];
+            if (filters.fullTime) jobTypes.push("Full Time");
+            if (filters.partTime) jobTypes.push("Part Time");
+            if (filters.internship) jobTypes.push("Internship");
+            if (filters.contract) jobTypes.push("Contract");
+            if (filters.remote) jobTypes.push("Remote");
+            if (jobTypes.length) params.jobType = jobTypes.join(",");
+
+            const exps = [];
+            if (filters.junior) exps.push("Junior");
+            if (filters.middle) exps.push("Mid Level");
+            if (filters.senior) exps.push("Senior");
+            if (exps.length) params.experienceLevel = exps.join(",");
+
+            // Salary filters
+            if (typeof salaryRange?.min !== "undefined")
+                params.minSalary = salaryRange.min;
+            if (typeof salaryRange?.max !== "undefined")
+                params.maxSalary = salaryRange.max;
+
+            const { data } = await api.get("/jobs", {
+                params,
+                headers: {
+                    authorization: `Bearer ${user.token}`,
+                },
+            });
+
+            setJobs(data.jobs || []);
+            setTotal(data.total || 0);
+            setPage(data.page || page);
+        } catch (error) {
+            console.error("Error fetching jobs:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Debounced fetch on salary range change
+    useEffect(() => {
+        if (!user) return;
+        setPage(1);
+        if (salaryDebounceRef.current) clearTimeout(salaryDebounceRef.current);
+        salaryDebounceRef.current = setTimeout(() => {
+            fetchJobs({ page: 1 });
+            salaryDebounceRef.current = null;
+        }, 300);
+        return () => {
+            if (salaryDebounceRef.current)
+                clearTimeout(salaryDebounceRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [salaryRange]);
+    useEffect(() => {
+        // initial fetch when user available
+        if (user) fetchJobs({ page: 1 });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
+
+    useEffect(() => {
+        // refetch when filters change
+        if (user) {
+            setPage(1);
+            fetchJobs({ page: 1 });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filters]);
+
     return (
         <>
             {user.role === "company" && <CreateJobCTA />}
             <div className="min-h-screen bg-[#fafbfc] font-sans">
                 <Hero />
-                <SearchBar />
+                <SearchBar
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    locationTerm={locationTerm}
+                    setLocationTerm={setLocationTerm}
+                    onSearch={() => {
+                        setPage(1);
+                        fetchJobs({ page: 1 });
+                    }}
+                />
 
                 <main className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-12 gap-">
                     <div className="md:col-span-3">
@@ -276,14 +395,189 @@ export default function Jobs() {
 
                         <FilterSection title="Salary">
                             <div className="flex justify-between text-sm text-gray-500 mb-2">
-                                <span>$200</span>
-                                <span>$4,960</span>
+                                <span>${salaryRange.min.toLocaleString()}</span>
+                                <span>${salaryRange.max.toLocaleString()}</span>
                             </div>
 
-                            <div className="relative h-1 bg-gray-200 rounded-full mt-2">
-                                <div className="absolute left-0 right-1/4 h-full bg-[#e63946] rounded-full"></div>
-                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#e63946] rounded-full border-2 border-white shadow cursor-pointer"></div>
-                                <div className="absolute right-1/4 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#e63946] rounded-full border-2 border-white shadow cursor-pointer"></div>
+                            <div className="space-y-3">
+                                <div className="relative">
+                                    {/* Lower handle */}
+                                    <input
+                                        type="range"
+                                        min={SALARY_MIN}
+                                        max={SALARY_MAX}
+                                        value={salaryRange.min}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            // Prevent min exceeding max
+                                            const nextMin = Math.min(
+                                                val,
+                                                salaryRange.max - 1
+                                            );
+                                            setSalaryRange({
+                                                ...salaryRange,
+                                                min: nextMin,
+                                            });
+                                        }}
+                                        onPointerDown={() =>
+                                            setActiveThumb("min")
+                                        }
+                                        onPointerUp={() => setActiveThumb(null)}
+                                        style={{
+                                            zIndex:
+                                                activeThumb === "min" ? 2 : 1,
+                                        }}
+                                        className="salary-range lower w-full appearance-none h-1 bg-transparent"
+                                    />
+
+                                    {/* Upper handle */}
+                                    <input
+                                        type="range"
+                                        min={SALARY_MIN}
+                                        max={SALARY_MAX}
+                                        value={salaryRange.max}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            const nextMax = Math.max(
+                                                val,
+                                                salaryRange.min + 1
+                                            );
+                                            setSalaryRange({
+                                                ...salaryRange,
+                                                max: nextMax,
+                                            });
+                                        }}
+                                        className="salary-range upper w-full appearance-none h-1 bg-transparent absolute top-0 left-0"
+                                    />
+
+                                    {/* Visual track */}
+                                    <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full">
+                                        <div
+                                            className="h-full bg-[#e63946] rounded-full"
+                                            style={{
+                                                marginLeft: `${
+                                                    (salaryRange.min /
+                                                        SALARY_MAX) *
+                                                    100
+                                                }%`,
+                                                marginRight: `${
+                                                    100 -
+                                                    (salaryRange.max /
+                                                        SALARY_MAX) *
+                                                        100
+                                                }%`,
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-sm">
+                                    <div className="w-1/2 flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            className="w-full border rounded px-2 py-1 no-spin"
+                                            value={salaryRange.min}
+                                            onChange={(e) => {
+                                                const val =
+                                                    Number(e.target.value) || 0;
+                                                setSalaryRange({
+                                                    ...salaryRange,
+                                                    min: Math.min(
+                                                        val,
+                                                        salaryRange.max - 1
+                                                    ),
+                                                });
+                                            }}
+                                        />
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                                type="button"
+                                                aria-label="increase min"
+                                                onClick={() =>
+                                                    setSalaryRange((s) => ({
+                                                        ...s,
+                                                        min: Math.min(
+                                                            s.max - 1,
+                                                            s.min + 100
+                                                        ),
+                                                    }))
+                                                }
+                                                className="p-1 border rounded bg-white"
+                                            >
+                                                <ChevronUp size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                aria-label="decrease min"
+                                                onClick={() =>
+                                                    setSalaryRange((s) => ({
+                                                        ...s,
+                                                        min: Math.max(
+                                                            SALARY_MIN,
+                                                            s.min - 100
+                                                        ),
+                                                    }))
+                                                }
+                                                className="p-1 border rounded bg-white"
+                                            >
+                                                <ChevronDown size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="w-1/2 flex items-center gap-2 justify-end">
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                                type="button"
+                                                aria-label="increase max"
+                                                onClick={() =>
+                                                    setSalaryRange((s) => ({
+                                                        ...s,
+                                                        max: Math.min(
+                                                            SALARY_MAX,
+                                                            s.max + 100
+                                                        ),
+                                                    }))
+                                                }
+                                                className="p-1 border rounded bg-white"
+                                            >
+                                                <ChevronUp size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                aria-label="decrease max"
+                                                onClick={() =>
+                                                    setSalaryRange((s) => ({
+                                                        ...s,
+                                                        max: Math.max(
+                                                            salaryRange.min + 1,
+                                                            s.max - 100
+                                                        ),
+                                                    }))
+                                                }
+                                                className="p-1 border rounded bg-white"
+                                            >
+                                                <ChevronDown size={14} />
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            className="w-32 border rounded px-2 py-1 no-spin"
+                                            value={salaryRange.max}
+                                            onChange={(e) => {
+                                                const val =
+                                                    Number(e.target.value) || 0;
+                                                setSalaryRange({
+                                                    ...salaryRange,
+                                                    max: Math.max(
+                                                        val,
+                                                        salaryRange.min + 1
+                                                    ),
+                                                });
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </FilterSection>
 
@@ -291,17 +585,32 @@ export default function Jobs() {
                             <Checkbox
                                 label="Entry/Junior"
                                 checked={filters.junior}
-                                onChange={() => {}}
+                                onChange={() =>
+                                    setFilters({
+                                        ...filters,
+                                        junior: !filters.junior,
+                                    })
+                                }
                             />
                             <Checkbox
                                 label="Middle"
                                 checked={filters.middle}
-                                onChange={() => {}}
+                                onChange={() =>
+                                    setFilters({
+                                        ...filters,
+                                        middle: !filters.middle,
+                                    })
+                                }
                             />
                             <Checkbox
                                 label="Senior"
                                 checked={filters.senior}
-                                onChange={() => {}}
+                                onChange={() =>
+                                    setFilters({
+                                        ...filters,
+                                        senior: !filters.senior,
+                                    })
+                                }
                             />
                         </FilterSection>
                     </div>
@@ -312,7 +621,7 @@ export default function Jobs() {
                     >
                         <div className="flex justify-between items-center mb-6">
                             <p className="text-gray-400 text-sm">
-                                Showing 68 results
+                                Showing {total} results
                             </p>
                             <div className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                                 <div className="form-group">
@@ -331,12 +640,18 @@ export default function Jobs() {
                         </div>
 
                         <div className="space-y-6">
-                            {jobs ? jobs.map((job) => (
-                                <Link to={`/jobs/${job._id}`}
-                                className="block transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl shadow-md rounded-xl">
-                                    <JobCard key={job._id} job={job} />
-                                </Link>
-                            )) : <p>No jobs found</p>}
+                            {loading ? (
+                                <p>Loading...</p>
+                            ) : jobs && jobs.length > 0 ? (
+                                jobs.map((job) => (
+                                    <JobCard
+                                        key={job._id || job.id}
+                                        job={job}
+                                    />
+                                ))
+                            ) : (
+                                <p>No jobs found</p>
+                            )}
                         </div>
                     </div>
                 </main>
