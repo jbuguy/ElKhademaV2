@@ -71,7 +71,6 @@ export const JobCard = ({ job }) => {
         if (!job?.postedBy) return;
 
         const fetchProfile = async () => {
-            console.log(posterProfile?.profile)
 
             try {
                 console.log("Fetching profile for username:", job.postedBy);
@@ -123,7 +122,7 @@ export const JobCard = ({ job }) => {
                         </div>
                     </div>
                 </div>
-                <div className="font-bold text-gray-800">{!job.salary.hideSalary ? job.salary.salaryRange : "Not disclosed"}</div>
+                <div className="font-bold text-gray-800">{!job.salary.hideSalary ? job.salaryRange : "Not disclosed"}</div>
             </div>
 
             <p className="text-gray-500 text-sm leading-relaxed mb-6">
@@ -182,7 +181,7 @@ const CreateJobCTA = () => (
                     Post your job opportunity and connect with top talent
                 </p>
             </div>
-            <Link to="/jobs/Create">
+            <Link to="/jobs/form">
                 <button className="bg-white text-[#1aac83] hover:bg-gray-50 px-8 py-3 rounded-lg font-semibold transition-colors shadow-md whitespace-nowrap">
                     Post a Job
                 </button>
@@ -316,10 +315,10 @@ export default function Jobs() {
                                 Showing 68 results
                             </p>
                             <div className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                <div class="form-group">
-                                    <label for="sortby">Sort by</label>
+                                <div className="form-group">
+                                    <label htmlFor="sortby">Sort by</label>
                                     <select
-                                        class="form-control"
+                                        className="form-control"
                                         name="sortby"
                                         id="sortby"
                                     >
@@ -333,7 +332,10 @@ export default function Jobs() {
 
                         <div className="space-y-6">
                             {jobs ? jobs.map((job) => (
-                                <JobCard key={job.id} job={job} />
+                                <Link to={`/jobs/${job._id}`}
+                                className="block transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-xl shadow-md rounded-xl">
+                                    <JobCard key={job._id} job={job} />
+                                </Link>
                             )) : <p>No jobs found</p>}
                         </div>
                     </div>
