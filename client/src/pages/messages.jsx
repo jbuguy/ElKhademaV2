@@ -131,7 +131,7 @@ export default function MessagesPage() {
                     </div>
                 </div>
 
-                <div className="flex-grow overflow-y-auto">
+                <div className="grow overflow-y-auto">
                     {loading ? (
                         <div className="p-4 text-center text-gray-500">
                             Loading...
@@ -166,9 +166,9 @@ export default function MessagesPage() {
                                         <img
                                             src={displayPic}
                                             alt=""
-                                            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                                            className="w-12 h-12 rounded-full object-cover shrink-0"
                                         />
-                                        <div className="flex-grow min-w-0">
+                                        <div className="grow min-w-0">
                                             <p className="font-500 text-gray-900 truncate">
                                                 {displayName}
                                             </p>
@@ -190,7 +190,7 @@ export default function MessagesPage() {
                 </div>
             </div>
 
-            <div className="flex-grow flex flex-col bg-white">
+            <div className="grow flex flex-col bg-white">
                 {activeChat ? (
                     <>
                         <div className="border-b border-gray-300 p-4 bg-white flex items-center gap-3">
@@ -206,7 +206,7 @@ export default function MessagesPage() {
                             </div>
                         </div>
 
-                        <div className="flex-grow overflow-y-auto p-4 bg-white flex flex-col gap-3">
+                        <div className="grow overflow-y-auto p-4 bg-white flex flex-col gap-3">
                             {messages.map((m, index) => {
                                 const isMine = m.userId._id === user._id;
                                 return (
@@ -222,7 +222,7 @@ export default function MessagesPage() {
                                             <img
                                                 src={m.userId.profilePic}
                                                 alt=""
-                                                className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                                                className="w-6 h-6 rounded-full object-cover shrink-0"
                                             />
                                         )}
                                         <div
@@ -232,9 +232,50 @@ export default function MessagesPage() {
                                                     : "bg-gray-200 text-gray-900 rounded-bl-none"
                                             }`}
                                         >
-                                            <p className="break-words">
-                                                {m.content}
-                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="wrap-break-word">
+                                                    {m.content}
+                                                </p>
+                                                <button
+                                                    className="text-xs text-red-600"
+                                                    onClick={async () => {
+                                                        if (!user)
+                                                            return alert(
+                                                                "Please login to report"
+                                                            );
+                                                        const reason = prompt(
+                                                            "Reason for reporting this message (required):"
+                                                        );
+                                                        if (!reason) return;
+                                                        try {
+                                                            await api.post(
+                                                                "/reports",
+                                                                {
+                                                                    type: "message",
+                                                                    targetId:
+                                                                        m._id,
+                                                                    reason,
+                                                                    description:
+                                                                        "",
+                                                                }
+                                                            );
+                                                            alert(
+                                                                "Report submitted"
+                                                            );
+                                                        } catch (err) {
+                                                            console.error(err);
+                                                            alert(
+                                                                err.response
+                                                                    ?.data
+                                                                    ?.error ||
+                                                                    err.message
+                                                            );
+                                                        }
+                                                    }}
+                                                >
+                                                    Report
+                                                </button>
+                                            </div>
                                             <span
                                                 className={`text-xs mt-1 block ${
                                                     isMine
@@ -254,7 +295,7 @@ export default function MessagesPage() {
                         <div className="border-t border-gray-300 p-4 bg-white">
                             <div className="flex gap-2">
                                 <textarea
-                                    className="flex-grow border border-gray-300 rounded-full px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-24"
+                                    className="grow border border-gray-300 rounded-full px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-24"
                                     placeholder="Aa"
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
@@ -270,7 +311,7 @@ export default function MessagesPage() {
                                 <button
                                     onClick={sendMessage}
                                     disabled={!message.trim() || isSending}
-                                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-full p-2 flex-shrink-0 transition"
+                                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-full p-2 shrink-0 transition"
                                 >
                                     <IoMdSend size={20} />
                                 </button>
@@ -278,7 +319,7 @@ export default function MessagesPage() {
                         </div>
                     </>
                 ) : (
-                    <div className="flex-grow flex items-center justify-center text-gray-500">
+                    <div className="grow flex items-center justify-center text-gray-500">
                         <div className="text-center">
                             <p className="text-lg mb-2">
                                 Select a conversation to start messaging
