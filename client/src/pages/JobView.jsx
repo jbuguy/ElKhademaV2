@@ -1,7 +1,7 @@
-import React, { useEffect, useState,  } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuthContext } from "../hooks/useAuthContext.js";
 import api from "../utils/api.js";
-import { useParams,useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ApplicationModal } from "./jobApplication.jsx";
 import { Link } from "react-router-dom";
 import {
@@ -19,7 +19,10 @@ import {
     CheckCircle,
     Trash,
     Edit,
-    AlertTriangle
+    AlertTriangle,
+    Download,
+    FileText,
+    XCircle,
 } from "lucide-react";
 const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, jobTitle }) => {
     if (!isOpen) return null;
@@ -66,85 +69,101 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, jobTitle }) => {
         </div>
     );
 };
-const JobHeader = ({ user, openApplication , job, poster, handleDeleteClick }) =>{
+const JobHeader = ({
+    user,
+    openApplication,
+    job,
+    poster,
+    handleDeleteClick,
+}) => {
     const navigate = useNavigate();
     const handleEdit = () => {
-        navigate("/jobs/form", { state: { jobToEdit: job } }); 
+        navigate("/jobs/form", { state: { jobToEdit: job } });
     };
-    return(
-    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-8 rounded-lg shadow-lg mb-6">
-        <div className="flex items-start gap-6">
-            <img
-                src={poster?.profilePic}
-                alt={poster?.companyName}
-                className="w-20 h-20 rounded-lg bg-white p-2 shadow-md"
-            />
-            <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-2">{job.title}</h1>
-                <div className="flex items-center gap-2 text-emerald-50 mb-3">
-                    <Building2 size={18} />
-                    <span className="text-lg font-medium">
-                        {poster?.companyName}
-                    </span>
-                </div>
-                <div className="flex flex-wrap gap-4 text-sm">
-                    <div className="flex items-center gap-1">
-                        <MapPin size={16} />
-                        <span>
-                            {job.location.city}, {job.location.country}
+    return (
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-8 rounded-lg shadow-lg mb-6">
+            <div className="flex items-start gap-6">
+                <img
+                    src={poster?.profilePic}
+                    alt={poster?.companyName}
+                    className="w-20 h-20 rounded-lg bg-white p-2 shadow-md"
+                />
+                <div className="flex-1">
+                    <h1 className="text-3xl font-bold mb-2">{job.title}</h1>
+                    <div className="flex items-center gap-2 text-emerald-50 mb-3">
+                        <Building2 size={18} />
+                        <span className="text-lg font-medium">
+                            {poster?.companyName}
                         </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <Briefcase size={16} />
-                        <span>{job.jobType}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Award size={16} />
-                        <span>{job.experienceLevel}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Users size={16} />
-                        <span>{job.applicants?.filter(app => app.status === "pending")?.length || 0} Pending</span>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                            <MapPin size={16} />
+                            <span>
+                                {job.location.city}, {job.location.country}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Briefcase size={16} />
+                            <span>{job.jobType}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Award size={16} />
+                            <span>{job.experienceLevel}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Users size={16} />
+                            <span>
+                                {job.applicants?.filter(
+                                    (app) => app.status === "pending"
+                                )?.length || 0}{" "}
+                                Pending
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            {user.role === "user" ? (
-                job?.applicants?.find(app => (app.user) === user._id) ? (
-    
-    <button 
-        disabled
-        className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md cursor-default capitalize"
-    >
-        {job.applicants.find(app => app.user === user._id).status}
-    </button>
-
-) : (
-
-    <button 
-        onClick={openApplication} 
-        className="bg-white text-emerald-600 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md"
-    >
-        Apply Now
-    </button>
-)
-            ) : (
-                user._id === job.postedBy && (
-                    <div className="flex flex-col gap-3">
-                        <button onClick={handleEdit} className="bg-white  flex gap-5 text-emerald-600 px-6 py-2 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md">
-                            <Edit /> Edit
-                        </button>
+                {user.role === "user" ? (
+                    job?.applicants?.find((app) => app.user === user._id) ? (
                         <button
-                            onClick={handleDeleteClick}
-                            className="bg-red-600 flex gap-5 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors shadow-md"
+                            disabled
+                            className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md cursor-default capitalize"
                         >
-                            <Trash /> Delete
+                            {
+                                job.applicants.find(
+                                    (app) => app.user === user._id
+                                ).status
+                            }
                         </button>
-                    </div>
-                )
-            )}
+                    ) : (
+                        <button
+                            onClick={openApplication}
+                            className="bg-white text-emerald-600 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md"
+                        >
+                            Apply Now
+                        </button>
+                    )
+                ) : (
+                    user._id === job.postedBy && (
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={handleEdit}
+                                className="bg-white  flex gap-5 text-emerald-600 px-6 py-2 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md"
+                            >
+                                <Edit /> Edit
+                            </button>
+                            <button
+                                onClick={handleDeleteClick}
+                                className="bg-red-600 flex gap-5 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors shadow-md"
+                            >
+                                <Trash /> Delete
+                            </button>
+                        </div>
+                    )
+                )}
+            </div>
         </div>
-    </div>
-);};
+    );
+};
 
 const JobDetails = ({ job }) => (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -153,7 +172,9 @@ const JobDetails = ({ job }) => (
             <DetailItem
                 icon={<DollarSign className="text-emerald-500" size={20} />}
                 label="Salary Range"
-                value={!job.salary.hideSalary ? job.salaryRange : "Not disclosed"}
+                value={
+                    !job.salary.hideSalary ? job.salaryRange : "Not disclosed"
+                }
             />
             <DetailItem
                 icon={<Calendar className="text-emerald-500" size={20} />}
@@ -246,44 +267,322 @@ const JobRequirements = ({ requirements, responsibilities }) => (
 
 const SkillsTags = ({ skills, tags }) => (
     <>
-    {skills && skills.length > 0 && tags && tags.length > 0 && (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        {skills && skills.length > 0 && (
-            <div className="mb-4">
-                <h3 className="text-lg font-bold text-gray-800 mb-3">
-                    Required Skills
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                    {skills.map((skill, index) => (
-                        <span
-                            key={index}
-                            className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium"
-                        >
-                            {skill}
-                        </span>
-                    ))}
-                </div>
+        {skills && skills.length > 0 && tags && tags.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                {skills && skills.length > 0 && (
+                    <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-800 mb-3">
+                            Required Skills
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                            {skills.map((skill, index) => (
+                                <span
+                                    key={index}
+                                    className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium"
+                                >
+                                    {skill}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {tags && tags.length > 0 && (
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-800 mb-3">
+                            Tags
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                            {tags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                                >
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         )}
-        {tags && tags.length > 0 && (
-            <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                    {tags.map((tag, index) => (
-                        <span
-                            key={index}
-                            className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-                        >
-                            {tag}
-                        </span>
-                    ))}
-                </div>
-            </div>
-        )}
-        </div>)};
+        ;
     </>
 );
+const ApplicantCard = ({ applicant, onStatusUpdate }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [userData, setUserData] = useState(null);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
+    const handleStatusUpdate = async (newStatus) => {
+        setIsUpdating(true);
+        await onStatusUpdate(applicant._id, newStatus);
+        setIsUpdating(false);
+    };
+    useEffect(() => {
+        const fetchUser = async () => {
+            if (!applicant.user) {
+                setIsLoadingUser(false);
+                return;
+            }
 
+            try {
+                const res = await api.get(`/user/profile/id/${applicant.user}`);
+                setUserData(res.data.profile);
+            } catch (error) {
+                console.error("Error fetching applicant details:", error);
+            } finally {
+                setIsLoadingUser(false);
+            }
+        };
+        fetchUser();
+        }, [applicant.user]);
+    const getStatusColor = (status) => {
+        switch (status) {
+            case "accepted":
+                return "bg-green-100 text-green-700 border-green-200";
+            case "rejected":
+                return "bg-red-100 text-red-700 border-red-200";
+            default:
+                return "bg-yellow-100 text-yellow-700 border-yellow-200";
+        }
+    };
+    console.log(userData)
+    return (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+            <div className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <span className="text-emerald-600 font-semibold text-lg">
+                                    {userData?.profilePic ? <img src={userData?.profilePic} alt="" /> : "loading"}
+                                </span>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-800">
+                                    {isLoadingUser
+                                        ? "Loading..."
+                                        : (userData?.firstName || userData?.email) + " " + (userData?.lastName || "")}
+                                </h3>
+                                <span
+                                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                                        applicant.status
+                                    )}`}
+                                >
+                                    {applicant.status.charAt(0).toUpperCase() +
+                                        applicant.status.slice(1)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 text-sm text-gray-600 mb-3">
+                            {userData?.email && (
+                                <div className="flex items-center gap-1">
+                                    <Mail size={14} />
+                                    <span>{userData.email}</span>
+                                </div>
+                            )}
+                            {userData?.phoneNumber && (
+                                <div className="flex items-center gap-1">
+                                    <Phone size={14} />
+                                    <span>{userData.phoneNumber}</span>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-1">
+                                <Calendar size={14} />
+                                <span>
+                                    Applied{" "}
+                                    {new Date(
+                                        applicant.appliedAt
+                                    ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                    })}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                            {applicant.resume && (
+                                <a
+                                    href={`http://localhost:8080/api/media/pdf/${applicant.resume}`} 
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
+                                >
+                                    <Download size={14} />
+                                    Resume
+                                </a>
+                            )}
+                            {applicant.coverLetter && (
+                                <a
+                                    href={`http://localhost:8080/api/media/pdf/${applicant.coverLetter}`} 
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
+                                >
+                                    <FileText size={14} />
+                                    Cover Letter
+                                </a>
+                            )}
+                        </div>
+                    </div>
+
+                    {applicant.status === "pending" && (
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleStatusUpdate("hired")}
+                                disabled={isUpdating}
+                                className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Accept"
+                            >
+                                <CheckCircle size={18} />
+                            </button>
+                            <button
+                                onClick={() => handleStatusUpdate("rejected")}
+                                disabled={isUpdating}
+                                className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Reject"
+                            >
+                                <XCircle size={18} />
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {applicant.additionalInfo && (
+                    <div className="mt-3">
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                        >
+                            {isExpanded ? (
+                                <>
+                                    <ChevronUp size={16} />
+                                    Hide Details
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronDown size={16} />
+                                    Show Details
+                                </>
+                            )}
+                        </button>
+                        {isExpanded && (
+                            <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
+                                {applicant.additionalInfo}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export const ApplicantsManager = ({ job, onStatusUpdate }) => {
+    const [filterStatus, setFilterStatus] = useState("all");
+
+    const filteredApplicants = job.applicants?.filter((app) => {
+        if (filterStatus === "all") return true;
+        return app.status === filterStatus;
+    });
+
+    const counts = {
+        all: job.applicants?.length || 0,
+        pending:
+            job.applicants?.filter((app) => app.status === "pending").length ||
+            0,
+        accepted:
+            job.applicants?.filter((app) => app.status === "accepted").length ||
+            0,
+        rejected:
+            job.applicants?.filter((app) => app.status === "rejected").length ||
+            0,
+    };
+
+    return (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                    <Users className="text-emerald-500" size={24} />
+                    <h2 className="text-2xl font-bold text-gray-800">
+                        Applicants
+                    </h2>
+                    <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-semibold">
+                        {counts.all}
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                <button
+                    onClick={() => setFilterStatus("all")}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+                        filterStatus === "all"
+                            ? "bg-emerald-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                    All ({counts.all})
+                </button>
+                <button
+                    onClick={() => setFilterStatus("pending")}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+                        filterStatus === "pending"
+                            ? "bg-yellow-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                    Pending ({counts.pending})
+                </button>
+                <button
+                    onClick={() => setFilterStatus("accepted")}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+                        filterStatus === "accepted"
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                    Accepted ({counts.accepted})
+                </button>
+                <button
+                    onClick={() => setFilterStatus("rejected")}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+                        filterStatus === "rejected"
+                            ? "bg-red-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                    Rejected ({counts.rejected})
+                </button>
+            </div>
+
+            {filteredApplicants && filteredApplicants.length > 0 ? (
+                <div className="space-y-3">
+                    {filteredApplicants.map((applicant) => (
+                        <ApplicantCard
+                            key={applicant._id}
+                            applicant={applicant}
+                            onStatusUpdate={onStatusUpdate}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 text-gray-500">
+                    <Users size={48} className="mx-auto mb-3 opacity-30" />
+                    <p className="text-lg font-medium">No applicants yet</p>
+                    <p className="text-sm mt-1">
+                        {filterStatus === "all"
+                            ? "Applications will appear here once candidates apply"
+                            : `No ${filterStatus} applications`}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
 const CompanyInfo = ({ poster }) => (
     <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -366,7 +665,26 @@ export default function JobView() {
     const [poster, setPoster] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const navigate  = useNavigate();
+    const navigate = useNavigate();
+    const onStatusUpdate = async (applicantId, newStatus) => {
+        try {
+            await api.patch(
+                `/jobs/${jobId}/applicants/${applicantId}`,
+                { status: newStatus,userId: user._id },
+                {
+                    headers: { authorization: `Bearer ${user.token}` },
+                }
+            );
+            setJob((prevJob) => {
+                const updatedApplicants = prevJob.applicants.map((app) =>
+                    app._id === applicantId ? { ...app, status: newStatus } : app
+                );
+                return { ...prevJob, applicants: updatedApplicants };
+            });
+        } catch (error) {
+            console.error("Error updating applicant status:", error);
+        }
+    };
     useEffect(() => {
         const fetchData = async () => {
             if (!user || !jobId) return;
@@ -415,7 +733,7 @@ export default function JobView() {
     const handleCancelDelete = () => {
         setShowDeleteModal(false);
     };
-    console.log(job)
+    console.log(job);
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -448,21 +766,24 @@ export default function JobView() {
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             {isApplicationModalOpen && (
-            <ApplicationModal
-                isOpen={isApplicationModalOpen}
-                onClose={() => setIsApplicationModalOpen(false)}
-                job={job}
-            />)}
+                <ApplicationModal
+                    isOpen={isApplicationModalOpen}
+                    onClose={() => setIsApplicationModalOpen(false)}
+                    job={job}
+                />
+            )}
             <DeleteConfirmModal
                 isOpen={showDeleteModal}
                 onClose={handleCancelDelete}
                 onConfirm={handleConfirmDelete}
                 jobTitle={job.title}
-                />
+            />
             <div className="max-w-6xl mx-auto px-4">
                 <JobHeader
                     user={user}
-                    openApplication={() => {setIsApplicationModalOpen(true)}}
+                    openApplication={() => {
+                        setIsApplicationModalOpen(true);
+                    }}
                     job={job}
                     poster={poster}
                     handleDeleteClick={handleDeleteClick}
@@ -477,6 +798,9 @@ export default function JobView() {
                             responsibilities={job.responsibilities}
                         />
                         <SkillsTags skills={job.skills} tags={job.tags} />
+                        {user._id === job.postedBy && (
+                            <ApplicantsManager job={job} onStatusUpdate={onStatusUpdate}/>
+                        )}
                     </div>
 
                     <div className="lg:col-span-1">

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { X, Upload, CheckCircle, FileText } from "lucide-react";
-import { uploadMedia } from "../utils/uploadMedia";
 import { useJobCreation } from "../hooks/useJobCreation.js";
 
 export const ApplicationModal = ({ isOpen, onClose, job }) => {
@@ -64,25 +63,37 @@ export const ApplicationModal = ({ isOpen, onClose, job }) => {
 
         setIsSubmitting(true);
 
-        try {
-            console.log("1. Uploading Resume...", formData.resumeFile.name);
-            const uploadPromises = [
-                    uploadMedia(formData.resumeFile, "pdf"),
-                    uploadMedia(formData.coverLetterFile, "pdf")
-                ];
+        try {   
+            const resumeData = new FormData();
+            const coverLetterData = new FormData();
+            
+            resumeData.append("pdf", formData.resumeFile);
+            coverLetterData.append("pdf", formData.coverLetterFile);
 
-            const [resumeUpload, coverUpload] = await Promise.all(uploadPromises);
-            console.log("2. Uploads complete:", { resumeUpload, coverUpload });
+            const uploadRes1 = await fetch("http://localhost:8080/api/media/pdf", {
+                method: "POST",
+                body: resumeData,
+            });
+            const  resumeFile  = await uploadRes1.json();
+
+
+            const uploadRes2 = await fetch("http://localhost:8080/api/media/pdf", {
+                method: "POST",
+                body: coverLetterData,
+            });
+            const  coverLetterFile  = await uploadRes2.json();
+            
+
             if (
-                coverUpload.secure_url === undefined ||
-                resumeUpload.secure_url === undefined
+                !resumeFile.fileId ||
+                !coverLetterFile.fileId
             ) {
                 throw new Error("File upload failed");
             }
             const payload = {
                 ...job,
-                resume: resumeUpload.secure_url,
-                coverLetter: coverUpload.secure_url,
+                resume: resumeFile.fileId,
+                coverLetter: coverLetterFile.fileId,
             };
 
             console.log("3. Submitting Application to backend:", payload);
