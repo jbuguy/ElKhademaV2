@@ -49,5 +49,33 @@ export const useJobCreation = () => {
             throw errorMessage;
         }
     };
-    return { createjob, updatejob };
+    const applyjob = async (applicationData) => {
+        if (!user || user.role !== "user") {
+            throw new Error("Only users can apply for jobs");
+        }
+        try {
+            const payload = {
+                ...applicationData,
+                user_id: user._id,
+            };
+            console.log(payload);
+            const response = await api.post(
+                `/jobs/${applicationData._id}/apply`,
+                payload,
+                {
+                    headers: {
+                        Authorization: `Bearer ${user.token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const errorMessage =
+                error.response?.data?.error ||
+                error.message ||
+                "An unexpected error occurred";
+            throw errorMessage;
+        }
+    };
+    return { createjob, updatejob, applyjob };
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState,  } from "react";
 import { useAuthContext } from "../hooks/useAuthContext.js";
 import api from "../utils/api.js";
 import { useParams,useNavigate } from "react-router-dom";
+import { ApplicationModal } from "./jobApplication.jsx";
 import { Link } from "react-router-dom";
 import {
     MapPin,
@@ -65,7 +66,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, jobTitle }) => {
         </div>
     );
 };
-const JobHeader = ({ user, job, poster, handleDeleteClick }) =>{
+const JobHeader = ({ user, openApplication , job, poster, handleDeleteClick }) =>{
     const navigate = useNavigate();
     const handleEdit = () => {
         navigate("/jobs/form", { state: { jobToEdit: job } }); 
@@ -101,12 +102,31 @@ const JobHeader = ({ user, job, poster, handleDeleteClick }) =>{
                         <Award size={16} />
                         <span>{job.experienceLevel}</span>
                     </div>
+                    <div className="flex items-center gap-1">
+                        <Users size={16} />
+                        <span>{job.applicants?.filter(app => app.status === "pending")?.length || 0} Pending</span>
+                    </div>
                 </div>
             </div>
             {user.role === "user" ? (
-                <button className="bg-white text-emerald-600 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md">
-                    Apply Now
-                </button>
+                job?.applicants?.find(app => (app.user) === user._id) ? (
+    
+    <button 
+        disabled
+        className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md cursor-default capitalize"
+    >
+        {job.applicants.find(app => app.user === user._id).status}
+    </button>
+
+) : (
+
+    <button 
+        onClick={openApplication} 
+        className="bg-white text-emerald-600 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md"
+    >
+        Apply Now
+    </button>
+)
             ) : (
                 user._id === job.postedBy && (
                     <div className="flex flex-col gap-3">
@@ -225,6 +245,8 @@ const JobRequirements = ({ requirements, responsibilities }) => (
 );
 
 const SkillsTags = ({ skills, tags }) => (
+    <>
+    {skills && skills.length > 0 && tags && tags.length > 0 && (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         {skills && skills.length > 0 && (
             <div className="mb-4">
@@ -258,7 +280,8 @@ const SkillsTags = ({ skills, tags }) => (
                 </div>
             </div>
         )}
-    </div>
+        </div>)};
+    </>
 );
 
 const CompanyInfo = ({ poster }) => (
@@ -336,6 +359,7 @@ const InfoRow = ({ icon, label, value }) => (
     </div>
 );
 export default function JobView() {
+    const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
     const { user } = useAuthContext();
     const { jobId } = useParams();
     const [job, setJob] = useState(null);
@@ -423,15 +447,22 @@ export default function JobView() {
     }
     return (
         <div className="min-h-screen bg-gray-50 py-8">
+            {isApplicationModalOpen && (
+            <ApplicationModal
+                isOpen={isApplicationModalOpen}
+                onClose={() => setIsApplicationModalOpen(false)}
+                job={job}
+            />)}
             <DeleteConfirmModal
                 isOpen={showDeleteModal}
                 onClose={handleCancelDelete}
                 onConfirm={handleConfirmDelete}
                 jobTitle={job.title}
-            />
+                />
             <div className="max-w-6xl mx-auto px-4">
                 <JobHeader
                     user={user}
+                    openApplication={() => {setIsApplicationModalOpen(true)}}
                     job={job}
                     poster={poster}
                     handleDeleteClick={handleDeleteClick}

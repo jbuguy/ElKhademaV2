@@ -72,18 +72,17 @@ const jobsSchema = new Schema(
             hideSalary: { type: Boolean, default: false },
         },
 
-        // --- Search & Filtering ---
         tags: {
-            type: [String], // e.g. ["React", "Node.js", "Figma"]
+            type: [String],
             index: true,
         },
         skills: [
             {
-                type: String, // Strictly for technical matching algorithms
+                type: String,
             },
         ],
         category: {
-            type: String, // e.g., "Engineering", "Design", "Marketing"
+            type: String,
             index: true,
         },
 
@@ -93,11 +92,10 @@ const jobsSchema = new Schema(
             default: "draft",
         },
 
-        // Embedded applicants array (good for small-medium scale)
         applicants: [
             {
                 user: { type: Schema.Types.ObjectId, ref: "User" },
-                resume: String, // URL to resume file
+                resume: String,
                 coverLetter: String,
                 appliedAt: { type: Date, default: Date.now },
                 status: {
