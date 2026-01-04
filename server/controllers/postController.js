@@ -119,14 +119,14 @@ export const addComment = async (req, res) => {
     const commentObj = comment.toObject();
     commentObj.userId.displayName = getDisplayName(profile);
 
-  // Create notification for post owner
-  const post = await Post.findById(id);
-  if (post) {
-    console.log('Creating comment notification:', post.userId, userId, id);
-    await createNotification(post.userId, userId, 'comment', id);
-  }
+    // Create notification for post owner
+    const post = await Post.findById(id);
+    if (post) {
+        console.log("Creating comment notification:", post.userId, userId, id);
+        await createNotification(post.userId, userId, "comment", id);
+    }
 
-  res.status(201).json(commentObj);
+    res.status(201).json(commentObj);
 };
 export const getComments = async (req, res) => {
     const { id } = req.params;
@@ -153,59 +153,89 @@ export const getComments = async (req, res) => {
     res.status(200).json(commentsWithDisplayNames);
 };
 export const addLike = async (req, res) => {
-  const { id } = req.params;
-  const userid = req.user.id;
-  const response = await Post.findByIdAndUpdate(id, { $addToSet: { likes: userid } }, { new: true });
-  
-  // Create notification for post owner
-  if (response) {
-    console.log('Creating like notification:', response.userId, userid, id);
-    await createNotification(response.userId, userid, 'like', id);
-  }
-  
-  res.status(200).json({ totalLikes: response.likes.length, liked: true })
+    const { id } = req.params;
+    const userid = req.user.id;
+    const response = await Post.findByIdAndUpdate(
+        id,
+        { $addToSet: { likes: userid } },
+        { new: true }
+    );
+
+    // Create notification for post owner
+    if (response) {
+        console.log("Creating like notification:", response.userId, userid, id);
+        await createNotification(response.userId, userid, "like", id);
+    }
+
+    res.status(200).json({ totalLikes: response.likes.length, liked: true });
 };
 export const sharePost = async (req, res) => {
     try {
-        const { id } = req.params;
-        const userId = req.user.id;
+        try {
+            const { id } = req.params;
+            const userId = req.user.id;
 
-        // Get the original post
-        const originalPost = await Post.findById(id).populate(
-            "userId",
-            "username profilePic"
-        );
-        if (!originalPost) {
-            return res.status(404).json({ error: "Post not found" });
+            // Get the original post
+            const originalPost = await Post.findById(id).populate(
+                "userId",
+                "username profilePic"
+            );
+            if (!originalPost) {
+                return res.status(404).json({ error: "Post not found" });
+            }
+
+            // Create a shared post
+            let sharedPost = await Post.create({
+                content: originalPost.content,
+                media: originalPost.media,
+                userId: userId,
+                sharedFrom: originalPost._id,
+            });
+
+            // Populate the shared post data
+            sharedPost = await sharedPost.populate(
+                "userId",
+                "username profilePic"
+            );
+            sharedPost = await sharedPost.populate({
+                path: "sharedFrom",
+                populate: { path: "userId", select: "username profilePic" },
+            });
+
+            // Get display name for current user
+            const profile = await Profile.findOne({ userId });
+            const sharedPostObj = sharedPost.toObject();
+            sharedPostObj.userId.displayName = getDisplayName(profile);
+
+            // Get display name for original poster
+            if (sharedPost.sharedFrom && sharedPost.sharedFrom.userId) {
+                const originalProfile = await Profile.findOne({
+                    userId: sharedPost.sharedFrom.userId._id,
+                });
+                sharedPostObj.sharedFrom.userId.displayName =
+                    getDisplayName(originalProfile);
+            }
+
+            res.status(201).json(sharedPostObj);
+        } catch (error) {
+            console.error("Error sharing post:", error);
+            res.status(500).json({ error: error.message });
         }
 
-        // Create a shared post
-        let sharedPost = await Post.create({
-            content: originalPost.content,
-            media: originalPost.media,
-            userId: userId,
-            sharedFrom: originalPost._id,
-        });
-
-        // Populate the shared post data
-        sharedPost = await sharedPost.populate("userId", "username profilePic");
-        sharedPost = await sharedPost.populate({
-            path: "sharedFrom",
-            populate: { path: "userId", select: "username profilePic" },
-        });
-
-        // Get display name for current user
-        const profile = await Profile.findOne({ userId });
-        const sharedPostObj = sharedPost.toObject();
-        sharedPostObj.userId.displayName = getDisplayName(profile);
-
-        // Get display name for original poster
-        if (sharedPost.sharedFrom && sharedPost.sharedFrom.userId) {
-            const originalProfile = await Profile.findOne({
-                userId: sharedPost.sharedFrom.userId._id,
-            });
-            sharedPostObj.sharedFrom.userId.displayName =
-                getDisplayName(originalProfile);
+        // Create notification for original post owner
+        if (originalPost.userId._id.toString() !== userId.toString()) {
+            console.log(
+                "Creating share notification:",
+                originalPost.userId._id,
+                userId,
+                id
+            );
+            await createNotification(
+                originalPost.userId._id,
+                userId,
+                "share",
+                id
+            );
         }
 
         res.status(201).json(sharedPostObj);
@@ -213,21 +243,14 @@ export const sharePost = async (req, res) => {
         console.error("Error sharing post:", error);
         res.status(500).json({ error: error.message });
     }
-
-    // Create notification for original post owner
-    if (originalPost.userId._id.toString() !== userId.toString()) {
-      console.log('Creating share notification:', originalPost.userId._id, userId, id);
-      await createNotification(originalPost.userId._id, userId, 'share', id);
-    }
-
-    res.status(201).json(sharedPostObj);
-  } catch (error) {
-    console.error("Error sharing post:", error);
-    res.status(500).json({ error: error.message });
-  }
-}; export const deleteLike = async (req, res) => {
-  const { id } = req.params;
-  const userid = req.user.id;
-  const response = await Post.findByIdAndUpdate(id, { $pull: { likes: userid } }, { new: true });
-  res.status(200).json({ totalLikes: response.likes.length, liked: false })
-}
+};
+export const deleteLike = async (req, res) => {
+    const { id } = req.params;
+    const userid = req.user.id;
+    const response = await Post.findByIdAndUpdate(
+        id,
+        { $pull: { likes: userid } },
+        { new: true }
+    );
+    res.status(200).json({ totalLikes: response.likes.length, liked: false });
+};
