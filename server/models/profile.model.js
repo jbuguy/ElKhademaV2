@@ -40,6 +40,10 @@ const profileSchema = new Schema(
             type: String,
             default: "https://i.pravatar.cc/150?img=1",
         },
+        // Video CV URL
+        videoCv: {
+            type: String,
+        },
         email: {
             type: String,
             unique: true,

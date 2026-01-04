@@ -100,7 +100,7 @@ export default function ChatWidget() {
             {!min && (
                 <>
                     {/* Messages */}
-                    <div className="flex-grow h-80 overflow-y-auto p-2 bg-gray-100 flex flex-col gap-2">
+                    <div className="grow h-80 overflow-y-auto p-2 bg-gray-100 flex flex-col gap-2">
                         {messages.map((m, index) => {
                             const isMine = m.userId._id === user._id;
                             console.log(m.userId);
@@ -125,7 +125,45 @@ export default function ChatWidget() {
                                                 : "bg-white text-left rounded-bl-none"
                                         }`}
                                     >
-                                        <span>{m.content}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span>{m.content}</span>
+                                            <button
+                                                className="text-xs text-red-600"
+                                                onClick={async () => {
+                                                    if (!user)
+                                                        return alert(
+                                                            "Please login to report"
+                                                        );
+                                                    const reason = prompt(
+                                                        "Reason for reporting this message (required):"
+                                                    );
+                                                    if (!reason) return;
+                                                    try {
+                                                        await api.post(
+                                                            "/reports",
+                                                            {
+                                                                type: "message",
+                                                                targetId: m._id,
+                                                                reason,
+                                                                description: "",
+                                                            }
+                                                        );
+                                                        alert(
+                                                            "Report submitted"
+                                                        );
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        alert(
+                                                            err.response?.data
+                                                                ?.error ||
+                                                                err.message
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                Report
+                                            </button>
+                                        </div>
                                         <span className="text-xs text-gray-500">
                                             {formatTime(m.createdAt)}
                                         </span>
@@ -141,7 +179,7 @@ export default function ChatWidget() {
                     <div className="border-t border-gray-300 p-4 bg-white">
                         <div className="flex gap-2">
                             <textarea
-                                className="flex-grow border border-gray-300 rounded-full px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-24"
+                                className="grow border border-gray-300 rounded-full px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-24"
                                 placeholder="Aa"
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
@@ -157,7 +195,7 @@ export default function ChatWidget() {
                             <button
                                 onClick={sendMessage}
                                 disabled={!message.trim() || isSending}
-                                className="bg-green-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-full p-2 flex-shrink-0 transition"
+                                className="bg-green-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-full p-2 shrink-0 transition"
                             >
                                 <IoMdSend size={20} />
                             </button>
