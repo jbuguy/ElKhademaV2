@@ -1,68 +1,141 @@
-import { Link } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useAuthContext } from "../hooks/useAuthContext.js";
 import { useLogout } from "../hooks/useLogout.js";
-import { useState, useEffect } from "react";
-import api from "../utils/api.js";
+import { useState } from "react";
+import {
+    FaSearch,
+    FaHome,
+    FaBriefcase,
+    FaCommentDots,
+    FaUserCircle,
+    FaSignOutAlt,
+    FaTools,
+} from "react-icons/fa";
+import NotificationDropdown from "./NotificationDropdown.jsx";
 
 export function NavBar() {
-  const logout = useLogout();
-  const { user } = useAuthContext();
-  const [displayName, setDisplayName] = useState("");
-  const [profilePic, setProfilePic] = useState("");
-  
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (user && user.username) {
-        try {
-          const res = await api.get(`/user/profile/${user.username}`);
-          const profile = res.data.profile;
-          // Get display name based on profile type
-          let name = "";
-          if (profile.profileType === 'company') {
-            name = profile.companyName || "";
-          } else {
-            name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim();
-          }
-          setDisplayName(name);
-          setProfilePic(res.data.user.profilePic || "");
-        } catch (error) {
-          console.error("Error fetching profile:", error);
+    const logout = useLogout();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { user } = useAuthContext();
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            navigate(`/jobs?search=${encodeURIComponent(searchQuery)}`);
+            setSearchQuery("");
         }
-      }
     };
-    fetchProfile();
-  }, [user]);
-  
-  const handleClick = () => {
-    logout();
-  };
-  return (
-    <header>
-      <div className="container">
-        <Link to="/">
-          <h1>ElKadema</h1>
-        </Link>
-        <nav>
-          {user ? (
-            <div>
-              <Link to="/jobs">
-              <span style={{cursor: 'pointer'}}>Jobs</span>
-              </Link>
-              <Link to="/profile">
-                <img src={profilePic || user.profilePic || "https://via.placeholder.com/40"} alt="profile" style={{width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px', cursor: 'pointer'}} />
-              </Link>
-              <Link to="/profile" style={{textDecoration: 'none', color: '#333'}}>
-                <span style={{cursor: 'pointer'}}>{displayName || user.username || user.email}</span>
-              </Link>
-              <button onClick={handleClick}>logout</button>
-            </div>) : (
-            <div>
-              <Link to={"/login"}>Login</Link>
-              <Link to={"/signup"}>Sign up</Link>
+
+    const isActive = (path) => location.pathname === path;
+
+    return (
+        <header className="bg-white shadow-md sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4">
+                <div className="flex items-center justify-between h-16 gap-6">
+                    {/* Logo */}
+                    <Link to="/" className="flex items-center">
+                        <h1 className="text-2xl font-bold text-[#1aac83] transition">
+                            ElKhadema
+                        </h1>
+                    </Link>
+
+                    {user ? (
+                        <>
+                            {/* Center: Search Bar */}
+                            <form
+                                onSubmit={handleSearch}
+                                className="flex-1 max-w-lg"
+                            >
+                                <input
+                                    type="text"
+                                    placeholder="Search jobs..."
+                                    value={searchQuery}
+                                    onChange={(e) =>
+                                        setSearchQuery(e.target.value)
+                                    }
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1aac83] bg-white text-gray-700 placeholder-gray-400 transition"
+                                />
+                            </form>
+
+                            {/* Right: Icons */}
+                            <nav className="flex items-center gap-3">
+                                <Link
+                                    to="/"
+                                    className={`p-2 rounded-lg transition-all ${
+                                        isActive("/")
+                                            ? "text-[#1aac83] border-2 border-[#1aac83]"
+                                            : "text-gray-600 hover:text-[#1aac83]"
+                                    }`}
+                                >
+                                    <FaHome className="text-2xl" />
+                                </Link>
+                                <Link
+                                    to="/profile"
+                                    className={`p-2 rounded-lg transition-all ${
+                                        isActive("/profile")
+                                            ? "text-[#1aac83] border-2 border-[#1aac83]"
+                                            : "text-gray-600 hover:text-[#1aac83]"
+                                    }`}
+                                >
+                                    <FaUserCircle className="text-2xl" />
+                                </Link>
+                                <Link
+                                    to="/jobs"
+                                    className={`p-2 rounded-lg transition-all ${
+                                        isActive("/jobs")
+                                            ? "text-[#1aac83] border-2 border-[#1aac83]"
+                                            : "text-gray-600 hover:text-[#1aac83]"
+                                    }`}
+                                >
+                                    <FaBriefcase className="text-2xl" />
+                                </Link>
+                                {user.role === "admin" && (
+                                    <Link
+                                        to="/admin"
+                                        className={`p-2 rounded-lg transition-all ${
+                                            isActive("/admin")
+                                                ? "text-[#1aac83] border-2 border-[#1aac83]"
+                                                : "text-gray-600 hover:text-[#1aac83]"
+                                        }`}
+                                    >
+                                        <FaTools className="text-2xl" />
+                                    </Link>
+                                )}
+                                <Link to={"/messages"}>
+                                    <button className="text-gray-600 hover:text-[#1aac83] transition-all border-0 bg-transparent p-0">
+                                        <FaCommentDots className="text-2xl" />
+                                    </button>
+                                </Link>
+                                <NotificationDropdown />
+                                <button
+                                    onClick={logout}
+                                    className="text-gray-600 hover:text-[#1aac83] transition-all border-0 bg-transparent p-0"
+                                    title="Logout"
+                                >
+                                    <FaSignOutAlt className="text-2xl" />
+                                </button>
+                            </nav>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-4">
+                            <Link
+                                to="/login"
+                                className="px-4 py-2 text-[#1aac83] font-medium rounded-lg transition"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                to="/signup"
+                                className="px-4 py-2 bg-[#1aac83] text-white font-medium rounded-lg hover:bg-[#158f6b] transition"
+                            >
+                                Sign up
+                            </Link>
+                        </div>
+                    )}
+                </div>
             </div>
-          )}
-        </nav>
-      </div>
-    </header>
-  )
+        </header>
+    );
 }

@@ -1,4 +1,5 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
 :root {
     --primary: #1aac83;
     --error: #e7195a;
@@ -327,6 +328,16 @@ form.login {
     font-weight: 500;
 }
 
+/* Hide native number input spinners when .no-spin is applied */
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.no-spin {
+    -moz-appearance: textfield;
+}
+
 @keyframes slideIn {
     from {
         transform: translateX(400px);
@@ -343,7 +354,8 @@ form.login {
     body * {
         visibility: hidden;
     }
-    .profile, .profile * {
+    .profile,
+    .profile * {
         visibility: visible;
     }
     .profile {
@@ -362,6 +374,72 @@ form.login {
     .modal-overlay {
         display: none !important;
     }
+}
+
+/* Salary range custom thumbs (chevrons) */
+.salary-range {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+}
+
+/* WebKit track (kept transparent) */
+.salary-range::-webkit-slider-runnable-track {
+    height: 6px;
+    background: transparent;
+}
+
+/* WebKit thumbs */
+.salary-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 2px solid #fff;
+    background-color: #e63946;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+/* Lower handle: chevron up */
+.salary-range.lower::-webkit-slider-thumb {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 15 12 9 18 15'/></svg>");
+}
+
+/* Upper handle: chevron down */
+.salary-range.upper::-webkit-slider-thumb {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' transform='rotate(180)'><polyline points='6 15 12 9 18 15'/></svg>");
+}
+
+/* Focus/active state */
+.salary-range:active::-webkit-slider-thumb,
+.salary-range:focus::-webkit-slider-thumb {
+    transform: scale(1.05);
+}
+
+/* Firefox support */
+.salary-range::-moz-range-track {
+    height: 6px;
+    background: transparent;
+}
+.salary-range::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 2px solid #fff;
+    background-color: #e63946;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+.salary-range.lower::-moz-range-thumb {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 15 12 9 18 15'/></svg>");
+}
+.salary-range.upper::-moz-range-thumb {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' transform='rotate(180)'><polyline points='6 15 12 9 18 15'/></svg>");
 }
 
 .profile-details {
