@@ -1,0 +1,21 @@
+{
+    "name": "elkhademav2-clean",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build": "cd client && npm run build",
+        "run": "cd server && npm run start "
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jbuguy/ElKhademaV2.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/jbuguy/ElKhademaV2/issues"
+    },
+    "homepage": "https://github.com/jbuguy/ElKhademaV2#readme"
+}
