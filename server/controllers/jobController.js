@@ -208,3 +208,29 @@ export const applyForJob = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+export const changeApplicantStatus = async (req, res) => {
+    const { jobId, applicantId } = req.params;
+    const { status, userId } = req.body;
+
+    try {
+        const job = await Jobs.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ error: "Job not found" });
+        }
+        if (job.postedBy.toString() !== userId) {
+            return res.status(401).json({ error: "Unauthorized access" });
+        }
+        const applicant = job.applicants.id(applicantId);
+        if (!applicant) {
+            return res.status(404).json({ error: "Applicant not found" });
+        }
+        applicant.status = status;
+        console.log(job, status);
+        await job.save();
+        res.status(200).json({
+            message: "Applicant status updated successfully",
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
