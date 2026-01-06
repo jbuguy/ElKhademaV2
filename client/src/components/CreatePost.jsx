@@ -67,61 +67,61 @@ export default function CreatePost({ addPost }) {
     const isUploading = postMedia.some((m) => m.uploading);
 
     return (
-        <div className="bg-white p-4 m-2 flex gap-4">
-            <img src={user.profilePic} className="rounded-full h-10" />
-            <form
-                onSubmit={handleSubmit}
-                className="flex flex-col justify-end gap-2 w-full"
-            >
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 p-6">
+            <div className="flex gap-4 mb-4">
+                <img
+                    src={user.profilePic}
+                    className="rounded-full h-12 w-12 object-cover flex-shrink-0"
+                />
                 <textarea
                     rows="2"
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-                    placeholder="Start a post"
+                    className="flex-1 bg-slate-50 rounded-full px-4 py-3 outline-none border border-slate-200 hover:border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all placeholder-slate-400 resize-none"
+                    placeholder="Share what's on your mind..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                 />
+            </div>
 
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {postMedia.length > 0 && (
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2">
                         {postMedia.map((item) => (
-                            <div key={item.id} className="relative h-20 w-20">
+                            <div key={item.id} className="relative h-24 w-24">
                                 {item.type === "video" ? (
                                     item.url ? (
                                         <video
                                             src={item.url}
-                                            className="h-20 w-20 object-cover rounded"
+                                            className="h-24 w-24 object-cover rounded-lg"
                                             controls
                                         />
                                     ) : (
-                                        <div className="h-20 w-20 bg-gray-100 rounded flex items-center justify-center">
+                                        <div className="h-24 w-24 bg-slate-100 rounded-lg flex items-center justify-center">
                                             Uploading...
                                         </div>
                                     )
                                 ) : item.url ? (
                                     <img
                                         src={item.url}
-                                        className="h-20 w-20 object-cover rounded"
+                                        className="h-24 w-24 object-cover rounded-lg"
                                     />
                                 ) : (
-                                    <div className="h-20 w-20 bg-gray-100 rounded flex items-center justify-center">
+                                    <div className="h-24 w-24 bg-slate-100 rounded-lg flex items-center justify-center">
                                         Uploading...
                                     </div>
                                 )}
 
-                                {/* spinner */}
                                 {item.uploading && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded">
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
                                         <div className="animate-spin border-2 border-t-transparent border-white rounded-full w-6 h-6" />
                                     </div>
                                 )}
 
-                                {/* remove button */}
                                 <button
                                     onClick={(e) => {
                                         e.preventDefault();
                                         removeMedia(item.id);
                                     }}
-                                    className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow"
+                                    className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:shadow-md transition"
                                     title="Remove media"
                                 >
                                     <FaTimes className="text-red-600" />
@@ -131,7 +131,7 @@ export default function CreatePost({ addPost }) {
                     </div>
                 )}
 
-                <div className="flex justify-around items-center">
+                <div className="flex gap-3 pt-4 border-t border-slate-100">
                     <div className="relative inline-block">
                         <input
                             type="file"
@@ -142,9 +142,10 @@ export default function CreatePost({ addPost }) {
                         />
                         <label
                             htmlFor="image-upload"
-                            className="text-green-500 hover:text-green-700 cursor-pointer"
+                            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                         >
-                            <CiImageOn /> Image
+                            <CiImageOn size={18} />
+                            <span className="text-sm font-medium">Image</span>
                         </label>
                     </div>
                     <div className="relative inline-block">
@@ -157,15 +158,16 @@ export default function CreatePost({ addPost }) {
                         />
                         <label
                             htmlFor="video-upload"
-                            className="text-green-500 hover:text-green-700 cursor-pointer"
+                            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                         >
-                            <FaRegPlayCircle size={20} /> Video
+                            <FaRegPlayCircle size={18} />
+                            <span className="text-sm font-medium">Video</span>
                         </label>
                     </div>
                     <button
                         type="submit"
-                        className="grow-0 px-4 py-2 bg-[#1aac83] text-white rounded"
                         disabled={isUploading}
+                        className="ml-auto px-6 py-2 bg-emerald-600 text-white rounded-lg hover:shadow-lg hover:shadow-emerald-200 transition-all font-medium disabled:opacity-50"
                     >
                         {isUploading ? "Uploading..." : "Post"}
                     </button>

@@ -3,180 +3,294 @@ import { useParams, useLocation, useNavigate } from "react-router";
 import { useAuthContext } from "../hooks/useAuthContext";
 import api from "../utils/api";
 import Posts from "../components/Posts";
-import { uploadMedia } from "../utils/uploadMedia";
-import { ImageUpload } from "../components/ImageUpload";
+import CreatePost from "../components/CreatePost";
+import ProfileHeader from "../components/ProfileHeader";
+import ProfileTabs from "../components/ProfileTabs";
+import ProfileEditForm from "../components/ProfileEditForm";
+import ProfileAbout from "../components/ProfileAbout";
+import useProfileForm from "../hooks/useProfileForm";
+import { UserPlus, UserCheck, X, MessageCircle } from "lucide-react";
+import { useChat } from "../hooks/useChat";
 
 function Profile() {
     const { username: paramUsername } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
     const { user: currentUser } = useAuthContext();
-    const [user, setUser] = useState(null);
-    const [profile, setProfile] = useState(null);
-    const [posts, setPosts] = useState([]);
-    const [isEditing, setIsEditing] = useState(false);
-    const [activeTab, setActiveTab] = useState("posts");
-    const [profileImage, setProfileImage] = useState(null);
-    const [videoCvFile, setVideoCvFile] = useState(null);
-    const [videoCvPreview, setVideoCvPreview] = useState(null);
-    const [removeVideo, setRemoveVideo] = useState(false);
-
-    useEffect(() => {
-        if (!videoCvFile) return;
-        const url =
-            typeof videoCvFile === "string"
-                ? videoCvFile
-                : URL.createObjectURL(videoCvFile);
-        setVideoCvPreview(url);
-        return () => {
-            if (typeof videoCvFile !== "string") URL.revokeObjectURL(url);
-        };
-    }, [videoCvFile]);
-
-    useEffect(() => {
-        if (profile?.videoCv) setVideoCvPreview(profile.videoCv);
-    }, [profile]);
-
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
-    const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        companyName: "",
-        description: "",
-        birthday: "",
-        location: "",
-        phoneNumber: "",
-        email: "",
-        gender: "",
-        skills: [],
-        pastJobs: [],
-        education: [],
-        // Company fields
-        foundedDate: "",
-        founderName: "",
-        companyDescription: "",
-        industry: "",
-        companySize: "",
-        website: "",
-    });
-
-    const toISODate = (d) => (d ? new Date(d).toISOString().split("T")[0] : "");
 
     const username =
         paramUsername ??
         currentUser?.username ??
         currentUser?.email?.split("@")[0];
+
+    const { openChat } = useChat();
+    // Open chat with this profile user
+    const handleOpenChat = async () => {
+        if (!currentUser || !user?._id) return;
+        try {
+            // Try to find or create a conversation with this user
+            const res = await api.post(
+                "/conversation",
+                { members: [user._id] },
+                { headers: { authorization: `Bearer ${currentUser.token}` } }
+            );
+            const conversation = res.data;
+            openChat({
+                _id: conversation._id,
+                displayName: user.username,
+                displayPic: user.profilePic,
+            });
+        } catch (err) {
+            alert("Could not start chat");
+        }
+    };
     const isOwner = Boolean(
         currentUser &&
             (currentUser.username === username ||
                 currentUser.email?.split("@")[0] === username)
     );
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                setLoading(true);
-                const profileRes = await api.get(`/user/profile/${username}`);
-                const p = profileRes.data.profile || {};
-                setUser(profileRes.data.user);
-                setProfile(p);
+    // use shared profile form hook
+    const {
+        profile,
+        user,
+        formData,
+        setFormData,
+        profileImage,
+        setProfileImage,
+        videoCvFile,
+        setVideoCvFile,
+        videoCvPreview,
+        setVideoCvPreview,
+        removeVideo,
+        setRemoveVideo,
+        loading: formLoading,
+        error: formError,
+        handleSubmit: hookHandleSubmit,
+        handleAddSkill,
+        handleSkillChange,
+        handleRemoveSkill,
+        handleAddJob,
+        handleJobChange,
+        handleRemoveJob,
+        handleAddEducation,
+        handleEducationChange,
+        handleRemoveEducation,
+        setUser: setHookUser,
+        setProfile: setHookProfile,
+    } = useProfileForm({ username });
 
+    const [posts, setPosts] = useState([]);
+    const [isEditing, setIsEditing] = useState(false);
+    const [activeTab, setActiveTab] = useState("posts");
+    const [loadingPosts, setLoadingPosts] = useState(true);
+    const [error, setError] = useState(null);
+    const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
+
+    // Connection states
+    const [followers, setFollowers] = useState([]);
+    const [following, setFollowing] = useState([]);
+    const [connections, setConnections] = useState([]);
+    const [connectionRequests, setConnectionRequests] = useState([]);
+    const [loadingConnections, setLoadingConnections] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState(null); // 'pending', 'connected', null
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                setLoadingPosts(true);
                 const postsRes = await api.get(
                     `/user/profile/${username}/posts`
                 );
                 setPosts(postsRes.data);
-
-                if (isOwner) {
-                    setFormData({
-                        firstName: p.firstName || "",
-                        lastName: p.lastName || "",
-                        companyName: p.companyName || "",
-                        description: p.description || "",
-                        birthday: toISODate(p.birthday),
-                        location: p.location || "",
-                        phoneNumber: p.phoneNumber || "",
-                        email: p.email || "",
-                        gender: p.gender || "",
-                        skills: p.skills || [],
-                        pastJobs: p.pastJobs || [],
-                        education: p.education || [],
-                        foundedDate: toISODate(p.foundedDate),
-                        founderName: p.founderName || "",
-                        companyDescription: p.companyDescription || "",
-                        industry: p.industry || "",
-                        companySize: p.companySize || "",
-                        website: p.website || "",
-                    });
-
-                    if (location.state?.openEdit) {
-                        setIsEditing(true);
-                        setActiveTab("about");
-                        if (!p.isProfileComplete)
-                            setNeedsProfileCompletion(true);
-                    }
-                }
             } catch (err) {
                 console.error(
-                    "Error fetching profile:",
+                    "Error fetching posts:",
                     err?.response?.data || err
                 );
-                setError("Profile not found");
             } finally {
-                setLoading(false);
+                setLoadingPosts(false);
             }
         };
 
-        if (username) {
-            fetchProfile();
-        } else {
-            setLoading(false);
-            setError("No username provided");
-        }
-    }, [username, isOwner, location.state?.openEdit]);
+        if (username) fetchPosts();
+    }, [username]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
+    // Fetch connection data
+    useEffect(() => {
+        const fetchConnectionData = async () => {
+            if (!username) return;
+            try {
+                setLoadingConnections(true);
+                const [
+                    followersRes,
+                    followingRes,
+                    connectionsRes,
+                    requestsRes,
+                ] = await Promise.all([
+                    api
+                        .get(`/user/followers/${username}`)
+                        .catch(() => ({ data: [] })),
+                    api
+                        .get(`/user/following/${username}`)
+                        .catch(() => ({ data: [] })),
+                    api
+                        .get(`/user/connections/${username}`)
+                        .catch(() => ({ data: [] })),
+                    isOwner
+                        ? api
+                              .get(`/user/connection-requests`)
+                              .catch(() => ({ data: [] }))
+                        : Promise.resolve({ data: [] }),
+                ]);
+
+                setFollowers(followersRes.data || []);
+                setFollowing(followingRes.data || []);
+                setConnections(connectionsRes.data || []);
+                setConnectionRequests(requestsRes.data || []);
+
+                // Check current connection status
+                if (!isOwner && currentUser) {
+                    const checkRes = await api
+                        .get(`/user/connection-status/${username}`)
+                        .catch(() => ({ data: {} }));
+                    setConnectionStatus(checkRes.data?.status); // 'pending', 'connected', or null
+                    setIsConnected(checkRes.data?.status === "connected");
+                }
+            } catch (err) {
+                console.error("Error fetching connections:", err);
+            } finally {
+                setLoadingConnections(false);
+            }
+        };
+
+        fetchConnectionData();
+    }, [username, isOwner, currentUser]);
+
+    const addPost = async (post) => {
+        if (!currentUser) return alert("Please log in to post");
         try {
-            const updatedFormData = { ...formData };
+            const res = await api.post(
+                "/post",
+                { content: post.content, media: post.media },
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setPosts((prev) => [res.data, ...(prev || [])]);
+        } catch (err) {
+            console.error("Error creating post:", err);
+            alert("Failed to create post. Please try again.");
+        }
+    };
 
-            if (profileImage) {
-                const uploadResult = await uploadMedia(profileImage, "image");
-                updatedFormData.profilePic = uploadResult?.secure_url;
-            }
+    const handleSendConnection = async () => {
+        if (!currentUser)
+            return alert("Please log in to send connection request");
+        try {
+            await api.post(
+                `/user/send-connection-request/${username}`,
+                {},
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setConnectionStatus("pending");
+        } catch (err) {
+            alert(
+                err.response?.data?.error || "Failed to send connection request"
+            );
+        }
+    };
 
-            if (removeVideo) {
-                updatedFormData.videoCv = null;
-            } else if (videoCvFile) {
-                const uploadResult = await uploadMedia(videoCvFile, "post");
-                updatedFormData.videoCv = uploadResult?.secure_url;
-            }
+    const handleAcceptConnection = async (requestId) => {
+        try {
+            await api.post(
+                `/user/accept-connection/${requestId}`,
+                {},
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setConnectionRequests((prev) =>
+                prev.filter((r) => r._id !== requestId)
+            );
+            setConnections((prev) => [
+                ...prev,
+                ...connectionRequests.filter((r) => r._id === requestId),
+            ]);
+        } catch (err) {
+            alert(err.response?.data?.error || "Failed to accept connection");
+        }
+    };
 
-            const res = await api.put("/user/profile", updatedFormData, {
+    const handleRejectConnection = async (requestId) => {
+        try {
+            await api.post(
+                `/user/reject-connection/${requestId}`,
+                {},
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setConnectionRequests((prev) =>
+                prev.filter((r) => r._id !== requestId)
+            );
+        } catch (err) {
+            alert(err.response?.data?.error || "Failed to reject connection");
+        }
+    };
+
+    const handleRemoveConnection = async (connectedUserId) => {
+        try {
+            await api.delete(`/user/remove-connection/${connectedUserId}`, {
                 headers: { authorization: `Bearer ${currentUser.token}` },
             });
-
-            setProfile(res.data);
-
-            if (updatedFormData.profilePic) {
-                setUser((u) => ({
-                    ...u,
-                    profilePic: updatedFormData.profilePic,
-                }));
-            }
-
-            setNeedsProfileCompletion(false);
-            setIsEditing(false);
-            setProfileImage(null);
-
-            if (location.state?.openEdit) navigate("/", { replace: true });
-        } catch (err) {
-            console.error(
-                "Error updating profile:",
-                err?.response?.data || err
+            setConnections((prev) =>
+                prev.filter((c) => c._id !== connectedUserId)
             );
+            setIsConnected(false);
+            setConnectionStatus(null);
+        } catch (err) {
+            alert(err.response?.data?.error || "Failed to remove connection");
+        }
+    };
+
+    useEffect(() => {
+        // if owner and openEdit, open editor and set profile completion flag
+        if (isOwner && profile) {
+            if (location.state?.openEdit) {
+                setIsEditing(true);
+                setActiveTab("about");
+                if (!profile.isProfileComplete) setNeedsProfileCompletion(true);
+            }
+        }
+    }, [isOwner, profile, location.state?.openEdit]);
+
+    const handleSubmit = async (e) => {
+        try {
+            await hookHandleSubmit(e, {
+                onSuccess: (resData) => {
+                    // resData is the updated profile (per server)
+                    setHookProfile(resData);
+
+                    if (formData.profilePic) {
+                        setHookUser((u) => ({
+                            ...u,
+                            profilePic: formData.profilePic,
+                        }));
+                    }
+
+                    setNeedsProfileCompletion(false);
+                    setIsEditing(false);
+                    setProfileImage(null);
+
+                    if (location.state?.openEdit)
+                        navigate("/", { replace: true });
+                },
+            });
+        } catch (err) {
             setError(
                 err.response?.data?.error ||
                     "Failed to update profile. Please try again."
@@ -184,82 +298,9 @@ function Profile() {
         }
     };
 
-    const handleAddSkill = () => {
-        setFormData({ ...formData, skills: [...formData.skills, ""] });
-    };
-
-    const handleSkillChange = (index, value) => {
-        const newSkills = [...formData.skills];
-        newSkills[index] = value;
-        setFormData({ ...formData, skills: newSkills });
-    };
-
-    const handleRemoveSkill = (index) => {
-        const newSkills = formData.skills.filter((_, i) => i !== index);
-        setFormData({ ...formData, skills: newSkills });
-    };
-
-    const handleAddJob = () => {
-        setFormData({
-            ...formData,
-            pastJobs: [
-                ...formData.pastJobs,
-                {
-                    title: "",
-                    company: "",
-                    startDate: "",
-                    endDate: "",
-                    current: false,
-                    description: "",
-                },
-            ],
-        });
-    };
-
-    const handleJobChange = (index, field, value) => {
-        const newJobs = [...formData.pastJobs];
-        newJobs[index][field] = value;
-        setFormData({ ...formData, pastJobs: newJobs });
-    };
-
-    const handleRemoveJob = (index) => {
-        const newJobs = formData.pastJobs.filter((_, i) => i !== index);
-        setFormData({ ...formData, pastJobs: newJobs });
-    };
-
-    const handleAddEducation = () => {
-        setFormData({
-            ...formData,
-            education: [
-                ...formData.education,
-                {
-                    institution: "",
-                    degree: "",
-                    field: "",
-                    startDate: "",
-                    endDate: "",
-                    current: false,
-                },
-            ],
-        });
-    };
-
-    const handleEducationChange = (index, field, value) => {
-        const newEducation = [...formData.education];
-        newEducation[index][field] = value;
-        setFormData({ ...formData, education: newEducation });
-    };
-
-    const handleRemoveEducation = (index) => {
-        const newEducation = formData.education.filter((_, i) => i !== index);
-        setFormData({ ...formData, education: newEducation });
-    };
-
     const handleGenerateCV = () => {
         window.print();
     };
-
-    // Hide navbar when profile completion is required
     useEffect(() => {
         if (needsProfileCompletion) {
             document
@@ -288,7 +329,7 @@ function Profile() {
             window.removeEventListener("beforeunload", handleBeforeUnload);
     }, [needsProfileCompletion]);
 
-    if (loading) {
+    if (formLoading || loadingPosts) {
         return <div>Loading profile...</div>;
     }
 
@@ -297,965 +338,370 @@ function Profile() {
     }
 
     return (
-        <div className="profile">
-            <div className="profile-container">
-                <div className="profile-header">
-                    <img
-                        src={
-                            user.profilePic || "https://via.placeholder.com/150"
-                        }
-                        alt={user.username}
-                        className="profile-image"
+        <div className="min-h-screen bg-slate-50">
+            <div className="page-container py-8">
+                <div className="max-w-4xl mx-auto space-y-6">
+                    <ProfileHeader
+                        user={user}
+                        profile={profile}
+                        isOwner={isOwner}
+                        isEditing={isEditing}
+                        onEdit={() => navigate("/profile/editprofile")}
+                        onGenerateCV={handleGenerateCV}
                     />
-                    <div className="profile-info">
-                        <h2>
-                            {profile.companyName ||
-                                `${profile.firstName || ""} ${
-                                    profile.lastName || ""
-                                }`.trim() ||
-                                user.username}
-                        </h2>
-                        <p className="username-tag">{user.username}</p>
-                        {isOwner && !isEditing && (
-                            <div className="profile-actions">
+
+                    {/* Connection & Message Buttons */}
+                    {!isOwner && currentUser && !isEditing && (
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200/50 flex gap-3">
+                            {connectionStatus === "pending" ? (
+                                <button
+                                    disabled
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-medium cursor-not-allowed"
+                                >
+                                    <UserCheck className="w-4 h-4" />
+                                    Connection Pending
+                                </button>
+                            ) : isConnected ? (
                                 <button
                                     onClick={() =>
-                                        navigate("/profile/editprofile")
+                                        handleRemoveConnection(user._id)
                                     }
-                                    className="edit-btn"
+                                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition"
                                 >
-                                    Edit Profile
+                                    <X className="w-4 h-4" />
+                                    Remove Connection
                                 </button>
-                                {profile.profileType !== "company" && (
-                                    <button
-                                        onClick={handleGenerateCV}
-                                        className="edit-btn"
-                                    >
-                                        Generate CV
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {!isEditing && (
-                    <div className="profile-tabs">
-                        <button
-                            className={`tab-btn ${
-                                activeTab === "posts" ? "active" : ""
-                            }`}
-                            onClick={() => setActiveTab("posts")}
-                        >
-                            Posts
-                        </button>
-                        <button
-                            className={`tab-btn ${
-                                activeTab === "about" ? "active" : ""
-                            }`}
-                            onClick={() => setActiveTab("about")}
-                        >
-                            About Me
-                        </button>
-                    </div>
-                )}
-
-                {isEditing && (
-                    <form onSubmit={handleSubmit} className="edit-form">
-                        {error && <div className="error">{error}</div>}
-
-                        <ImageUpload
-                            label={"Profile Image"}
-                            buttonLabel={"Choose Picture"}
-                            onChange={(e) => setProfileImage(e.target.files[0])}
-                            isLoading={false}
-                            preview={profileImage}
-                        />
-
-                        {/* Preview */}
-                        {(profileImage || user.profilePic) && (
-                            <div
-                                className="image-preview"
-                                style={{ marginTop: 10 }}
-                            >
-                                <img
-                                    src={
-                                        profileImage
-                                            ? URL.createObjectURL(profileImage)
-                                            : user.profilePic
-                                    }
-                                    alt="Preview"
-                                    style={{
-                                        width: "150px",
-                                        height: "150px",
-                                        objectFit: "cover",
-                                        borderRadius: "50%",
-                                    }}
-                                />
-                            </div>
-                        )}
-
-                        <div className="form-group">
-                            <label>Video CV:</label>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    gap: 12,
-                                    alignItems: "center",
-                                    marginTop: 8,
-                                }}
-                            >
-                                <input
-                                    type="file"
-                                    accept="video/*"
-                                    onChange={(e) => {
-                                        setVideoCvFile(e.target.files[0]);
-                                        setRemoveVideo(false);
-                                    }}
-                                    style={{ display: "none" }}
-                                    id="video-cv-input-profile"
-                                />
-                                <label
-                                    htmlFor="video-cv-input-profile"
-                                    className="text-green-500 hover:text-green-700 cursor-pointer"
-                                >
-                                    Choose Video CV
-                                </label>
-                                {(videoCvPreview || profile?.videoCv) && (
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            gap: 8,
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <video
-                                            src={
-                                                videoCvPreview ||
-                                                profile.videoCv
-                                            }
-                                            width={200}
-                                            controls
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setVideoCvFile(null);
-                                                setVideoCvPreview(null);
-                                                setRemoveVideo(true);
-                                            }}
-                                            className="px-3 py-1 bg-red-500 text-white rounded"
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                            <p
-                                style={{
-                                    fontSize: 12,
-                                    color: "#6b7280",
-                                    marginTop: 8,
-                                }}
-                            >
-                                MP4, MOV (max 50MB)
-                            </p>
-                        </div>
-
-                        {profile?.profileType === "company" ? (
-                            <div className="form-group">
-                                <label>Company Name:</label>
-                                <input
-                                    type="text"
-                                    value={formData.companyName}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            companyName: e.target.value,
-                                        })
-                                    }
-                                    placeholder="Your company name"
-                                />
-                            </div>
-                        ) : (
-                            <>
-                                <div className="form-group">
-                                    <label>First Name:</label>
-                                    <input
-                                        type="text"
-                                        value={formData.firstName}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                firstName: e.target.value,
-                                            })
-                                        }
-                                        placeholder="Your first name"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Last Name:</label>
-                                    <input
-                                        type="text"
-                                        value={formData.lastName}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                lastName: e.target.value,
-                                            })
-                                        }
-                                        placeholder="Your last name"
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        <div className="form-group">
-                            <label>Email:</label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        email: e.target.value,
-                                    })
-                                }
-                                placeholder="your.email@example.com"
-                                disabled={true}
-                                style={{
-                                    backgroundColor: "#f0f0f0",
-                                    cursor: "not-allowed",
-                                }}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label>Phone Number:</label>
-                            <input
-                                type="tel"
-                                value={formData.phoneNumber}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        phoneNumber: e.target.value,
-                                    })
-                                }
-                                placeholder="+1234567890"
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label>Location:</label>
-                            <input
-                                type="text"
-                                value={formData.location}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        location: e.target.value,
-                                    })
-                                }
-                                placeholder="City, Country"
-                            />
-                        </div>
-
-                        {profile?.profileType !== "company" && (
-                            <div className="form-group">
-                                <label>Gender:</label>
-                                <select
-                                    value={formData.gender}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            gender: e.target.value,
-                                        })
-                                    }
-                                >
-                                    <option value="">Select gender</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                </select>
-                            </div>
-                        )}
-
-                        {profile?.profileType !== "company" && (
-                            <div className="form-group">
-                                <label>Birthday:</label>
-                                <input
-                                    type="date"
-                                    value={formData.birthday}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            birthday: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-                        )}
-
-                        {profile?.profileType === "company" ? (
-                            <>
-                                <div className="form-group">
-                                    <label>Company Description:</label>
-                                    <textarea
-                                        value={formData.companyDescription}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                companyDescription:
-                                                    e.target.value,
-                                            })
-                                        }
-                                        rows="4"
-                                        placeholder="Tell us about your company..."
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Founded Date:</label>
-                                    <input
-                                        type="date"
-                                        value={formData.foundedDate}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                foundedDate: e.target.value,
-                                            })
-                                        }
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Founder Name:</label>
-                                    <input
-                                        type="text"
-                                        value={formData.founderName}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                founderName: e.target.value,
-                                            })
-                                        }
-                                        placeholder="Name of founder(s)"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Industry:</label>
-                                    <input
-                                        type="text"
-                                        value={formData.industry}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                industry: e.target.value,
-                                            })
-                                        }
-                                        placeholder="e.g., Technology, Healthcare, Finance"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Company Size:</label>
-                                    <input
-                                        type="text"
-                                        value={formData.companySize}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                companySize: e.target.value,
-                                            })
-                                        }
-                                        placeholder="e.g., 1-10, 11-50, 51-200, 200+"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Website:</label>
-                                    <input
-                                        type="url"
-                                        value={formData.website}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                website: e.target.value,
-                                            })
-                                        }
-                                        placeholder="https://www.example.com"
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <div className="form-group">
-                                <label>Description:</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            description: e.target.value,
-                                        })
-                                    }
-                                    rows="4"
-                                    placeholder="Tell us about yourself..."
-                                />
-                            </div>
-                        )}
-
-                        {profile?.profileType !== "company" && (
-                            <div className="form-section">
-                                <h3>Skills</h3>
-                                {formData.skills.map((skill, index) => (
-                                    <div key={index} className="array-item">
-                                        <input
-                                            type="text"
-                                            value={skill}
-                                            onChange={(e) =>
-                                                handleSkillChange(
-                                                    index,
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Enter skill"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleRemoveSkill(index)
-                                            }
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                ))}
+                            ) : (
                                 <button
-                                    type="button"
-                                    onClick={handleAddSkill}
-                                    className="add-btn"
+                                    onClick={handleSendConnection}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
                                 >
-                                    + Add Skill
+                                    <UserPlus className="w-4 h-4" />
+                                    Send Connection Request
                                 </button>
-                            </div>
-                        )}
-
-                        {profile?.profileType !== "company" && (
-                            <div className="form-section">
-                                <h3>Work Experience</h3>
-                                {formData.pastJobs.map((job, index) => (
-                                    <div key={index} className="array-item-box">
-                                        <input
-                                            type="text"
-                                            value={job.title}
-                                            onChange={(e) =>
-                                                handleJobChange(
-                                                    index,
-                                                    "title",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Job Title"
-                                            required
-                                        />
-                                        <input
-                                            type="text"
-                                            value={job.company}
-                                            onChange={(e) =>
-                                                handleJobChange(
-                                                    index,
-                                                    "company",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Company"
-                                            required
-                                        />
-                                        <input
-                                            type="date"
-                                            value={
-                                                job.startDate
-                                                    ? new Date(job.startDate)
-                                                          .toISOString()
-                                                          .split("T")[0]
-                                                    : ""
-                                            }
-                                            onChange={(e) =>
-                                                handleJobChange(
-                                                    index,
-                                                    "startDate",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Start Date"
-                                            required
-                                        />
-                                        <input
-                                            type="date"
-                                            value={
-                                                job.endDate
-                                                    ? new Date(job.endDate)
-                                                          .toISOString()
-                                                          .split("T")[0]
-                                                    : ""
-                                            }
-                                            onChange={(e) =>
-                                                handleJobChange(
-                                                    index,
-                                                    "endDate",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="End Date"
-                                            disabled={job.current}
-                                        />
-                                        <label>
-                                            <input
-                                                type="checkbox"
-                                                checked={job.current}
-                                                onChange={(e) =>
-                                                    handleJobChange(
-                                                        index,
-                                                        "current",
-                                                        e.target.checked
-                                                    )
-                                                }
-                                            />
-                                            Currently working here
-                                        </label>
-                                        <textarea
-                                            value={job.description}
-                                            onChange={(e) =>
-                                                handleJobChange(
-                                                    index,
-                                                    "description",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Job Description"
-                                            rows="2"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleRemoveJob(index)
-                                            }
-                                        >
-                                            Remove Job
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={handleAddJob}
-                                    className="add-btn"
-                                >
-                                    + Add Work Experience
-                                </button>
-                            </div>
-                        )}
-
-                        {profile?.profileType !== "company" && (
-                            <div className="form-section">
-                                <h3>Education</h3>
-                                {formData.education.map((edu, index) => (
-                                    <div key={index} className="array-item-box">
-                                        <input
-                                            type="text"
-                                            value={edu.institution}
-                                            onChange={(e) =>
-                                                handleEducationChange(
-                                                    index,
-                                                    "institution",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Institution"
-                                            required
-                                        />
-                                        <input
-                                            type="text"
-                                            value={edu.degree}
-                                            onChange={(e) =>
-                                                handleEducationChange(
-                                                    index,
-                                                    "degree",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Degree"
-                                            required
-                                        />
-                                        <input
-                                            type="text"
-                                            value={edu.field}
-                                            onChange={(e) =>
-                                                handleEducationChange(
-                                                    index,
-                                                    "field",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Field of Study"
-                                            required
-                                        />
-                                        <input
-                                            type="date"
-                                            value={
-                                                edu.startDate
-                                                    ? new Date(edu.startDate)
-                                                          .toISOString()
-                                                          .split("T")[0]
-                                                    : ""
-                                            }
-                                            onChange={(e) =>
-                                                handleEducationChange(
-                                                    index,
-                                                    "startDate",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Start Date"
-                                            required
-                                        />
-                                        <input
-                                            type="date"
-                                            value={
-                                                edu.endDate
-                                                    ? new Date(edu.endDate)
-                                                          .toISOString()
-                                                          .split("T")[0]
-                                                    : ""
-                                            }
-                                            onChange={(e) =>
-                                                handleEducationChange(
-                                                    index,
-                                                    "endDate",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="End Date"
-                                            disabled={edu.current}
-                                        />
-                                        <label>
-                                            <input
-                                                type="checkbox"
-                                                checked={edu.current}
-                                                onChange={(e) =>
-                                                    handleEducationChange(
-                                                        index,
-                                                        "current",
-                                                        e.target.checked
-                                                    )
-                                                }
-                                            />
-                                            Currently studying here
-                                        </label>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleRemoveEducation(index)
-                                            }
-                                        >
-                                            Remove Education
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={handleAddEducation}
-                                    className="add-btn"
-                                >
-                                    + Add Education
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="form-actions">
-                            <button type="submit">Save Changes</button>
+                            )}
+                            {/* Message Button */}
                             <button
-                                type="button"
-                                onClick={() => setIsEditing(false)}
+                                onClick={handleOpenChat}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition"
                             >
-                                Cancel
+                                <MessageCircle className="w-4 h-4" />
+                                Message
                             </button>
                         </div>
-                    </form>
-                )}
+                    )}
 
-                {!isEditing && activeTab === "about" && (
-                    <div className="tab-content">
-                        <div className="profile-details">
-                            {profile.profileType === "company" ? (
-                                <>
-                                    <div className="profile-section">
-                                        <h3>Company Information</h3>
-                                        {profile.email && (
-                                            <p>
-                                                <strong>Email:</strong>{" "}
-                                                {profile.email}
-                                            </p>
-                                        )}
-                                        {profile.phoneNumber && (
-                                            <p>
-                                                <strong>Phone:</strong>{" "}
-                                                {profile.phoneNumber}
-                                            </p>
-                                        )}
-                                        {profile.location && (
-                                            <p>
-                                                <strong>Location:</strong>{" "}
-                                                {profile.location}
-                                            </p>
-                                        )}
-                                        {profile.website && (
-                                            <p>
-                                                <strong>Website:</strong>{" "}
-                                                <a
-                                                    href={profile.website}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    {profile.website}
-                                                </a>
-                                            </p>
-                                        )}
+                    {!isEditing && (
+                        <ProfileTabs
+                            activeTab={activeTab}
+                            setActiveTab={setActiveTab}
+                            isEditing={isEditing}
+                        />
+                    )}
 
-                                        {profile.videoCv && (
-                                            <div style={{ marginTop: 12 }}>
-                                                <h4>Company Video</h4>
-                                                <video
-                                                    src={profile.videoCv}
-                                                    controls
-                                                    width={420}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
+                    {isEditing && (
+                        <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-8">
+                            <ProfileEditForm
+                                error={formError || error}
+                                profileImage={profileImage}
+                                setProfileImage={setProfileImage}
+                                videoCvFile={videoCvFile}
+                                setVideoCvFile={setVideoCvFile}
+                                videoCvPreview={videoCvPreview}
+                                setVideoCvPreview={setVideoCvPreview}
+                                removeVideo={removeVideo}
+                                setRemoveVideo={setRemoveVideo}
+                                profile={profile}
+                                formData={formData}
+                                setFormData={setFormData}
+                                handleSubmit={handleSubmit}
+                                handleAddSkill={handleAddSkill}
+                                handleSkillChange={handleSkillChange}
+                                handleRemoveSkill={handleRemoveSkill}
+                                handleAddJob={handleAddJob}
+                                handleJobChange={handleJobChange}
+                                handleRemoveJob={handleRemoveJob}
+                                handleAddEducation={handleAddEducation}
+                                handleEducationChange={handleEducationChange}
+                                handleRemoveEducation={handleRemoveEducation}
+                                setIsEditing={setIsEditing}
+                            />
+                        </div>
+                    )}
 
-                                    {profile.companyDescription && (
-                                        <div className="profile-section">
-                                            <h3>About Company</h3>
-                                            <p>{profile.companyDescription}</p>
-                                        </div>
-                                    )}
+                    {!isEditing && activeTab === "about" && (
+                        <div className="space-y-4">
+                            <ProfileAbout profile={profile} />
+                        </div>
+                    )}
 
-                                    {profile.foundedDate && (
-                                        <div className="profile-section">
-                                            <h3>Founded</h3>
-                                            <p>
-                                                {new Date(
-                                                    profile.foundedDate
-                                                ).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {profile.founderName && (
-                                        <div className="profile-section">
-                                            <h3>Founder</h3>
-                                            <p>{profile.founderName}</p>
-                                        </div>
-                                    )}
-
-                                    {profile.industry && (
-                                        <div className="profile-section">
-                                            <h3>Industry</h3>
-                                            <p>{profile.industry}</p>
-                                        </div>
-                                    )}
-
-                                    {profile.companySize && (
-                                        <div className="profile-section">
-                                            <h3>Company Size</h3>
-                                            <p>
-                                                {profile.companySize} employees
-                                            </p>
-                                        </div>
-                                    )}
-                                </>
+                    {!isEditing && activeTab === "posts" && (
+                        <div className="space-y-4">
+                            {isOwner && <CreatePost addPost={addPost} />}
+                            {posts && posts.length > 0 ? (
+                                <Posts posts={posts} />
                             ) : (
-                                <>
-                                    <div className="profile-section">
-                                        <h3>Contact Information</h3>
-                                        {profile.email && (
-                                            <p>
-                                                <strong>Email:</strong>{" "}
-                                                {profile.email}
-                                            </p>
-                                        )}
-                                        {profile.phoneNumber && (
-                                            <p>
-                                                <strong>Phone:</strong>{" "}
-                                                {profile.phoneNumber}
-                                            </p>
-                                        )}
-                                        {profile.location && (
-                                            <p>
-                                                <strong>Location:</strong>{" "}
-                                                {profile.location}
-                                            </p>
-                                        )}
-                                        {profile.birthday && (
-                                            <p>
-                                                <strong>Birthday:</strong>{" "}
-                                                {new Date(
-                                                    profile.birthday
-                                                ).toLocaleDateString()}
-                                            </p>
-                                        )}
-                                        {profile.gender && (
-                                            <p>
-                                                <strong>Gender:</strong>{" "}
-                                                {profile.gender
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    profile.gender.slice(1)}
-                                            </p>
-                                        )}
+                                <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white px-8 py-12 text-center">
+                                    <p className="text-slate-600 text-lg">
+                                        No posts yet
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
-                                        {profile.videoCv && (
-                                            <div style={{ marginTop: 12 }}>
-                                                <h4>Video CV</h4>
-                                                <video
-                                                    src={profile.videoCv}
-                                                    controls
-                                                    width={420}
+                    {/* Followers Tab */}
+                    {!isEditing && activeTab === "followers" && (
+                        <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                            <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                Followers ({followers.length})
+                            </h3>
+                            {loadingConnections ? (
+                                <div className="text-center text-gray-600">
+                                    Loading...
+                                </div>
+                            ) : followers.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {followers.map((follower) => (
+                                        <div
+                                            key={follower._id}
+                                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={follower.profilePic}
+                                                    alt={follower.username}
+                                                    className="w-10 h-10 rounded-full object-cover"
                                                 />
+                                                <div>
+                                                    <p className="font-medium text-gray-900">
+                                                        {follower.username}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500">
+                                                        {follower.email}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        )}
+                                            <button
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/profile/${follower.username}`
+                                                    )
+                                                }
+                                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-600">
+                                    No followers yet
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Following Tab */}
+                    {!isEditing && activeTab === "following" && (
+                        <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                            <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                Following ({following.length})
+                            </h3>
+                            {loadingConnections ? (
+                                <div className="text-center text-gray-600">
+                                    Loading...
+                                </div>
+                            ) : following.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {following.map((followee) => (
+                                        <div
+                                            key={followee._id}
+                                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={followee.profilePic}
+                                                    alt={followee.username}
+                                                    className="w-10 h-10 rounded-full object-cover"
+                                                />
+                                                <div>
+                                                    <p className="font-medium text-gray-900">
+                                                        {followee.username}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500">
+                                                        {followee.email}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/profile/${followee.username}`
+                                                    )
+                                                }
+                                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-600">
+                                    Not following anyone yet
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Connections Tab */}
+                    {!isEditing && activeTab === "connections" && (
+                        <div className="space-y-6">
+                            {/* Connection Requests */}
+                            {isOwner && connectionRequests.length > 0 && (
+                                <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                                    <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                        Pending Connection Requests (
+                                        {connectionRequests.length})
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {connectionRequests.map((request) => (
+                                            <div
+                                                key={request._id}
+                                                className="flex items-center justify-between p-4 border border-yellow-200 rounded-lg bg-yellow-50"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={
+                                                            request.requester
+                                                                ?.profilePic
+                                                        }
+                                                        alt={
+                                                            request.requester
+                                                                ?.username
+                                                        }
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">
+                                                            {
+                                                                request
+                                                                    .requester
+                                                                    ?.username
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-gray-500">
+                                                            {
+                                                                request
+                                                                    .requester
+                                                                    ?.email
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAcceptConnection(
+                                                                request._id
+                                                            )
+                                                        }
+                                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition"
+                                                    >
+                                                        Accept
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleRejectConnection(
+                                                                request._id
+                                                            )
+                                                        }
+                                                        className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
+                            )}
 
-                                    {profile.displayName && (
-                                        <div className="profile-section">
-                                            <h3>Display Name</h3>
-                                            <p>{profile.displayName}</p>
-                                        </div>
-                                    )}
-
-                                    {profile.description && (
-                                        <div className="profile-section">
-                                            <h3>Description</h3>
-                                            <p>{profile.description}</p>
-                                        </div>
-                                    )}
-
-                                    {profile.skills &&
-                                        profile.skills.length > 0 && (
-                                            <div className="profile-section">
-                                                <h3>Skills</h3>
-                                                <div className="skills-list">
-                                                    {profile.skills.map(
-                                                        (skill, index) => (
-                                                            <span
-                                                                key={index}
-                                                                className="skill-tag"
-                                                            >
-                                                                {skill}
-                                                            </span>
-                                                        )
+                            {/* Connections List */}
+                            <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                                <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                    Connections ({connections.length})
+                                </h3>
+                                {loadingConnections ? (
+                                    <div className="text-center text-gray-600">
+                                        Loading...
+                                    </div>
+                                ) : connections.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {connections.map((connection) => (
+                                            <div
+                                                key={connection._id}
+                                                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={
+                                                            connection.profilePic
+                                                        }
+                                                        alt={
+                                                            connection.username
+                                                        }
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">
+                                                            {
+                                                                connection.username
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-gray-500">
+                                                            {connection.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            navigate(
+                                                                `/profile/${connection.username}`
+                                                            )
+                                                        }
+                                                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleRemoveConnection(
+                                                                    connection._id
+                                                                )
+                                                            }
+                                                            className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition"
+                                                        >
+                                                            Remove
+                                                        </button>
                                                     )}
                                                 </div>
                                             </div>
-                                        )}
-
-                                    {profile.pastJobs &&
-                                        profile.pastJobs.length > 0 && (
-                                            <div className="profile-section">
-                                                <h3>Work Experience</h3>
-                                                {profile.pastJobs.map(
-                                                    (job, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="experience-item"
-                                                        >
-                                                            <h4>
-                                                                {job.title} at{" "}
-                                                                {job.company}
-                                                            </h4>
-                                                            <p className="date-range">
-                                                                {job.startDate &&
-                                                                    new Date(
-                                                                        job.startDate
-                                                                    ).toLocaleDateString()}{" "}
-                                                                -{" "}
-                                                                {job.current
-                                                                    ? "Present"
-                                                                    : job.endDate &&
-                                                                      new Date(
-                                                                          job.endDate
-                                                                      ).toLocaleDateString()}
-                                                            </p>
-                                                            {job.description && (
-                                                                <p>
-                                                                    {
-                                                                        job.description
-                                                                    }
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    )
-                                                )}
-                                            </div>
-                                        )}
-
-                                    {profile.education &&
-                                        profile.education.length > 0 && (
-                                            <div className="profile-section">
-                                                <h3>Education</h3>
-                                                {profile.education.map(
-                                                    (edu, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="experience-item"
-                                                        >
-                                                            <h4>
-                                                                {edu.degree}{" "}
-                                                                {edu.field &&
-                                                                    `in ${edu.field}`}
-                                                            </h4>
-                                                            <p className="institution">
-                                                                {
-                                                                    edu.institution
-                                                                }
-                                                            </p>
-                                                            <p className="date-range">
-                                                                {edu.startDate &&
-                                                                    new Date(
-                                                                        edu.startDate
-                                                                    ).toLocaleDateString()}{" "}
-                                                                -{" "}
-                                                                {edu.current
-                                                                    ? "Present"
-                                                                    : edu.endDate &&
-                                                                      new Date(
-                                                                          edu.endDate
-                                                                      ).toLocaleDateString()}
-                                                            </p>
-                                                        </div>
-                                                    )
-                                                )}
-                                            </div>
-                                        )}
-                                </>
-                            )}
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-gray-600">
+                                        No connections yet
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                )}
-
-                {!isEditing && activeTab === "posts" && (
-                    <div className="tab-content">
-                        <div className="profile-section posts-section">
-                            <h3>Posts</h3>
-                            {posts.length > 0 ? (
-                                <Posts posts={posts} setPosts={setPosts} />
-                            ) : (
-                                <p>No posts yet</p>
-                            )}
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );

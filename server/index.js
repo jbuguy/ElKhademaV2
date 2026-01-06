@@ -1,6 +1,6 @@
 import express from "express";
 import { connectDB } from "./config/db.js";
-import userRouter from "./routes/authRoute.js";
+import authRouter from "./routes/authRoute.js";
 import postRouter from "./routes/postRoute.js";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -10,6 +10,7 @@ import jobsRouter from "./routes/jobsRoute.js";
 import notificationRouter from "./routes/notificationRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import reportRouter from "./routes/reportRoute.js";
+import userRouter from "./routes/userRoute.js";
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,7 @@ if (process.env.NODE_ENV == "development") {
     );
 }
 app.use(express.json());
+app.use("/api/user", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/post", postRouter);

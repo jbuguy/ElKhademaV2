@@ -52,6 +52,59 @@ export default function MessagesPage() {
             .catch((err) => console.error(err));
     }, [activeChat, user]);
 
+    // keep a ref to messages for the poll loop
+    const messagesRef = useRef(messages);
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
+
+    // Long-polling: ask server for new messages after the last one we have.
+    useEffect(() => {
+        if (!activeChat?._id || !user) return;
+        let cancelled = false;
+
+        const pollOnce = async () => {
+            if (cancelled) return;
+            try {
+                const lastMessageId =
+                    messagesRef.current && messagesRef.current.length > 0
+                        ? messagesRef.current[messagesRef.current.length - 1]
+                              ._id
+                        : undefined;
+                const res = await api.get(
+                    `conversation/${activeChat._id}/messages/poll`,
+                    {
+                        params: { lastMessageId },
+                        headers: { authorization: `Bearer ${user.token}` },
+                        timeout: 35000, // ensure client waits a bit longer than server timeout
+                    }
+                );
+
+                const newMsgs = res.data || [];
+                if (newMsgs.length > 0) {
+                    setMessages((prev) => {
+                        const ids = new Set(prev.map((m) => m._id));
+                        const filtered = newMsgs.filter((m) => !ids.has(m._id));
+                        return filtered.length ? [...prev, ...filtered] : prev;
+                    });
+                }
+            } catch (err) {
+                console.error("Polling error:", err.message || err);
+                // short backoff on error
+                await new Promise((r) => setTimeout(r, 2000));
+            } finally {
+                // loop again unless cancelled
+                if (!cancelled) setTimeout(pollOnce, 50); // slight delay to avoid tight loop
+            }
+        };
+
+        pollOnce();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeChat?._id, user]);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -113,34 +166,38 @@ export default function MessagesPage() {
     });
 
     return (
-        <div className="flex h-screen bg-white">
+        <div className="h-screen flex bg-slate-50">
             {/* Sidebar - Conversations List */}
-            <div className="w-80 border-r border-gray-300 flex flex-col bg-white">
+            <div className="w-96 border-r border-slate-200 flex flex-col bg-white shadow-sm">
                 {/* Header */}
-                <div className="p-4 border-b border-gray-200">
-                    <h1 className="text-2xl font-bold mb-4">Messages</h1>
+                <div className="p-6 border-b border-slate-200 bg-gradient-to-br from-slate-50 to-white">
+                    <h1 className="text-3xl font-bold mb-4 text-slate-900">
+                        Messages
+                    </h1>
                     <div className="relative">
-                        <IoMdSearch className="absolute left-3 top-3 text-gray-500" />
+                        <IoMdSearch className="absolute left-4 top-3.5 text-slate-400" />
                         <input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                         />
                     </div>
                 </div>
 
-                <div className="grow overflow-y-auto">
+                <div className="grow overflow-y-auto space-y-1 p-3">
                     {loading ? (
-                        <div className="p-4 text-center text-gray-500">
-                            Loading...
+                        <div className="p-8 text-center text-slate-500">
+                            <p className="text-sm">Loading conversations...</p>
                         </div>
                     ) : filteredConversations.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500">
-                            {conversations.length === 0
-                                ? "No conversations yet"
-                                : "No results found"}
+                        <div className="p-8 text-center text-slate-500">
+                            <p className="text-sm">
+                                {conversations.length === 0
+                                    ? "No conversations yet"
+                                    : "No results found"}
+                            </p>
                         </div>
                     ) : (
                         filteredConversations.map((conv) => {
@@ -156,24 +213,24 @@ export default function MessagesPage() {
                                 <div
                                     key={conv._id}
                                     onClick={() => setActiveChat(conv)}
-                                    className={`p-3 border-b border-gray-100 cursor-pointer transition ${
+                                    className={`p-4 rounded-lg cursor-pointer transition-all ${
                                         isActive
-                                            ? "bg-blue-50"
-                                            : "hover:bg-gray-50"
+                                            ? "bg-emerald-50 border border-emerald-200 shadow-sm"
+                                            : "hover:bg-slate-50 border border-transparent"
                                     }`}
                                 >
                                     <div className="flex gap-3 items-start">
                                         <img
                                             src={displayPic}
                                             alt=""
-                                            className="w-12 h-12 rounded-full object-cover shrink-0"
+                                            className="w-12 h-12 rounded-full object-cover shrink-0 ring-2 ring-slate-200"
                                         />
                                         <div className="grow min-w-0">
-                                            <p className="font-500 text-gray-900 truncate">
+                                            <p className="font-semibold text-slate-900 truncate">
                                                 {displayName}
                                             </p>
                                             {lastMessage && (
-                                                <p className="text-sm text-gray-600 truncate">
+                                                <p className="text-sm text-slate-500 truncate">
                                                     {lastMessage.userId._id ===
                                                     user._id
                                                         ? "You: "
@@ -190,23 +247,21 @@ export default function MessagesPage() {
                 </div>
             </div>
 
-            <div className="grow flex flex-col bg-white">
+            <div className="grow flex flex-col bg-slate-50">
                 {activeChat ? (
                     <>
-                        <div className="border-b border-gray-300 p-4 bg-white flex items-center gap-3">
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src={getContactInfo(activeChat).displayPic}
-                                    alt=""
-                                    className="w-10 h-10 rounded-full object-cover"
-                                />
-                                <h2 className="text-xl font-semibold">
-                                    {getContactInfo(activeChat).displayName}
-                                </h2>
-                            </div>
+                        <div className="border-b border-slate-200 p-6 bg-white flex items-center gap-4 shadow-sm">
+                            <img
+                                src={getContactInfo(activeChat).displayPic}
+                                alt=""
+                                className="w-12 h-12 rounded-full object-cover ring-2 ring-slate-200"
+                            />
+                            <h2 className="text-xl font-bold text-slate-900">
+                                {getContactInfo(activeChat).displayName}
+                            </h2>
                         </div>
 
-                        <div className="grow overflow-y-auto p-4 bg-white flex flex-col gap-3">
+                        <div className="grow overflow-y-auto p-6 flex flex-col gap-4">
                             {messages.map((m, index) => {
                                 const isMine = m.userId._id === user._id;
                                 return (
@@ -226,18 +281,18 @@ export default function MessagesPage() {
                                             />
                                         )}
                                         <div
-                                            className={`max-w-xs px-4 py-2 rounded-lg ${
+                                            className={`max-w-xs px-4 py-2.5 rounded-2xl ${
                                                 isMine
-                                                    ? "bg-green-500 text-white rounded-br-none"
-                                                    : "bg-gray-200 text-gray-900 rounded-bl-none"
+                                                    ? "bg-emerald-600 text-white rounded-br-md shadow-md"
+                                                    : "bg-white text-slate-900 rounded-bl-md border border-slate-200 shadow-sm"
                                             }`}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <p className="wrap-break-word">
+                                                <p className="wrap-break-word text-sm">
                                                     {m.content}
                                                 </p>
                                                 <button
-                                                    className="text-xs text-red-600"
+                                                    className="text-xs text-red-500 hover:text-red-700 opacity-0 hover:opacity-100 transition-opacity"
                                                     onClick={async () => {
                                                         if (!user)
                                                             return alert(
@@ -277,10 +332,10 @@ export default function MessagesPage() {
                                                 </button>
                                             </div>
                                             <span
-                                                className={`text-xs mt-1 block ${
+                                                className={`text-xs mt-1.5 block ${
                                                     isMine
-                                                        ? "text-blue-100"
-                                                        : "text-gray-600"
+                                                        ? "text-emerald-100"
+                                                        : "text-slate-500"
                                                 }`}
                                             >
                                                 {formatTime(m.createdAt)}
@@ -292,11 +347,11 @@ export default function MessagesPage() {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        <div className="border-t border-gray-300 p-4 bg-white">
-                            <div className="flex gap-2">
+                        <div className="border-t border-slate-200 p-6 bg-white shadow-lg">
+                            <div className="flex gap-3">
                                 <textarea
-                                    className="grow border border-gray-300 rounded-full px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-24"
-                                    placeholder="Aa"
+                                    className="grow resize-none max-h-24 rounded-2xl px-5 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm"
+                                    placeholder="Type a message..."
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     onKeyDown={(e) => {
@@ -311,7 +366,7 @@ export default function MessagesPage() {
                                 <button
                                     onClick={sendMessage}
                                     disabled={!message.trim() || isSending}
-                                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-full p-2 shrink-0 transition"
+                                    className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-md"
                                 >
                                     <IoMdSend size={20} />
                                 </button>
@@ -319,10 +374,20 @@ export default function MessagesPage() {
                         </div>
                     </>
                 ) : (
-                    <div className="grow flex items-center justify-center text-gray-500">
+                    <div className="grow flex items-center justify-center text-slate-500">
                         <div className="text-center">
-                            <p className="text-lg mb-2">
-                                Select a conversation to start messaging
+                            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <IoMdSearch
+                                    size={40}
+                                    className="text-slate-400"
+                                />
+                            </div>
+                            <p className="text-lg font-semibold text-slate-900 mb-2">
+                                Select a conversation
+                            </p>
+                            <p className="text-sm text-slate-500">
+                                Choose a conversation from the list to start
+                                messaging
                             </p>
                         </div>
                     </div>

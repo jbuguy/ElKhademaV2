@@ -81,7 +81,7 @@ const JobHeader = ({
         navigate("/jobs/form", { state: { jobToEdit: job } });
     };
     return (
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-8 rounded-lg shadow-lg mb-6">
+        <div className="bg-emerald-600 text-white p-8 rounded-lg shadow-lg mb-6">
             <div className="flex items-start gap-6">
                 <img
                     src={poster?.profilePic}

@@ -4,6 +4,7 @@ import { Post } from "../models/post.model.js";
 import { generateToken } from "../utils/jwt.js";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
+import { Conversation } from "../models/conversation.model.js";
 
 /* =========================
    AUTH
@@ -134,16 +135,35 @@ export const googleAuth = async (req, res) => {
 
         let user = await User.findOne({ email });
 
+        // parse name into first/last
+        const nameParts = (name || "").trim().split(/\s+/).filter(Boolean);
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ") || "";
+
         if (!user) {
-            const base =
-                email
-                    .split("@")[0]
-                    .replace(/[^a-zA-Z0-9_-]/g, "")
-                    .toLowerCase() || "user";
+            // Prefer a username derived from the Google name, fall back to email local part
+            let base = (name || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9._-]+/g, ".") // replace spaces/invalid chars with dots
+                .replace(/(^\.+|\.+$)/g, "") // trim leading/trailing dots
+                .replace(/\.{2,}/g, "."); // collapse consecutive dots
+
+            if (!base) {
+                base = (email.split("@")[0] || "user")
+                    .replace(/[^a-z0-9_-]+/g, "")
+                    .toLowerCase();
+            }
+
+            // enforce max length for base to leave room for suffixes
+            base = base.slice(0, 30) || "user";
+
             let username = base;
             let suffix = 1;
             while (await User.findOne({ username })) {
-                username = `${base}${suffix}`;
+                const suffixStr = String(suffix);
+                // ensure username length stays within 30 chars
+                const maxBaseLen = Math.max(1, 30 - suffixStr.length);
+                username = `${base.slice(0, maxBaseLen)}${suffixStr}`;
                 suffix += 1;
             }
 
@@ -160,17 +180,40 @@ export const googleAuth = async (req, res) => {
                 userId: user._id,
                 email,
                 profilePic: picture,
-                displayName: name,
+                firstName,
+                lastName,
             });
+        } else {
+            // existing user: keep profilePic and names in sync with Google data if provided
+            const userUpdate = {};
+            if (picture && user.profilePic !== picture)
+                userUpdate.profilePic = picture;
+            if (Object.keys(userUpdate).length) {
+                await User.findByIdAndUpdate(user._id, userUpdate);
+                user = await User.findById(user._id);
+            }
+
+            await Profile.findOneAndUpdate(
+                { userId: user._id },
+                { $set: { email, profilePic: picture, firstName, lastName } },
+                { new: true, upsert: true }
+            );
         }
 
         const token = generateToken(user);
+
+        // compute displayName for convenience (first + last or fallback to username)
+        const profile = await Profile.findOne({ userId: user._id }).lean();
+        const displayName =
+            `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() ||
+            user.username;
 
         res.status(200).json({
             token,
             email: user.email,
             username: user.username,
             profilePic: user.profilePic,
+            displayName,
             role: user.role,
             _id: user._id,
         });
@@ -265,6 +308,197 @@ export const updateProfile = async (req, res) => {
         }
 
         res.status(200).json(profile);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+/* =========================
+   CONNECTIONS & FOLLOWERS
+========================= */
+
+// GET /user/followers/:username
+export const getFollowers = async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username })
+            .populate("followers", "username profilePic email")
+            .select("followers");
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json(user.followers);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// GET /user/following/:username
+export const getFollowing = async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username })
+            .populate("following", "username profilePic email")
+            .select("following");
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json(user.following);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// GET /user/connections/:username
+export const getConnections = async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username })
+            .populate("connections", "username profilePic email")
+            .select("connections");
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json(user.connections);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// GET /user/connection-status/:username
+export const getConnectionStatus = async (req, res) => {
+    try {
+        const targetUser = await User.findOne({
+            username: req.params.username,
+        });
+        const currentUser = await User.findById(req.user.id);
+
+        if (!targetUser)
+            return res.status(404).json({ error: "User not found" });
+
+        let status = "none"; // none, pending, connected
+
+        if (currentUser.connections.includes(targetUser._id)) {
+            status = "connected";
+        } else if (
+            targetUser.connectionRequests.some(
+                (req) => req.from.toString() === currentUser._id.toString()
+            )
+        ) {
+            status = "pending";
+        }
+
+        res.status(200).json({ status });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// GET /user/connection-requests (Protected: for owner)
+export const getConnectionRequests = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).populate(
+            "connectionRequests.from",
+            "username profilePic email"
+        );
+
+        res.status(200).json(user.connectionRequests);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// POST /user/send-connection-request/:username
+export const sendConnectionRequest = async (req, res) => {
+    try {
+        const senderId = req.user.id;
+        const targetUser = await User.findOne({
+            username: req.params.username,
+        });
+
+        if (!targetUser)
+            return res.status(404).json({ error: "User not found" });
+        if (targetUser._id.toString() === senderId)
+            return res
+                .status(400)
+                .json({ error: "Cannot connect to yourself" });
+
+        // Check if already connected
+        if (targetUser.connections.includes(senderId)) {
+            return res.status(400).json({ error: "Already connected" });
+        }
+
+        // Add to pending requests
+        await User.findByIdAndUpdate(targetUser._id, {
+            $addToSet: { connectionRequests: { from: senderId } },
+        });
+
+        // Create or find a conversation between sender and targetUser
+        let conversation = await Conversation.findOne({
+            members: { $all: [senderId, targetUser._id], $size: 2 },
+        });
+        if (!conversation) {
+            conversation = await Conversation.create({
+                members: [senderId, targetUser._id],
+            });
+        }
+
+        res.status(200).json({ message: "Connection request sent" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// POST /user/accept-connection/:requestId (requestId is the sender's User ID)
+export const acceptConnection = async (req, res) => {
+    try {
+        const receiverId = req.user.id;
+        const senderId = req.params.requestId;
+
+        // 1. Add each other to connections
+        await User.findByIdAndUpdate(receiverId, {
+            $addToSet: { connections: senderId },
+            $pull: { connectionRequests: { from: senderId } },
+        });
+        await User.findByIdAndUpdate(senderId, {
+            $addToSet: { connections: receiverId },
+        });
+
+        // Create or find a conversation between sender and receiver
+        let conversation = await Conversation.findOne({
+            members: { $all: [senderId, receiverId], $size: 2 },
+        });
+        if (!conversation) {
+            conversation = await Conversation.create({
+                members: [senderId, receiverId],
+            });
+        }
+
+        res.status(200).json({ message: "Connection accepted" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// POST /user/reject-connection/:requestId
+export const rejectConnection = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.user.id, {
+            $pull: { connectionRequests: { from: req.params.requestId } },
+        });
+        res.status(200).json({ message: "Connection request rejected" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// DELETE /user/remove-connection/:userId
+export const removeConnection = async (req, res) => {
+    try {
+        const myId = req.user.id;
+        const targetId = req.params.userId;
+
+        await User.findByIdAndUpdate(myId, {
+            $pull: { connections: targetId },
+        });
+        await User.findByIdAndUpdate(targetId, {
+            $pull: { connections: myId },
+        });
+
+        res.status(200).json({ message: "Connection removed" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -92,10 +92,50 @@ export default function Post({ post }) {
     };
 
     return (
-        <div className="bg-white rounded m-2 p-4  shadow">
+        <article className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden hover:shadow-md transition-all">
+            {/* Post Header */}
+            <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100">
+                <div className="flex items-center gap-4">
+                    <img
+                        src={
+                            post.sharedFrom
+                                ? post.sharedFrom.userId.profilePic
+                                : post?.userId?.profilePic
+                        }
+                        alt="profile"
+                        className="rounded-full h-16 w-16 object-cover"
+                    />
+                    <div>
+                        <Link
+                            to={`/profile/${
+                                post.sharedFrom
+                                    ? post.sharedFrom.userId.username
+                                    : post.userId.username
+                            }`}
+                            className="font-semibold text-slate-900 hover:underline text-base"
+                        >
+                            {post.sharedFrom
+                                ? post.sharedFrom.userId.displayName ||
+                                  post.sharedFrom.userId.username
+                                : post.userId.displayName ||
+                                  post.userId.username}
+                        </Link>
+                        <p className="text-sm text-slate-500">
+                            {formatDistanceToNow(
+                                new Date(
+                                    post.sharedFrom
+                                        ? post.sharedFrom.createdAt
+                                        : post.createdAt
+                                ),
+                                { addSuffix: true }
+                            )}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {post.sharedFrom && (
-                <div className="flex items-center gap-2 mb-2 text-gray-600 text-sm">
-                    <BiSend className="text-blue-500" />
+                <div className="flex items-center gap-2 px-8 py-3 text-slate-500 text-sm bg-slate-50 border-b border-slate-100">
                     <span>
                         <strong>
                             {post.userId.displayName || post.userId.username}
@@ -104,86 +144,66 @@ export default function Post({ post }) {
                     </span>
                 </div>
             )}
-            <div className="flex gap-4 items-center">
-                <img
-                    src={
-                        post.sharedFrom
-                            ? post.sharedFrom.userId.profilePic
-                            : post?.userId?.profilePic
-                    }
-                    alt="profile"
-                    className="rounded-full h-10"
-                />
-                <Link
-                    to={`/profile/${
-                        post.sharedFrom
-                            ? post.sharedFrom.userId.username
-                            : post.userId.username
-                    }`}
-                    className="font-bold hover:underline"
-                >
-                    {post.sharedFrom
-                        ? post.sharedFrom.userId.displayName ||
-                          post.sharedFrom.userId.username
-                        : post.userId.displayName || post.userId.username}
-                </Link>
-                <span className="font-thin text-gray-600 text-sm">
-                    {formatDistanceToNow(
-                        new Date(
-                            post.sharedFrom
-                                ? post.sharedFrom.createdAt
-                                : post.createdAt
-                        ),
-                        { addSuffix: true }
-                    )}
-                </span>
+
+            {/* Post Content */}
+            <div className="px-8 py-7">
+                <div className="text-slate-800 text-lg mb-5 leading-relaxed">
+                    {post.content}
+                </div>
+                <MediaGrid media={post.media} />
             </div>
-            <div className="mt-2">{post.content}</div>
-            <MediaGrid media={post.media} />
-            <hr className="border-0 h-px bg-gray-300 my-2" />
-            <div className="flex justify-around items-center text-gray-600 mt-2">
+
+            {/* Post Actions */}
+            <div className="px-8 py-5 flex items-center justify-between border-t border-slate-100">
                 <button
-                    className="flex items-center gap-1 cursor-pointer"
+                    className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg transition-all group font-medium"
                     onClick={toggleLiked}
                 >
                     {isLiked ? (
-                        <FaThumbsUp className="text-blue-500" />
+                        <FaThumbsUp className="text-emerald-600" size={18} />
                     ) : (
-                        <FaRegThumbsUp />
-                    )}{" "}
-                    {likes} likes
+                        <FaRegThumbsUp size={18} />
+                    )}
+                    <span className="text-sm">{likes}</span>
                 </button>
                 <button
-                    className="flex items-center gap-1 cursor-pointer "
+                    className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg transition-all font-medium"
                     onClick={() => setCommentsVisible(true)}
                 >
-                    <BiCommentDetail /> comment
+                    <BiCommentDetail size={18} />
+                    <span className="text-sm">Comment</span>
                 </button>
                 <button
-                    className="flex items-center gap-1 cursor-pointer"
+                    className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg transition-all font-medium"
                     onClick={handleShare}
                 >
-                    <BiSend /> share
+                    <BiSend size={18} />
+                    <span className="text-sm">Share</span>
                 </button>
                 <button
-                    className="flex items-center gap-1 cursor-pointer text-red-600"
+                    className="text-red-500 hover:text-red-700 text-sm font-medium hover:bg-red-50 px-4 py-2 rounded-lg transition-all"
                     onClick={reportPost}
                 >
                     Report
                 </button>
             </div>
+
             {commentsVisible && (
-                <Comments comments={comments} addComment={addComment} />
-            )}{" "}
+                <Comments
+                    comments={comments}
+                    addComment={addComment}
+                    postId={post._id}
+                />
+            )}
             {showToast && (
                 <Toast
                     message="You have shared a post"
                     onClose={() => setShowToast(false)}
                 />
-            )}{" "}
+            )}
             {reportMsg && (
                 <Toast message={reportMsg} onClose={() => setReportMsg("")} />
-            )}{" "}
-        </div>
+            )}
+        </article>
     );
 }

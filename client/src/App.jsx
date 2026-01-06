@@ -28,7 +28,7 @@ function AppContent() {
     if (!authIsReady) {
         return (
             <div className="flex items-center justify-center h-screen bg-white">
-                <div className="text-xl font-bold text-[#1aac83]">
+                <div className="text-xl font-bold text-primary-600">
                     <h1>Loading...</h1>
                 </div>
             </div>
@@ -38,7 +38,7 @@ function AppContent() {
     return (
         <>
             {!hideNavbar && <NavBar />}
-            <div className="pages">
+            <div className="page-container">
                 <Routes>
                     <Route
                         path="/"
