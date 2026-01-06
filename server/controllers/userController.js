@@ -134,16 +134,35 @@ export const googleAuth = async (req, res) => {
 
         let user = await User.findOne({ email });
 
+        // parse name into first/last
+        const nameParts = (name || "").trim().split(/\s+/).filter(Boolean);
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ") || "";
+
         if (!user) {
-            const base =
-                email
-                    .split("@")[0]
-                    .replace(/[^a-zA-Z0-9_-]/g, "")
-                    .toLowerCase() || "user";
+            // Prefer a username derived from the Google name, fall back to email local part
+            let base = (name || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9._-]+/g, ".") // replace spaces/invalid chars with dots
+                .replace(/(^\.+|\.+$)/g, "") // trim leading/trailing dots
+                .replace(/\.{2,}/g, "."); // collapse consecutive dots
+
+            if (!base) {
+                base = (email.split("@")[0] || "user")
+                    .replace(/[^a-z0-9_-]+/g, "")
+                    .toLowerCase();
+            }
+
+            // enforce max length for base to leave room for suffixes
+            base = base.slice(0, 30) || "user";
+
             let username = base;
             let suffix = 1;
             while (await User.findOne({ username })) {
-                username = `${base}${suffix}`;
+                const suffixStr = String(suffix);
+                // ensure username length stays within 30 chars
+                const maxBaseLen = Math.max(1, 30 - suffixStr.length);
+                username = `${base.slice(0, maxBaseLen)}${suffixStr}`;
                 suffix += 1;
             }
 
@@ -160,17 +179,40 @@ export const googleAuth = async (req, res) => {
                 userId: user._id,
                 email,
                 profilePic: picture,
-                displayName: name,
+                firstName,
+                lastName,
             });
+        } else {
+            // existing user: keep profilePic and names in sync with Google data if provided
+            const userUpdate = {};
+            if (picture && user.profilePic !== picture)
+                userUpdate.profilePic = picture;
+            if (Object.keys(userUpdate).length) {
+                await User.findByIdAndUpdate(user._id, userUpdate);
+                user = await User.findById(user._id);
+            }
+
+            await Profile.findOneAndUpdate(
+                { userId: user._id },
+                { $set: { email, profilePic: picture, firstName, lastName } },
+                { new: true, upsert: true }
+            );
         }
 
         const token = generateToken(user);
+
+        // compute displayName for convenience (first + last or fallback to username)
+        const profile = await Profile.findOne({ userId: user._id }).lean();
+        const displayName =
+            `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() ||
+            user.username;
 
         res.status(200).json({
             token,
             email: user.email,
             username: user.username,
             profilePic: user.profilePic,
+            displayName,
             role: user.role,
             _id: user._id,
         });

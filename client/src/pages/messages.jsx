@@ -52,6 +52,59 @@ export default function MessagesPage() {
             .catch((err) => console.error(err));
     }, [activeChat, user]);
 
+    // keep a ref to messages for the poll loop
+    const messagesRef = useRef(messages);
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
+
+    // Long-polling: ask server for new messages after the last one we have.
+    useEffect(() => {
+        if (!activeChat?._id || !user) return;
+        let cancelled = false;
+
+        const pollOnce = async () => {
+            if (cancelled) return;
+            try {
+                const lastMessageId =
+                    messagesRef.current && messagesRef.current.length > 0
+                        ? messagesRef.current[messagesRef.current.length - 1]
+                              ._id
+                        : undefined;
+                const res = await api.get(
+                    `conversation/${activeChat._id}/messages/poll`,
+                    {
+                        params: { lastMessageId },
+                        headers: { authorization: `Bearer ${user.token}` },
+                        timeout: 35000, // ensure client waits a bit longer than server timeout
+                    }
+                );
+
+                const newMsgs = res.data || [];
+                if (newMsgs.length > 0) {
+                    setMessages((prev) => {
+                        const ids = new Set(prev.map((m) => m._id));
+                        const filtered = newMsgs.filter((m) => !ids.has(m._id));
+                        return filtered.length ? [...prev, ...filtered] : prev;
+                    });
+                }
+            } catch (err) {
+                console.error("Polling error:", err.message || err);
+                // short backoff on error
+                await new Promise((r) => setTimeout(r, 2000));
+            } finally {
+                // loop again unless cancelled
+                if (!cancelled) setTimeout(pollOnce, 50); // slight delay to avoid tight loop
+            }
+        };
+
+        pollOnce();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeChat?._id, user]);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
