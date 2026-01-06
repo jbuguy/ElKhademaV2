@@ -1,27 +1,32 @@
 import { useEffect, useState, useRef } from "react";
-import { IoMdSend } from "react-icons/io";
+import { Send, Minus, X } from "lucide-react";
 import { useChat } from "../hooks/useChat";
 import { useAuthContext } from "../hooks/useAuthContext";
 import api from "../utils/api";
 
 export default function ChatWidget() {
     const { isOpen, activeChat, closeChat } = useChat();
-    const [min, setMinimized] = useState(false);
+    const [minimized, setMinimized] = useState(false);
     const [message, setMessage] = useState("");
     const { user } = useAuthContext();
     const [messages, setMessages] = useState([]);
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef(null);
 
-    const scrollToBottom = () => {
+    useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    }, [messages]);
 
-    useEffect(scrollToBottom, [messages]);
+    useEffect(() => {
+        if (!activeChat?._id || !user) return;
+
+        api.get(`conversation/${activeChat._id}`, {
+            headers: { authorization: `Bearer ${user.token}` },
+        }).then((res) => setMessages(res.data.messages));
+    }, [activeChat, user]);
 
     const sendMessage = async () => {
-        if (isSending) return;
-        if (!user || !message.trim()) return;
+        if (!message.trim() || isSending || !user) return;
 
         const content = message.trim();
         setIsSending(true);
@@ -31,178 +36,122 @@ export default function ChatWidget() {
                 `conversation/${activeChat._id}/messages`,
                 { content },
                 {
-                    headers: {
-                        authorization: `Bearer ${user.token}`,
-                    },
+                    headers: { authorization: `Bearer ${user.token}` },
                 }
             );
+
             setMessages((prev) => [
                 ...prev,
                 { ...res.data, userId: { _id: user._id } },
             ]);
-            setMessage((prev) => (prev.trim() === content ? "" : prev));
-        } catch (error) {
-            console.error(error);
+            setMessage("");
         } finally {
             setIsSending(false);
         }
     };
 
-    useEffect(() => {
-        const fetchMessages = async () => {
-            if (!activeChat?._id || !user) return;
-            try {
-                const res = await api.get(`conversation/${activeChat._id}`, {
-                    headers: { authorization: `Bearer ${user.token}` },
-                });
-                setMessages(res.data.messages);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-        fetchMessages();
-    }, [activeChat, user]);
-
-    // Helper to format timestamp
-    const formatTime = (isoString) => {
-        const date = new Date(isoString);
-        const hours = date.getHours().toString().padStart(2, "0");
-        const minutes = date.getMinutes().toString().padStart(2, "0");
-        return `${hours}:${minutes}`;
-    };
-
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-0 right-4 w-80 max-h-96 shadow-xl flex flex-col z-50 rounded-t bg-gray-200">
-            <div className="flex justify-between bg-primary-700 p-2 text-white">
-                <div className="flex gap-2 items-center">
-                    <img
-                        src={activeChat?.displayPic}
-                        alt=""
-                        className="rounded-full h-8"
-                    />
-                    <span>{activeChat?.displayName}</span>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            setMinimized((prev) => !prev);
-                        }}
-                    >
-                        -
-                    </button>
-                    <button onClick={() => closeChat()}>x</button>
-                </div>
-            </div>
+        <div className="fixed bottom-4 right-4 w-80 max-h-[520px] z-50">
+            <div className="flex flex-col bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white/70">
+                    <div className="flex items-center gap-3">
+                        <img
+                            src={activeChat?.displayPic}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <span className="font-semibold text-slate-900 text-sm">
+                            {activeChat?.displayName}
+                        </span>
+                    </div>
 
-            {!min && (
-                <>
-                    {/* Messages */}
-                    <div className="grow h-80 overflow-y-auto p-2 bg-gray-100 flex flex-col gap-2">
-                        {messages.map((m, index) => {
-                            const isMine = m.userId._id === user._id;
-                            console.log(m.userId);
-                            return (
-                                <div
-                                    key={index}
-                                    className={`flex items-end ${
-                                        isMine ? "justify-end" : "justify-start"
-                                    }`}
-                                >
-                                    {!isMine && (
-                                        <img
-                                            src={m.userId.profilePic}
-                                            alt=""
-                                            className="w-6 h-6 rounded-full mr-2"
-                                        />
-                                    )}
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setMinimized((p) => !p)}
+                            className="p-1.5 rounded-full hover:bg-slate-100"
+                        >
+                            <Minus size={16} />
+                        </button>
+                        <button
+                            onClick={closeChat}
+                            className="p-1.5 rounded-full hover:bg-slate-100"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {!minimized && (
+                    <>
+                        {/* Messages */}
+                        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-slate-50">
+                            {messages.map((m, index) => {
+                                const isMine = m.userId._id === user._id;
+
+                                return (
                                     <div
-                                        className={`max-w-[70%] p-2 rounded-lg flex items-end gap-2 ${
+                                        key={index}
+                                        className={`flex ${
                                             isMine
-                                                ? "bg-primary-100 text-right rounded-br-none"
-                                                : "bg-white text-left rounded-bl-none"
+                                                ? "justify-end"
+                                                : "justify-start"
                                         }`}
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <span>{m.content}</span>
-                                            <button
-                                                className="text-xs text-red-600"
-                                                onClick={async () => {
-                                                    if (!user)
-                                                        return alert(
-                                                            "Please login to report"
-                                                        );
-                                                    const reason = prompt(
-                                                        "Reason for reporting this message (required):"
-                                                    );
-                                                    if (!reason) return;
-                                                    try {
-                                                        await api.post(
-                                                            "/reports",
-                                                            {
-                                                                type: "message",
-                                                                targetId: m._id,
-                                                                reason,
-                                                                description: "",
-                                                            }
-                                                        );
-                                                        alert(
-                                                            "Report submitted"
-                                                        );
-                                                    } catch (err) {
-                                                        console.error(err);
-                                                        alert(
-                                                            err.response?.data
-                                                                ?.error ||
-                                                                err.message
-                                                        );
-                                                    }
-                                                }}
-                                            >
-                                                Report
-                                            </button>
+                                        <div
+                                            className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm shadow-sm ${
+                                                isMine
+                                                    ? "bg-emerald-600 text-white rounded-br-md"
+                                                    : "bg-white text-slate-900 rounded-bl-md border border-slate-200"
+                                            }`}
+                                        >
+                                            {m.content}
+                                            <div className="text-[10px] mt-1 opacity-70 text-right">
+                                                {new Date(
+                                                    m.createdAt
+                                                ).toLocaleTimeString([], {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </div>
                                         </div>
-                                        <span className="text-xs text-gray-500">
-                                            {formatTime(m.createdAt)}
-                                        </span>
                                     </div>
-                                </div>
-                            );
-                        })}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    <hr />
-
-                    <div className="border-t border-gray-300 p-4 bg-white">
-                        <div className="flex gap-2">
-                            <textarea
-                                className="grow border border-gray-300 rounded-full px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-24"
-                                placeholder="Aa"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (isSending) return;
-                                    if (e.key === "Enter" && !e.shiftKey) {
-                                        e.preventDefault();
-                                        sendMessage();
-                                    }
-                                }}
-                                rows="1"
-                            />
-                            <button
-                                onClick={sendMessage}
-                                disabled={!message.trim() || isSending}
-                                className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white rounded-full p-2 shrink-0 transition"
-                            >
-                                <IoMdSend size={20} />
-                            </button>
+                                );
+                            })}
+                            <div ref={messagesEndRef} />
                         </div>
-                    </div>
-                </>
-            )}
+
+                        {/* Input */}
+                        <div className="p-3 border-t border-slate-200 bg-white">
+                            <div className="flex items-end gap-2">
+                                <textarea
+                                    rows={1}
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    placeholder="Type a message…"
+                                    className="flex-1 resize-none rounded-xl border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                            e.preventDefault();
+                                            sendMessage();
+                                        }
+                                    }}
+                                />
+
+                                <button
+                                    onClick={sendMessage}
+                                    disabled={!message.trim() || isSending}
+                                    className="p-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-300 transition"
+                                >
+                                    <Send size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     );
 }
