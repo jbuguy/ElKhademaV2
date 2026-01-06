@@ -15,7 +15,7 @@ import { useNavigate,useLocation } from "react-router-dom";
 import { useJobCreation } from "../hooks/useJobCreation.js";
 
 const Hero = ( {isEditing}) => (
-    <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-8 px-4 rounded-t-xl">
+    <div className="bg-emerald-600 text-white py-8 px-4 rounded-t-xl">
         <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold mb-2">{isEditing ? "Edit " : "Post a"}  Job</h1>
             <p className="text-teal-100">

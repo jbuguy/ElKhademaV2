@@ -798,14 +798,14 @@ export default function Signup() {
                     }}
                     disabled={!isFormValid()}
                     style={{
-                        ...buttonStyle("#1aac83", !isFormValid()),
+                        ...buttonStyle("#10B981", !isFormValid()),
                         width: "100%",
                         fontSize: "16px",
                         fontWeight: "600",
                         backgroundColor: isFormValid()
                             ? isSignupHovered
                                 ? "#0f766e"
-                                : "#1aac83"
+                                : "#10B981"
                             : undefined,
                     }}
                     onMouseEnter={() => setIsSignupHovered(true)}

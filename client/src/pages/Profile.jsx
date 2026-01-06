@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from "react-router";
 import { useAuthContext } from "../hooks/useAuthContext";
 import api from "../utils/api";
 import Posts from "../components/Posts";
+import CreatePost from "../components/CreatePost";
 import ProfileHeader from "../components/ProfileHeader";
 import ProfileTabs from "../components/ProfileTabs";
 import ProfileEditForm from "../components/ProfileEditForm";
@@ -82,6 +83,23 @@ function Profile() {
 
         if (username) fetchPosts();
     }, [username]);
+
+    const addPost = async (post) => {
+        if (!currentUser) return alert("Please log in to post");
+        try {
+            const res = await api.post(
+                "/post",
+                { content: post.content, media: post.media },
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setPosts((prev) => [res.data, ...(prev || [])]);
+        } catch (err) {
+            console.error("Error creating post:", err);
+            alert("Failed to create post. Please try again.");
+        }
+    };
 
     useEffect(() => {
         // if owner and openEdit, open editor and set profile completion flag
@@ -166,68 +184,77 @@ function Profile() {
     }
 
     return (
-        <div className="profile">
-            <div className="profile-container">
-                <ProfileHeader
-                    user={user}
-                    profile={profile}
-                    isOwner={isOwner}
-                    isEditing={isEditing}
-                    onEdit={() => navigate("/profile/editprofile")}
-                    onGenerateCV={handleGenerateCV}
-                />
-                {!isEditing && (
-                    <ProfileTabs
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab}
-                        isEditing={isEditing}
-                    />
-                )}
-
-                {isEditing && (
-                    <ProfileEditForm
-                        error={formError || error}
-                        profileImage={profileImage}
-                        setProfileImage={setProfileImage}
-                        videoCvFile={videoCvFile}
-                        setVideoCvFile={setVideoCvFile}
-                        videoCvPreview={videoCvPreview}
-                        setVideoCvPreview={setVideoCvPreview}
-                        removeVideo={removeVideo}
-                        setRemoveVideo={setRemoveVideo}
+        <div className="min-h-screen bg-slate-50">
+            <div className="page-container py-8">
+                <div className="max-w-4xl mx-auto space-y-6">
+                    <ProfileHeader
+                        user={user}
                         profile={profile}
-                        formData={formData}
-                        setFormData={setFormData}
-                        handleSubmit={handleSubmit}
-                        handleAddSkill={handleAddSkill}
-                        handleSkillChange={handleSkillChange}
-                        handleRemoveSkill={handleRemoveSkill}
-                        handleAddJob={handleAddJob}
-                        handleJobChange={handleJobChange}
-                        handleRemoveJob={handleRemoveJob}
-                        handleAddEducation={handleAddEducation}
-                        handleEducationChange={handleEducationChange}
-                        handleRemoveEducation={handleRemoveEducation}
-                        setIsEditing={setIsEditing}
+                        isOwner={isOwner}
+                        isEditing={isEditing}
+                        onEdit={() => navigate("/profile/editprofile")}
+                        onGenerateCV={handleGenerateCV}
                     />
-                )}
 
-                {!isEditing && activeTab === "about" && (
-                    <ProfileAbout profile={profile} />
-                )}
+                    {!isEditing && (
+                        <ProfileTabs
+                            activeTab={activeTab}
+                            setActiveTab={setActiveTab}
+                            isEditing={isEditing}
+                        />
+                    )}
 
-                {!isEditing && activeTab === "posts" && (
-                    <div className="tab-content">
-                        <div className="profile-section posts-section">
-                            <h3>Posts</h3>
-                            {posts.length > 0 ? (
-                                <Posts posts={posts} setPosts={setPosts} />
+                    {isEditing && (
+                        <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-8">
+                            <ProfileEditForm
+                                error={formError || error}
+                                profileImage={profileImage}
+                                setProfileImage={setProfileImage}
+                                videoCvFile={videoCvFile}
+                                setVideoCvFile={setVideoCvFile}
+                                videoCvPreview={videoCvPreview}
+                                setVideoCvPreview={setVideoCvPreview}
+                                removeVideo={removeVideo}
+                                setRemoveVideo={setRemoveVideo}
+                                profile={profile}
+                                formData={formData}
+                                setFormData={setFormData}
+                                handleSubmit={handleSubmit}
+                                handleAddSkill={handleAddSkill}
+                                handleSkillChange={handleSkillChange}
+                                handleRemoveSkill={handleRemoveSkill}
+                                handleAddJob={handleAddJob}
+                                handleJobChange={handleJobChange}
+                                handleRemoveJob={handleRemoveJob}
+                                handleAddEducation={handleAddEducation}
+                                handleEducationChange={handleEducationChange}
+                                handleRemoveEducation={handleRemoveEducation}
+                                setIsEditing={setIsEditing}
+                            />
+                        </div>
+                    )}
+
+                    {!isEditing && activeTab === "about" && (
+                        <div className="space-y-4">
+                            <ProfileAbout profile={profile} />
+                        </div>
+                    )}
+
+                    {!isEditing && activeTab === "posts" && (
+                        <div className="space-y-4">
+                            {isOwner && <CreatePost addPost={addPost} />}
+                            {posts && posts.length > 0 ? (
+                                <Posts posts={posts} />
                             ) : (
-                                <p>No posts yet</p>
+                                <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white px-8 py-12 text-center">
+                                    <p className="text-slate-600 text-lg">
+                                        No posts yet
+                                    </p>
+                                </div>
                             )}
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );

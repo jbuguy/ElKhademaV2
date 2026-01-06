@@ -11,6 +11,13 @@ import {
     FaSignOutAlt,
     FaTools,
 } from "react-icons/fa";
+import {
+    Home as HomeIcon,
+    Briefcase,
+    User,
+    Settings,
+    Search,
+} from "lucide-react";
 import NotificationDropdown from "./NotificationDropdown.jsx";
 
 export function NavBar() {
@@ -31,109 +38,35 @@ export function NavBar() {
     const isActive = (path) => location.pathname === path;
 
     return (
-        <header className="bg-white shadow-md sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="flex items-center justify-between h-16 gap-6">
-                    {/* Logo */}
-                    <Link to="/" className="flex items-center">
-                        <h1 className="text-2xl font-bold text-[#1aac83] transition">
-                            ElKhadema
-                        </h1>
-                    </Link>
+        <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/50 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">E</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-emerald-600">
+                        ElKhadema
+                    </h1>
+                </div>
 
-                    {user ? (
-                        <>
-                            {/* Center: Search Bar */}
-                            <form
-                                onSubmit={handleSearch}
-                                className="flex-1 max-w-lg"
-                            >
-                                <input
-                                    type="text"
-                                    placeholder="Search jobs..."
-                                    value={searchQuery}
-                                    onChange={(e) =>
-                                        setSearchQuery(e.target.value)
-                                    }
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#1aac83] bg-white text-gray-700 placeholder-gray-400 transition"
-                                />
-                            </form>
+                <div className="hidden md:flex items-center bg-white border border-slate-200 rounded-full px-4 py-2 w-80 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all">
+                    <Search size={18} className="text-slate-400" />
+                    <input
+                        type="text"
+                        placeholder="Search jobs..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="ml-2 flex-1 outline-none text-sm bg-transparent placeholder-slate-400"
+                    />
+                </div>
 
-                            {/* Right: Icons */}
-                            <nav className="flex items-center gap-3">
-                                <Link
-                                    to="/"
-                                    className={`p-2 rounded-lg transition-all ${
-                                        isActive("/")
-                                            ? "text-[#1aac83] border-2 border-[#1aac83]"
-                                            : "text-gray-600 hover:text-[#1aac83]"
-                                    }`}
-                                >
-                                    <FaHome className="text-2xl" />
-                                </Link>
-                                <Link
-                                    to="/profile"
-                                    className={`p-2 rounded-lg transition-all ${
-                                        isActive("/profile")
-                                            ? "text-[#1aac83] border-2 border-[#1aac83]"
-                                            : "text-gray-600 hover:text-[#1aac83]"
-                                    }`}
-                                >
-                                    <FaUserCircle className="text-2xl" />
-                                </Link>
-                                <Link
-                                    to="/jobs"
-                                    className={`p-2 rounded-lg transition-all ${
-                                        isActive("/jobs")
-                                            ? "text-[#1aac83] border-2 border-[#1aac83]"
-                                            : "text-gray-600 hover:text-[#1aac83]"
-                                    }`}
-                                >
-                                    <FaBriefcase className="text-2xl" />
-                                </Link>
-                                {user.role === "admin" && (
-                                    <Link
-                                        to="/admin"
-                                        className={`p-2 rounded-lg transition-all ${
-                                            isActive("/admin")
-                                                ? "text-[#1aac83] border-2 border-[#1aac83]"
-                                                : "text-gray-600 hover:text-[#1aac83]"
-                                        }`}
-                                    >
-                                        <FaTools className="text-2xl" />
-                                    </Link>
-                                )}
-                                <Link to={"/messages"}>
-                                    <button className="text-gray-600 hover:text-[#1aac83] transition-all border-0 bg-transparent p-0">
-                                        <FaCommentDots className="text-2xl" />
-                                    </button>
-                                </Link>
-                                <NotificationDropdown />
-                                <button
-                                    onClick={logout}
-                                    className="text-gray-600 hover:text-[#1aac83] transition-all border-0 bg-transparent p-0"
-                                    title="Logout"
-                                >
-                                    <FaSignOutAlt className="text-2xl" />
-                                </button>
-                            </nav>
-                        </>
-                    ) : (
-                        <div className="flex items-center gap-4">
-                            <Link
-                                to="/login"
-                                className="px-4 py-2 text-[#1aac83] font-medium rounded-lg transition"
-                            >
-                                Login
-                            </Link>
-                            <Link
-                                to="/signup"
-                                className="px-4 py-2 bg-[#1aac83] text-white font-medium rounded-lg hover:bg-[#158f6b] transition"
-                            >
-                                Sign up
-                            </Link>
-                        </div>
-                    )}
+                <div className="flex items-center gap-2">
+                    <button className="p-2.5 hover:bg-slate-100 rounded-full transition-colors">
+                        <Settings size={20} className="text-slate-600" />
+                    </button>
+                    <button className="p-2.5 hover:bg-slate-100 rounded-full transition-colors">
+                        <User size={20} className="text-slate-600" />
+                    </button>
                 </div>
             </div>
         </header>

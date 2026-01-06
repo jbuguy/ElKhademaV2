@@ -166,20 +166,22 @@ export default function MessagesPage() {
     });
 
     return (
-        <div className="flex h-screen bg-white">
+        <div className="h-screen flex bg-gray-50">
             {/* Sidebar - Conversations List */}
-            <div className="w-80 border-r border-gray-300 flex flex-col bg-white">
+            <div className="w-80 border-r border-gray-200 flex flex-col bg-white">
                 {/* Header */}
                 <div className="p-4 border-b border-gray-200">
-                    <h1 className="text-2xl font-bold mb-4">Messages</h1>
+                    <h1 className="text-2xl font-bold mb-4 text-gray-900">
+                        Messages
+                    </h1>
                     <div className="relative">
-                        <IoMdSearch className="absolute left-3 top-3 text-gray-500" />
+                        <IoMdSearch className="absolute left-3 top-3 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="input pl-10"
                         />
                     </div>
                 </div>
@@ -211,7 +213,7 @@ export default function MessagesPage() {
                                     onClick={() => setActiveChat(conv)}
                                     className={`p-3 border-b border-gray-100 cursor-pointer transition ${
                                         isActive
-                                            ? "bg-blue-50"
+                                            ? "bg-primary-50"
                                             : "hover:bg-gray-50"
                                     }`}
                                 >
@@ -243,23 +245,21 @@ export default function MessagesPage() {
                 </div>
             </div>
 
-            <div className="grow flex flex-col bg-white">
+            <div className="grow flex flex-col bg-gray-50">
                 {activeChat ? (
                     <>
-                        <div className="border-b border-gray-300 p-4 bg-white flex items-center gap-3">
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src={getContactInfo(activeChat).displayPic}
-                                    alt=""
-                                    className="w-10 h-10 rounded-full object-cover"
-                                />
-                                <h2 className="text-xl font-semibold">
-                                    {getContactInfo(activeChat).displayName}
-                                </h2>
-                            </div>
+                        <div className="border-b border-gray-200 p-4 bg-white flex items-center gap-3">
+                            <img
+                                src={getContactInfo(activeChat).displayPic}
+                                alt=""
+                                className="w-10 h-10 rounded-full object-cover"
+                            />
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                {getContactInfo(activeChat).displayName}
+                            </h2>
                         </div>
 
-                        <div className="grow overflow-y-auto p-4 bg-white flex flex-col gap-3">
+                        <div className="grow overflow-y-auto p-4 flex flex-col gap-3">
                             {messages.map((m, index) => {
                                 const isMine = m.userId._id === user._id;
                                 return (
@@ -281,8 +281,8 @@ export default function MessagesPage() {
                                         <div
                                             className={`max-w-xs px-4 py-2 rounded-lg ${
                                                 isMine
-                                                    ? "bg-green-500 text-white rounded-br-none"
-                                                    : "bg-gray-200 text-gray-900 rounded-bl-none"
+                                                    ? "bg-primary-600 text-white rounded-br-none"
+                                                    : "bg-white text-gray-900 rounded-bl-none shadow-sm"
                                             }`}
                                         >
                                             <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function MessagesPage() {
                                                     {m.content}
                                                 </p>
                                                 <button
-                                                    className="text-xs text-red-600"
+                                                    className="text-xs text-red-600 hover:text-red-700"
                                                     onClick={async () => {
                                                         if (!user)
                                                             return alert(
@@ -332,7 +332,7 @@ export default function MessagesPage() {
                                             <span
                                                 className={`text-xs mt-1 block ${
                                                     isMine
-                                                        ? "text-blue-100"
+                                                        ? "text-primary-100"
                                                         : "text-gray-600"
                                                 }`}
                                             >
@@ -345,11 +345,11 @@ export default function MessagesPage() {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        <div className="border-t border-gray-300 p-4 bg-white">
+                        <div className="border-t border-gray-200 p-4 bg-white">
                             <div className="flex gap-2">
                                 <textarea
-                                    className="grow border border-gray-300 rounded-full px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-24"
-                                    placeholder="Aa"
+                                    className="grow input resize-none max-h-24 rounded-full px-4"
+                                    placeholder="Type a message..."
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     onKeyDown={(e) => {
@@ -364,7 +364,7 @@ export default function MessagesPage() {
                                 <button
                                     onClick={sendMessage}
                                     disabled={!message.trim() || isSending}
-                                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-full p-2 shrink-0 transition"
+                                    className="btn btn-primary rounded-full p-2 h-10 w-10 flex items-center justify-center disabled:opacity-50"
                                 >
                                     <IoMdSend size={20} />
                                 </button>

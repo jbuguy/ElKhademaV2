@@ -199,7 +199,7 @@ const Checkbox = ({ label, checked, onChange }) => (
 );
 
 const CreateJobCTA = () => (
-    <div className="bg-gradient-to-br from-[#1aac83] to-[#15a078] rounded-xl p-8 text-white shadow-lg sticky top-4 z-30 mb-6">
+    <div className="bg-emerald-600 rounded-xl p-8 text-white shadow-lg sticky top-4 z-30 mb-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex-1">
                 <h3 className="text-2xl font-bold mb-2">Looking to Hire?</h3>

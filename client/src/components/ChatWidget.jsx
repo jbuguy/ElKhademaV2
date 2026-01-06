@@ -75,7 +75,7 @@ export default function ChatWidget() {
 
     return (
         <div className="fixed bottom-0 right-4 w-80 max-h-96 shadow-xl flex flex-col z-50 rounded-t bg-gray-200">
-            <div className="flex justify-between bg-green-700 p-2 text-white">
+            <div className="flex justify-between bg-primary-700 p-2 text-white">
                 <div className="flex gap-2 items-center">
                     <img
                         src={activeChat?.displayPic}
@@ -121,7 +121,7 @@ export default function ChatWidget() {
                                     <div
                                         className={`max-w-[70%] p-2 rounded-lg flex items-end gap-2 ${
                                             isMine
-                                                ? "bg-green-200 text-right rounded-br-none"
+                                                ? "bg-primary-100 text-right rounded-br-none"
                                                 : "bg-white text-left rounded-bl-none"
                                         }`}
                                     >
@@ -195,7 +195,7 @@ export default function ChatWidget() {
                             <button
                                 onClick={sendMessage}
                                 disabled={!message.trim() || isSending}
-                                className="bg-green-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-full p-2 shrink-0 transition"
+                                className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white rounded-full p-2 shrink-0 transition"
                             >
                                 <IoMdSend size={20} />
                             </button>

@@ -26,8 +26,8 @@ export default function ProfileEditForm({
     setIsEditing,
 }) {
     return (
-        <form onSubmit={handleSubmit} className="edit-form">
-            {error && <div className="error">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+            {error && <div className="text-sm text-red-600">{error}</div>}
 
             <ImageUpload
                 label={"Profile Image"}
@@ -38,7 +38,7 @@ export default function ProfileEditForm({
             />
 
             {(profileImage || profile?.profilePic) && (
-                <div className="image-preview" style={{ marginTop: 10 }}>
+                <div className="mt-3">
                     <img
                         src={
                             profileImage
@@ -46,26 +46,16 @@ export default function ProfileEditForm({
                                 : profile.profilePic
                         }
                         alt="Preview"
-                        style={{
-                            width: "150px",
-                            height: "150px",
-                            objectFit: "cover",
-                            borderRadius: "50%",
-                        }}
+                        className="w-36 h-36 object-cover rounded-full"
                     />
                 </div>
             )}
 
-            <div className="form-group">
-                <label>Video CV:</label>
-                <div
-                    style={{
-                        display: "flex",
-                        gap: 12,
-                        alignItems: "center",
-                        marginTop: 8,
-                    }}
-                >
+            <div>
+                <label className="block text-sm font-medium text-gray-700">
+                    Video CV
+                </label>
+                <div className="flex items-center gap-3 mt-2">
                     <input
                         type="file"
                         accept="video/*"
@@ -78,22 +68,18 @@ export default function ProfileEditForm({
                     />
                     <label
                         htmlFor="video-cv-input-profile"
-                        className="text-green-500 hover:text-green-700 cursor-pointer"
+                        className="text-primary-600 hover:text-primary-700 cursor-pointer"
                     >
                         Choose Video CV
                     </label>
+
                     {(videoCvPreview || profile?.videoCv) && (
-                        <div
-                            style={{
-                                display: "flex",
-                                gap: 8,
-                                alignItems: "center",
-                            }}
-                        >
+                        <div className="flex items-center gap-3">
                             <video
                                 src={videoCvPreview || profile.videoCv}
                                 width={200}
                                 controls
+                                className="rounded-md"
                             />
                             <button
                                 type="button"
@@ -102,22 +88,25 @@ export default function ProfileEditForm({
                                     setVideoCvPreview(null);
                                     setRemoveVideo(true);
                                 }}
-                                className="px-3 py-1 bg-red-500 text-white rounded"
+                                className="px-3 py-1 bg-red-50 text-red-600 rounded"
                             >
                                 Remove
                             </button>
                         </div>
                     )}
                 </div>
-                <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>
+                <p className="text-xs text-gray-500 mt-2">
                     MP4, MOV (max 50MB)
                 </p>
             </div>
 
             {profile?.profileType === "company" ? (
-                <div className="form-group">
-                    <label>Company Name:</label>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Company Name
+                    </label>
                     <input
+                        className="input mt-2"
                         type="text"
                         value={formData.companyName}
                         onChange={(e) =>
@@ -130,10 +119,13 @@ export default function ProfileEditForm({
                     />
                 </div>
             ) : (
-                <>
-                    <div className="form-group">
-                        <label>First Name:</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            First Name
+                        </label>
                         <input
+                            className="input mt-2"
                             type="text"
                             value={formData.firstName}
                             onChange={(e) =>
@@ -146,9 +138,12 @@ export default function ProfileEditForm({
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Last Name:</label>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Last Name
+                        </label>
                         <input
+                            className="input mt-2"
                             type="text"
                             value={formData.lastName}
                             onChange={(e) =>
@@ -160,12 +155,15 @@ export default function ProfileEditForm({
                             placeholder="Your last name"
                         />
                     </div>
-                </>
+                </div>
             )}
 
-            <div className="form-group">
-                <label>Email:</label>
+            <div>
+                <label className="block text-sm font-medium text-gray-700">
+                    Email
+                </label>
                 <input
+                    className="input mt-2 bg-gray-100 cursor-not-allowed"
                     type="email"
                     value={formData.email}
                     onChange={(e) =>
@@ -173,77 +171,96 @@ export default function ProfileEditForm({
                     }
                     placeholder="your.email@example.com"
                     disabled={true}
-                    style={{
-                        backgroundColor: "#f0f0f0",
-                        cursor: "not-allowed",
-                    }}
                 />
             </div>
 
-            <div className="form-group">
-                <label>Phone Number:</label>
-                <input
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={(e) =>
-                        setFormData({
-                            ...formData,
-                            phoneNumber: e.target.value,
-                        })
-                    }
-                    placeholder="+1234567890"
-                />
-            </div>
-
-            <div className="form-group">
-                <label>Location:</label>
-                <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) =>
-                        setFormData({ ...formData, location: e.target.value })
-                    }
-                    placeholder="City, Country"
-                />
-            </div>
-
-            {profile?.profileType !== "company" && (
-                <div className="form-group">
-                    <label>Gender:</label>
-                    <select
-                        value={formData.gender}
-                        onChange={(e) =>
-                            setFormData({ ...formData, gender: e.target.value })
-                        }
-                    >
-                        <option value="">Select gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                    </select>
-                </div>
-            )}
-
-            {profile?.profileType !== "company" && (
-                <div className="form-group">
-                    <label>Birthday:</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Phone Number
+                    </label>
                     <input
-                        type="date"
-                        value={formData.birthday}
+                        className="input mt-2"
+                        type="tel"
+                        value={formData.phoneNumber}
                         onChange={(e) =>
                             setFormData({
                                 ...formData,
-                                birthday: e.target.value,
+                                phoneNumber: e.target.value,
                             })
                         }
+                        placeholder="+1234567890"
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Location
+                    </label>
+                    <input
+                        className="input mt-2"
+                        type="text"
+                        value={formData.location}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                location: e.target.value,
+                            })
+                        }
+                        placeholder="City, Country"
+                    />
+                </div>
+            </div>
+
+            {profile?.profileType !== "company" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Gender
+                        </label>
+                        <select
+                            className="input mt-2"
+                            value={formData.gender}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    gender: e.target.value,
+                                })
+                            }
+                        >
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Birthday
+                        </label>
+                        <input
+                            className="input mt-2"
+                            type="date"
+                            value={formData.birthday}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    birthday: e.target.value,
+                                })
+                            }
+                        />
+                    </div>
                 </div>
             )}
 
             {profile?.profileType === "company" ? (
                 <>
-                    <div className="form-group">
-                        <label>Company Description:</label>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Company Description
+                        </label>
                         <textarea
+                            className="input mt-2"
                             value={formData.companyDescription}
                             onChange={(e) =>
                                 setFormData({
@@ -256,84 +273,104 @@ export default function ProfileEditForm({
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Founded Date:</label>
-                        <input
-                            type="date"
-                            value={formData.foundedDate}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    foundedDate: e.target.value,
-                                })
-                            }
-                        />
-                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Founded Date
+                            </label>
+                            <input
+                                className="input mt-2"
+                                type="date"
+                                value={formData.foundedDate}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        foundedDate: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                    <div className="form-group">
-                        <label>Founder Name:</label>
-                        <input
-                            type="text"
-                            value={formData.founderName}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    founderName: e.target.value,
-                                })
-                            }
-                            placeholder="Name of founder(s)"
-                        />
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Founder Name
+                            </label>
+                            <input
+                                className="input mt-2"
+                                type="text"
+                                value={formData.founderName}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        founderName: e.target.value,
+                                    })
+                                }
+                                placeholder="Name of founder(s)"
+                            />
+                        </div>
 
-                    <div className="form-group">
-                        <label>Industry:</label>
-                        <input
-                            type="text"
-                            value={formData.industry}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    industry: e.target.value,
-                                })
-                            }
-                            placeholder="e.g., Technology, Healthcare, Finance"
-                        />
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Industry
+                            </label>
+                            <input
+                                className="input mt-2"
+                                type="text"
+                                value={formData.industry}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        industry: e.target.value,
+                                    })
+                                }
+                                placeholder="e.g., Technology, Healthcare, Finance"
+                            />
+                        </div>
 
-                    <div className="form-group">
-                        <label>Company Size:</label>
-                        <input
-                            type="text"
-                            value={formData.companySize}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    companySize: e.target.value,
-                                })
-                            }
-                            placeholder="e.g., 1-10, 11-50, 51-200, 200+"
-                        />
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Company Size
+                            </label>
+                            <input
+                                className="input mt-2"
+                                type="text"
+                                value={formData.companySize}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        companySize: e.target.value,
+                                    })
+                                }
+                                placeholder="e.g., 1-10, 11-50, 51-200, 200+"
+                            />
+                        </div>
 
-                    <div className="form-group">
-                        <label>Website:</label>
-                        <input
-                            type="url"
-                            value={formData.website}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    website: e.target.value,
-                                })
-                            }
-                            placeholder="https://www.example.com"
-                        />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Website
+                            </label>
+                            <input
+                                className="input mt-2"
+                                type="url"
+                                value={formData.website}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        website: e.target.value,
+                                    })
+                                }
+                                placeholder="https://www.example.com"
+                            />
+                        </div>
                     </div>
                 </>
             ) : (
-                <div className="form-group">
-                    <label>Description:</label>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Description
+                    </label>
                     <textarea
+                        className="input mt-2"
                         value={formData.description}
                         onChange={(e) =>
                             setFormData({
@@ -348,11 +385,14 @@ export default function ProfileEditForm({
             )}
 
             {profile?.profileType !== "company" && (
-                <div className="form-section">
-                    <h3>Skills</h3>
+                <div className="space-y-4">
+                    <h3 className="text-base font-semibold text-gray-800">
+                        Skills
+                    </h3>
                     {formData.skills.map((skill, index) => (
-                        <div key={index} className="array-item">
+                        <div key={index} className="flex gap-3 items-center">
                             <input
+                                className="input flex-1"
                                 type="text"
                                 value={skill}
                                 onChange={(e) =>
@@ -363,6 +403,7 @@ export default function ProfileEditForm({
                             <button
                                 type="button"
                                 onClick={() => handleRemoveSkill(index)}
+                                className="px-3 py-1 bg-red-50 text-red-600 rounded"
                             >
                                 Remove
                             </button>
@@ -371,7 +412,7 @@ export default function ProfileEditForm({
                     <button
                         type="button"
                         onClick={handleAddSkill}
-                        className="add-btn"
+                        className="btn btn-primary"
                     >
                         + Add Skill
                     </button>
@@ -379,75 +420,83 @@ export default function ProfileEditForm({
             )}
 
             {profile?.profileType !== "company" && (
-                <div className="form-section">
-                    <h3>Work Experience</h3>
+                <div className="space-y-4">
+                    <h3 className="text-base font-semibold text-gray-800">
+                        Work Experience
+                    </h3>
                     {formData.pastJobs.map((job, index) => (
-                        <div key={index} className="array-item-box">
-                            <input
-                                type="text"
-                                value={job.title}
-                                onChange={(e) =>
-                                    handleJobChange(
-                                        index,
-                                        "title",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Job Title"
-                                required
-                            />
-                            <input
-                                type="text"
-                                value={job.company}
-                                onChange={(e) =>
-                                    handleJobChange(
-                                        index,
-                                        "company",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Company"
-                                required
-                            />
-                            <input
-                                type="date"
-                                value={
-                                    job.startDate
-                                        ? new Date(job.startDate)
-                                              .toISOString()
-                                              .split("T")[0]
-                                        : ""
-                                }
-                                onChange={(e) =>
-                                    handleJobChange(
-                                        index,
-                                        "startDate",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Start Date"
-                                required
-                            />
-                            <input
-                                type="date"
-                                value={
-                                    job.endDate
-                                        ? new Date(job.endDate)
-                                              .toISOString()
-                                              .split("T")[0]
-                                        : ""
-                                }
-                                onChange={(e) =>
-                                    handleJobChange(
-                                        index,
-                                        "endDate",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="End Date"
-                                disabled={job.current}
-                            />
-                            <label>
+                        <div key={index} className="card">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input
+                                    className="input"
+                                    type="text"
+                                    value={job.title}
+                                    onChange={(e) =>
+                                        handleJobChange(
+                                            index,
+                                            "title",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Job Title"
+                                    required
+                                />
+                                <input
+                                    className="input"
+                                    type="text"
+                                    value={job.company}
+                                    onChange={(e) =>
+                                        handleJobChange(
+                                            index,
+                                            "company",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Company"
+                                    required
+                                />
+                                <input
+                                    className="input"
+                                    type="date"
+                                    value={
+                                        job.startDate
+                                            ? new Date(job.startDate)
+                                                  .toISOString()
+                                                  .split("T")[0]
+                                            : ""
+                                    }
+                                    onChange={(e) =>
+                                        handleJobChange(
+                                            index,
+                                            "startDate",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Start Date"
+                                    required
+                                />
+                                <input
+                                    className="input"
+                                    type="date"
+                                    value={
+                                        job.endDate
+                                            ? new Date(job.endDate)
+                                                  .toISOString()
+                                                  .split("T")[0]
+                                            : ""
+                                    }
+                                    onChange={(e) =>
+                                        handleJobChange(
+                                            index,
+                                            "endDate",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="End Date"
+                                    disabled={job.current}
+                                />
+                            </div>
+                            <label className="flex items-center gap-2 mt-3">
                                 <input
                                     type="checkbox"
                                     checked={job.current}
@@ -458,10 +507,11 @@ export default function ProfileEditForm({
                                             e.target.checked
                                         )
                                     }
-                                />
+                                />{" "}
                                 Currently working here
                             </label>
                             <textarea
+                                className="input mt-3"
                                 value={job.description}
                                 onChange={(e) =>
                                     handleJobChange(
@@ -473,18 +523,21 @@ export default function ProfileEditForm({
                                 placeholder="Job Description"
                                 rows="2"
                             />
-                            <button
-                                type="button"
-                                onClick={() => handleRemoveJob(index)}
-                            >
-                                Remove Job
-                            </button>
+                            <div className="mt-3">
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveJob(index)}
+                                    className="px-3 py-1 bg-red-50 text-red-600 rounded"
+                                >
+                                    Remove Job
+                                </button>
+                            </div>
                         </div>
                     ))}
                     <button
                         type="button"
                         onClick={handleAddJob}
-                        className="add-btn"
+                        className="btn btn-primary"
                     >
                         + Add Work Experience
                     </button>
@@ -492,88 +545,97 @@ export default function ProfileEditForm({
             )}
 
             {profile?.profileType !== "company" && (
-                <div className="form-section">
-                    <h3>Education</h3>
+                <div className="space-y-4">
+                    <h3 className="text-base font-semibold text-gray-800">
+                        Education
+                    </h3>
                     {formData.education.map((edu, index) => (
-                        <div key={index} className="array-item-box">
-                            <input
-                                type="text"
-                                value={edu.institution}
-                                onChange={(e) =>
-                                    handleEducationChange(
-                                        index,
-                                        "institution",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Institution"
-                                required
-                            />
-                            <input
-                                type="text"
-                                value={edu.degree}
-                                onChange={(e) =>
-                                    handleEducationChange(
-                                        index,
-                                        "degree",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Degree"
-                                required
-                            />
-                            <input
-                                type="text"
-                                value={edu.field}
-                                onChange={(e) =>
-                                    handleEducationChange(
-                                        index,
-                                        "field",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Field of Study"
-                                required
-                            />
-                            <input
-                                type="date"
-                                value={
-                                    edu.startDate
-                                        ? new Date(edu.startDate)
-                                              .toISOString()
-                                              .split("T")[0]
-                                        : ""
-                                }
-                                onChange={(e) =>
-                                    handleEducationChange(
-                                        index,
-                                        "startDate",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Start Date"
-                                required
-                            />
-                            <input
-                                type="date"
-                                value={
-                                    edu.endDate
-                                        ? new Date(edu.endDate)
-                                              .toISOString()
-                                              .split("T")[0]
-                                        : ""
-                                }
-                                onChange={(e) =>
-                                    handleEducationChange(
-                                        index,
-                                        "endDate",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="End Date"
-                                disabled={edu.current}
-                            />
-                            <label>
+                        <div key={index} className="card">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input
+                                    className="input"
+                                    type="text"
+                                    value={edu.institution}
+                                    onChange={(e) =>
+                                        handleEducationChange(
+                                            index,
+                                            "institution",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Institution"
+                                    required
+                                />
+                                <input
+                                    className="input"
+                                    type="text"
+                                    value={edu.degree}
+                                    onChange={(e) =>
+                                        handleEducationChange(
+                                            index,
+                                            "degree",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Degree"
+                                    required
+                                />
+                                <input
+                                    className="input"
+                                    type="text"
+                                    value={edu.field}
+                                    onChange={(e) =>
+                                        handleEducationChange(
+                                            index,
+                                            "field",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Field of Study"
+                                    required
+                                />
+                                <input
+                                    className="input"
+                                    type="date"
+                                    value={
+                                        edu.startDate
+                                            ? new Date(edu.startDate)
+                                                  .toISOString()
+                                                  .split("T")[0]
+                                            : ""
+                                    }
+                                    onChange={(e) =>
+                                        handleEducationChange(
+                                            index,
+                                            "startDate",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Start Date"
+                                    required
+                                />
+                                <input
+                                    className="input"
+                                    type="date"
+                                    value={
+                                        edu.endDate
+                                            ? new Date(edu.endDate)
+                                                  .toISOString()
+                                                  .split("T")[0]
+                                            : ""
+                                    }
+                                    onChange={(e) =>
+                                        handleEducationChange(
+                                            index,
+                                            "endDate",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="End Date"
+                                    disabled={edu.current}
+                                />
+                            </div>
+                            <label className="flex items-center gap-2 mt-3">
                                 <input
                                     type="checkbox"
                                     checked={edu.current}
@@ -584,30 +646,39 @@ export default function ProfileEditForm({
                                             e.target.checked
                                         )
                                     }
-                                />
+                                />{" "}
                                 Currently studying here
                             </label>
-                            <button
-                                type="button"
-                                onClick={() => handleRemoveEducation(index)}
-                            >
-                                Remove Education
-                            </button>
+                            <div className="mt-3">
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveEducation(index)}
+                                    className="px-3 py-1 bg-red-50 text-red-600 rounded"
+                                >
+                                    Remove Education
+                                </button>
+                            </div>
                         </div>
                     ))}
                     <button
                         type="button"
                         onClick={handleAddEducation}
-                        className="add-btn"
+                        className="btn btn-primary"
                     >
                         + Add Education
                     </button>
                 </div>
             )}
 
-            <div className="form-actions">
-                <button type="submit">Save Changes</button>
-                <button type="button" onClick={() => setIsEditing(false)}>
+            <div className="flex items-center gap-3">
+                <button type="submit" className="btn btn-primary">
+                    Save Changes
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="btn btn-ghost"
+                >
                     Cancel
                 </button>
             </div>
