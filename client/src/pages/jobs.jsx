@@ -5,23 +5,21 @@ import { Link } from "react-router";
 import api from "../utils/api.js";
 
 const Hero = () => (
-    <div className="relative bg-[#1aac83] px-8 pt-10 pb-24 flex justify-between items-center overflow-visible rounded-t-xl">
+    <div className="relative bg-gradient-to-br from-emerald-500 to-emerald-400 px-8 pt-12 pb-28 flex justify-between items-center overflow-visible rounded-t-3xl shadow-lg">
         <div className="max-w-2xl">
-            <h1 className="text-5xl font-serif text-white mb-6">
+            <h1 className="text-5xl font-extrabold text-white mb-6 drop-shadow-lg">
                 Find Your Dream Job
             </h1>
+            <p className="text-lg text-white/90 mb-2 font-medium">
+                Discover opportunities tailored for you
+            </p>
         </div>
-
-        {/* Abstract representation of the illustration in the image */}
         <div className="hidden lg:flex items-end absolute right-20 bottom-0">
-            {/* Simple CSS illustration placeholder */}
             <div className="relative z-10">
                 <img
                     src="https://ouch-cdn2.icons8.com/rN-3w156_5y_E6j6y7Z-wE9kH8k0_Y_6j5-3_1.png"
                     alt="Woman Illustration"
-                    className="h-64 object-contain opacity-90 drop-shadow-lg"
-                    // Note: Since I can't generate the exact image, I'm using a placeholder logic or external asset
-                    // Replace this src with your specific local asset if needed.
+                    className="h-64 object-contain opacity-90 drop-shadow-2xl"
                     onError={(e) => (e.target.style.display = "none")}
                 />
             </div>
@@ -36,30 +34,24 @@ const SearchBar = ({
     setLocationTerm,
     onSearch,
 }) => (
-    <div className="max-w-6xl mx-auto -mt-8 px-4 relative z-20">
-        <div className="bg-white rounded-lg shadow-lg p-3 flex flex-col md:flex-row items-center gap-4">
-            <div className="flex-1 flex items-center justify-center gap-3 px-4 border-b md:border-b-0 md:border-r border-gray-200 py-2 w-auto">
-                <Search
-                    className="text-gray-400 w-5 h-5"
-                    style={{ marginTop: "10px", marginBottom: "20px" }}
-                />
+    <div className="max-w-6xl mx-auto -mt-12 px-4 relative z-20">
+        <div className="bg-white rounded-2xl shadow-xl p-4 flex flex-col md:flex-row items-center gap-4 border border-slate-100">
+            <div className="flex-1 flex items-center gap-3 px-4 border-b md:border-b-0 md:border-r border-slate-200 py-2 w-auto">
+                <Search className="text-slate-400 w-5 h-5" />
                 <input
                     type="text"
-                    placeholder="UX Designer"
-                    className="w-auto outline-none text-gray-700 font-medium"
+                    placeholder="Job title, e.g. UX Designer"
+                    className="w-full outline-none text-slate-700 font-medium bg-transparent"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             <div className="flex-1 flex items-center gap-3 px-4 py-2 w-full">
-                <MapPin
-                    className="text-gray-400 w-5 h-5"
-                    style={{ marginTop: "10px", marginBottom: "20px" }}
-                />
+                <MapPin className="text-slate-400 w-5 h-5" />
                 <input
                     type="text"
                     placeholder="Location"
-                    className="w-full outline-none text-gray-700 font-medium"
+                    className="w-full outline-none text-slate-700 font-medium bg-transparent"
                     value={locationTerm}
                     onChange={(e) => setLocationTerm(e.target.value)}
                 />
@@ -67,8 +59,7 @@ const SearchBar = ({
             <button
                 type="button"
                 onClick={() => onSearch()}
-                style={{ marginTop: "10px", marginBottom: "20px" }}
-                className="bg-[#286ed6] hover:bg-[#286ed6] text-white font-semibold px-10 py-3 rounded transition shadow-md w-full md:w-auto"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-10 py-3 rounded-xl transition shadow-md w-full md:w-auto"
             >
                 Search
             </button>
@@ -105,11 +96,11 @@ export const JobCard = ({ job }) => {
         return `hsl(${hue}, 70%, 50%)`;
     }, [job.postedBy]);
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition mb-4">
-            <div className="flex justify-between items-start mb-4">
+        <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 hover:shadow-lg transition mb-6">
+            <div className="flex justify-between items-start mb-4 gap-4">
                 <div className="flex gap-4">
                     <div
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl overflow-hidden`}
+                        className={`w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-2xl overflow-hidden ring-2 ring-emerald-100`}
                         style={{ backgroundColor: color }}
                     >
                         {posterProfile?.profile.profilePic ? (
@@ -123,16 +114,16 @@ export const JobCard = ({ job }) => {
                         )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg text-gray-800">
+                        <h3 className="font-bold text-xl text-slate-900">
                             {job.title}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                        <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
                             <span className="font-medium">
                                 {posterProfile?.profile.companyName}
                             </span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                             <span className="flex items-center gap-1">
-                                <MapPin size={12} />{" "}
+                                <MapPin size={12} />
                                 {job.location.city +
                                     ", " +
                                     job.location.country}
@@ -141,32 +132,29 @@ export const JobCard = ({ job }) => {
                     </div>
                 </div>
 
-                <div className="font-bold text-gray-800">
+                <div className="font-bold text-emerald-600 text-lg">
                     {!job.salary.hideSalary
                         ? job.salary.salaryRange
                         : "Not disclosed"}
                 </div>
-
-                <div className="font-bold text-gray-800">{!job.salary.hideSalary ? job.salaryRange : "Not disclosed"}</div>
-
             </div>
 
-            <p className="text-gray-500 text-sm leading-relaxed mb-6">
+            <p className="text-slate-600 text-base leading-relaxed mb-6">
                 {job.description}
             </p>
 
-            <div className="flex justify-between items-center">
-                <div className="flex gap-2">
+            <div className="flex justify-between items-center mt-4">
+                <div className="flex gap-2 flex-wrap">
                     {job.tags.map((tag, i) => (
                         <span
                             key={i}
-                            className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full"
+                            className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-100"
                         >
                             {tag}
                         </span>
                     ))}
                 </div>
-                <span className="text-xs text-gray-400 font-medium">
+                <span className="text-xs text-slate-400 font-medium">
                     {job.deadline}
                 </span>
             </div>
@@ -199,16 +187,18 @@ const Checkbox = ({ label, checked, onChange }) => (
 );
 
 const CreateJobCTA = () => (
-    <div className="bg-emerald-600 rounded-xl p-8 text-white shadow-lg sticky top-4 z-30 mb-6">
+    <div className="bg-gradient-to-br from-emerald-500 to-emerald-400 rounded-2xl p-8 text-white shadow-xl sticky top-4 z-30 mb-8 border border-emerald-100">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex-1">
-                <h3 className="text-2xl font-bold mb-2">Looking to Hire?</h3>
-                <p className="text-white/90">
+                <h3 className="text-3xl font-extrabold mb-2 drop-shadow-lg">
+                    Looking to Hire?
+                </h3>
+                <p className="text-white/90 text-lg font-medium">
                     Post your job opportunity and connect with top talent
                 </p>
             </div>
             <Link to="/jobs/form">
-                <button className="bg-white text-[#1aac83] hover:bg-gray-50 px-8 py-3 rounded-lg font-semibold transition-colors shadow-md whitespace-nowrap">
+                <button className="bg-white text-emerald-600 hover:bg-emerald-50 px-10 py-3 rounded-xl font-bold transition-colors shadow-lg whitespace-nowrap border border-emerald-200">
                     Post a Job
                 </button>
             </Link>
@@ -325,7 +315,7 @@ export default function Jobs() {
     return (
         <>
             {user.role === "company" && <CreateJobCTA />}
-            <div className="min-h-screen bg-[#fafbfc] font-sans">
+            <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans">
                 <Hero />
                 <SearchBar
                     searchTerm={searchTerm}
@@ -338,7 +328,7 @@ export default function Jobs() {
                     }}
                 />
 
-                <main className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-12 gap-">
+                <main className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-12 gap-8">
                     <div className="md:col-span-3">
                         <FilterSection title="Job Type">
                             <Checkbox
@@ -394,7 +384,7 @@ export default function Jobs() {
                         </FilterSection>
 
                         <FilterSection title="Salary">
-                            <div className="flex justify-between text-sm text-gray-500 mb-2">
+                            <div className="flex justify-between text-sm text-slate-500 mb-2">
                                 <span>${salaryRange.min.toLocaleString()}</span>
                                 <span>${salaryRange.max.toLocaleString()}</span>
                             </div>
@@ -451,9 +441,9 @@ export default function Jobs() {
                                     />
 
                                     {/* Visual track */}
-                                    <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full">
+                                    <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 rounded-full">
                                         <div
-                                            className="h-full bg-[#e63946] rounded-full"
+                                            className="h-full bg-emerald-400 rounded-full"
                                             style={{
                                                 marginLeft: `${
                                                     (salaryRange.min /
@@ -475,7 +465,7 @@ export default function Jobs() {
                                     <div className="w-1/2 flex items-center gap-2">
                                         <input
                                             type="number"
-                                            className="w-full border rounded px-2 py-1 no-spin"
+                                            className="w-full border rounded-lg px-2 py-1 no-spin bg-slate-50"
                                             value={salaryRange.min}
                                             onChange={(e) => {
                                                 const val =
@@ -562,7 +552,7 @@ export default function Jobs() {
                                         </div>
                                         <input
                                             type="number"
-                                            className="w-32 border rounded px-2 py-1 no-spin"
+                                            className="w-32 border rounded-lg px-2 py-1 no-spin bg-slate-50"
                                             value={salaryRange.max}
                                             onChange={(e) => {
                                                 const val =
@@ -620,14 +610,19 @@ export default function Jobs() {
                         style={{ height: "100vh" }}
                     >
                         <div className="flex justify-between items-center mb-6">
-                            <p className="text-gray-400 text-sm">
+                            <p className="text-slate-400 text-sm">
                                 Showing {total} results
                             </p>
-                            <div className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                <div className="form-group">
-                                    <label htmlFor="sortby">Sort by</label>
+                            <div className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                                <div className="form-group flex items-center gap-2">
+                                    <label
+                                        htmlFor="sortby"
+                                        className="font-medium"
+                                    >
+                                        Sort by
+                                    </label>
                                     <select
-                                        className="form-control"
+                                        className="form-control rounded-lg border border-slate-200 px-2 py-1 bg-white"
                                         name="sortby"
                                         id="sortby"
                                     >
@@ -639,9 +634,11 @@ export default function Jobs() {
                             </div>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             {loading ? (
-                                <p>Loading...</p>
+                                <div className="text-center py-12 text-slate-400 text-lg font-medium">
+                                    Loading jobs...
+                                </div>
                             ) : jobs && jobs.length > 0 ? (
                                 jobs.map((job) => (
                                     <JobCard
@@ -650,7 +647,9 @@ export default function Jobs() {
                                     />
                                 ))
                             ) : (
-                                <p>No jobs found</p>
+                                <div className="text-center py-12 text-slate-400 text-lg font-medium">
+                                    No jobs found
+                                </div>
                             )}
                         </div>
                     </div>

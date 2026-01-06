@@ -40,10 +40,7 @@ export default function ChatWidget() {
                 }
             );
 
-            setMessages((prev) => [
-                ...prev,
-                { ...res.data, userId: { _id: user._id } },
-            ]);
+            setMessages((prev) => [...prev, res.data]);
             setMessage("");
         } finally {
             setIsSending(false);
@@ -53,8 +50,8 @@ export default function ChatWidget() {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 w-80 max-h-[520px] z-50">
-            <div className="flex flex-col bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+        <div className="fixed bottom-4 right-4 w-96 h-[520px] z-50">
+            <div className="flex flex-col bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden w-full h-full">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white/70">
                     <div className="flex items-center gap-3">

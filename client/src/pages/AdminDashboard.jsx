@@ -337,21 +337,21 @@ export default function AdminDashboard() {
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-slate-700">
+                            <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                         Username
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                         Email
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                         Role
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                         Actions
                                     </th>
                                 </tr>
@@ -360,12 +360,12 @@ export default function AdminDashboard() {
                                 {visibleUsers.map((u) => (
                                     <tr
                                         key={u._id}
-                                        className="border-t border-slate-700 hover:bg-slate-700/50 transition"
+                                        className="border-t border-gray-200 hover:bg-gray-50 transition"
                                     >
-                                        <td className="px-6 py-4 text-slate-200">
+                                        <td className="px-6 py-4 text-gray-900">
                                             {u.username}
                                         </td>
-                                        <td className="px-6 py-4 text-slate-400 text-sm">
+                                        <td className="px-6 py-4 text-gray-600 text-sm">
                                             {u.email}
                                         </td>
                                         <td className="px-6 py-4">
@@ -377,7 +377,7 @@ export default function AdminDashboard() {
                                                         e.target.value
                                                     )
                                                 }
-                                                className="bg-slate-700 border border-slate-600 text-white px-3 py-1 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="bg-white border border-gray-300 text-gray-900 px-3 py-1 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             >
                                                 <option value="user">
                                                     user
@@ -406,8 +406,8 @@ export default function AdminDashboard() {
                                                 <span
                                                     className={`text-sm font-medium ${
                                                         u.active
-                                                            ? "text-emerald-400"
-                                                            : "text-slate-500"
+                                                            ? "text-emerald-600"
+                                                            : "text-gray-500"
                                                     }`}
                                                 >
                                                     {u.active
@@ -458,24 +458,24 @@ export default function AdminDashboard() {
                         </h2>
                     </div>
                     {loadingReports ? (
-                        <div className="p-6 text-center text-slate-400">
+                        <div className="p-6 text-center text-gray-600">
                             Loading reports...
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-slate-700">
+                                <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                             Type
                                         </th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                             Target ID
                                         </th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                             Reporter
                                         </th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
+                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                                             Reason
                                         </th>
                                         <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
@@ -490,20 +490,20 @@ export default function AdminDashboard() {
                                     {reports.map((r) => (
                                         <tr
                                             key={r._id}
-                                            className="border-t border-slate-700 hover:bg-slate-700/50 transition"
+                                            className="border-t border-gray-200 hover:bg-gray-50 transition"
                                         >
-                                            <td className="px-6 py-4 text-slate-200 text-sm font-medium">
+                                            <td className="px-6 py-4 text-gray-900 text-sm font-medium">
                                                 {r.type}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-400 text-sm">
+                                            <td className="px-6 py-4 text-gray-600 text-sm">
                                                 {r.targetId?.substring(0, 12)}
                                                 ...
                                             </td>
-                                            <td className="px-6 py-4 text-slate-200 text-sm">
+                                            <td className="px-6 py-4 text-gray-900 text-sm">
                                                 {r.reporter?.username ||
                                                     r.reporter?.email}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-400 text-sm">
+                                            <td className="px-6 py-4 text-gray-600 text-sm">
                                                 {r.reason}
                                             </td>
                                             <td className="px-6 py-4">

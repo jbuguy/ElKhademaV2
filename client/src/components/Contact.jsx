@@ -39,7 +39,10 @@ export default function Contact({ contact }) {
                 </div>
                 {contact.lastMessage && (
                     <div className="text-xs text-gray-500 truncate">
-                        {contact.lastMessage}
+                        {typeof contact.lastMessage === "object" &&
+                        contact.lastMessage !== null
+                            ? contact.lastMessage.content
+                            : contact.lastMessage}
                     </div>
                 )}
             </div>

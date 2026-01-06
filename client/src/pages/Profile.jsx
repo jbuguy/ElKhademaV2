@@ -9,6 +9,8 @@ import ProfileTabs from "../components/ProfileTabs";
 import ProfileEditForm from "../components/ProfileEditForm";
 import ProfileAbout from "../components/ProfileAbout";
 import useProfileForm from "../hooks/useProfileForm";
+import { UserPlus, UserCheck, X, MessageCircle } from "lucide-react";
+import { useChat } from "../hooks/useChat";
 
 function Profile() {
     const { username: paramUsername } = useParams();
@@ -20,6 +22,28 @@ function Profile() {
         paramUsername ??
         currentUser?.username ??
         currentUser?.email?.split("@")[0];
+
+    const { openChat } = useChat();
+    // Open chat with this profile user
+    const handleOpenChat = async () => {
+        if (!currentUser || !user?._id) return;
+        try {
+            // Try to find or create a conversation with this user
+            const res = await api.post(
+                "/conversation",
+                { members: [user._id] },
+                { headers: { authorization: `Bearer ${currentUser.token}` } }
+            );
+            const conversation = res.data;
+            openChat({
+                _id: conversation._id,
+                displayName: user.username,
+                displayPic: user.profilePic,
+            });
+        } catch (err) {
+            alert("Could not start chat");
+        }
+    };
     const isOwner = Boolean(
         currentUser &&
             (currentUser.username === username ||
@@ -63,6 +87,15 @@ function Profile() {
     const [error, setError] = useState(null);
     const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
+    // Connection states
+    const [followers, setFollowers] = useState([]);
+    const [following, setFollowing] = useState([]);
+    const [connections, setConnections] = useState([]);
+    const [connectionRequests, setConnectionRequests] = useState([]);
+    const [loadingConnections, setLoadingConnections] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState(null); // 'pending', 'connected', null
+
     useEffect(() => {
         const fetchPosts = async () => {
             try {
@@ -84,6 +117,57 @@ function Profile() {
         if (username) fetchPosts();
     }, [username]);
 
+    // Fetch connection data
+    useEffect(() => {
+        const fetchConnectionData = async () => {
+            if (!username) return;
+            try {
+                setLoadingConnections(true);
+                const [
+                    followersRes,
+                    followingRes,
+                    connectionsRes,
+                    requestsRes,
+                ] = await Promise.all([
+                    api
+                        .get(`/user/followers/${username}`)
+                        .catch(() => ({ data: [] })),
+                    api
+                        .get(`/user/following/${username}`)
+                        .catch(() => ({ data: [] })),
+                    api
+                        .get(`/user/connections/${username}`)
+                        .catch(() => ({ data: [] })),
+                    isOwner
+                        ? api
+                              .get(`/user/connection-requests`)
+                              .catch(() => ({ data: [] }))
+                        : Promise.resolve({ data: [] }),
+                ]);
+
+                setFollowers(followersRes.data || []);
+                setFollowing(followingRes.data || []);
+                setConnections(connectionsRes.data || []);
+                setConnectionRequests(requestsRes.data || []);
+
+                // Check current connection status
+                if (!isOwner && currentUser) {
+                    const checkRes = await api
+                        .get(`/user/connection-status/${username}`)
+                        .catch(() => ({ data: {} }));
+                    setConnectionStatus(checkRes.data?.status); // 'pending', 'connected', or null
+                    setIsConnected(checkRes.data?.status === "connected");
+                }
+            } catch (err) {
+                console.error("Error fetching connections:", err);
+            } finally {
+                setLoadingConnections(false);
+            }
+        };
+
+        fetchConnectionData();
+    }, [username, isOwner, currentUser]);
+
     const addPost = async (post) => {
         if (!currentUser) return alert("Please log in to post");
         try {
@@ -98,6 +182,78 @@ function Profile() {
         } catch (err) {
             console.error("Error creating post:", err);
             alert("Failed to create post. Please try again.");
+        }
+    };
+
+    const handleSendConnection = async () => {
+        if (!currentUser)
+            return alert("Please log in to send connection request");
+        try {
+            await api.post(
+                `/user/send-connection-request/${username}`,
+                {},
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setConnectionStatus("pending");
+        } catch (err) {
+            alert(
+                err.response?.data?.error || "Failed to send connection request"
+            );
+        }
+    };
+
+    const handleAcceptConnection = async (requestId) => {
+        try {
+            await api.post(
+                `/user/accept-connection/${requestId}`,
+                {},
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setConnectionRequests((prev) =>
+                prev.filter((r) => r._id !== requestId)
+            );
+            setConnections((prev) => [
+                ...prev,
+                ...connectionRequests.filter((r) => r._id === requestId),
+            ]);
+        } catch (err) {
+            alert(err.response?.data?.error || "Failed to accept connection");
+        }
+    };
+
+    const handleRejectConnection = async (requestId) => {
+        try {
+            await api.post(
+                `/user/reject-connection/${requestId}`,
+                {},
+                {
+                    headers: { authorization: `Bearer ${currentUser.token}` },
+                }
+            );
+            setConnectionRequests((prev) =>
+                prev.filter((r) => r._id !== requestId)
+            );
+        } catch (err) {
+            alert(err.response?.data?.error || "Failed to reject connection");
+        }
+    };
+
+    const handleRemoveConnection = async (connectedUserId) => {
+        try {
+            await api.delete(`/user/remove-connection/${connectedUserId}`, {
+                headers: { authorization: `Bearer ${currentUser.token}` },
+            });
+            setConnections((prev) =>
+                prev.filter((c) => c._id !== connectedUserId)
+            );
+            setIsConnected(false);
+            setConnectionStatus(null);
+        } catch (err) {
+            alert(err.response?.data?.error || "Failed to remove connection");
         }
     };
 
@@ -145,8 +301,6 @@ function Profile() {
     const handleGenerateCV = () => {
         window.print();
     };
-
-    // Hide navbar when profile completion is required
     useEffect(() => {
         if (needsProfileCompletion) {
             document
@@ -195,6 +349,47 @@ function Profile() {
                         onEdit={() => navigate("/profile/editprofile")}
                         onGenerateCV={handleGenerateCV}
                     />
+
+                    {/* Connection & Message Buttons */}
+                    {!isOwner && currentUser && !isEditing && (
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200/50 flex gap-3">
+                            {connectionStatus === "pending" ? (
+                                <button
+                                    disabled
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg font-medium cursor-not-allowed"
+                                >
+                                    <UserCheck className="w-4 h-4" />
+                                    Connection Pending
+                                </button>
+                            ) : isConnected ? (
+                                <button
+                                    onClick={() =>
+                                        handleRemoveConnection(user._id)
+                                    }
+                                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition"
+                                >
+                                    <X className="w-4 h-4" />
+                                    Remove Connection
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleSendConnection}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+                                >
+                                    <UserPlus className="w-4 h-4" />
+                                    Send Connection Request
+                                </button>
+                            )}
+                            {/* Message Button */}
+                            <button
+                                onClick={handleOpenChat}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition"
+                            >
+                                <MessageCircle className="w-4 h-4" />
+                                Message
+                            </button>
+                        </div>
+                    )}
 
                     {!isEditing && (
                         <ProfileTabs
@@ -252,6 +447,258 @@ function Profile() {
                                     </p>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {/* Followers Tab */}
+                    {!isEditing && activeTab === "followers" && (
+                        <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                            <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                Followers ({followers.length})
+                            </h3>
+                            {loadingConnections ? (
+                                <div className="text-center text-gray-600">
+                                    Loading...
+                                </div>
+                            ) : followers.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {followers.map((follower) => (
+                                        <div
+                                            key={follower._id}
+                                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={follower.profilePic}
+                                                    alt={follower.username}
+                                                    className="w-10 h-10 rounded-full object-cover"
+                                                />
+                                                <div>
+                                                    <p className="font-medium text-gray-900">
+                                                        {follower.username}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500">
+                                                        {follower.email}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/profile/${follower.username}`
+                                                    )
+                                                }
+                                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-600">
+                                    No followers yet
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Following Tab */}
+                    {!isEditing && activeTab === "following" && (
+                        <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                            <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                Following ({following.length})
+                            </h3>
+                            {loadingConnections ? (
+                                <div className="text-center text-gray-600">
+                                    Loading...
+                                </div>
+                            ) : following.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {following.map((followee) => (
+                                        <div
+                                            key={followee._id}
+                                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={followee.profilePic}
+                                                    alt={followee.username}
+                                                    className="w-10 h-10 rounded-full object-cover"
+                                                />
+                                                <div>
+                                                    <p className="font-medium text-gray-900">
+                                                        {followee.username}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500">
+                                                        {followee.email}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/profile/${followee.username}`
+                                                    )
+                                                }
+                                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-600">
+                                    Not following anyone yet
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Connections Tab */}
+                    {!isEditing && activeTab === "connections" && (
+                        <div className="space-y-6">
+                            {/* Connection Requests */}
+                            {isOwner && connectionRequests.length > 0 && (
+                                <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                                    <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                        Pending Connection Requests (
+                                        {connectionRequests.length})
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {connectionRequests.map((request) => (
+                                            <div
+                                                key={request._id}
+                                                className="flex items-center justify-between p-4 border border-yellow-200 rounded-lg bg-yellow-50"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={
+                                                            request.requester
+                                                                ?.profilePic
+                                                        }
+                                                        alt={
+                                                            request.requester
+                                                                ?.username
+                                                        }
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">
+                                                            {
+                                                                request
+                                                                    .requester
+                                                                    ?.username
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-gray-500">
+                                                            {
+                                                                request
+                                                                    .requester
+                                                                    ?.email
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAcceptConnection(
+                                                                request._id
+                                                            )
+                                                        }
+                                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition"
+                                                    >
+                                                        Accept
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleRejectConnection(
+                                                                request._id
+                                                            )
+                                                        }
+                                                        className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Connections List */}
+                            <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
+                                <h3 className="text-xl font-semibold mb-4 text-gray-900">
+                                    Connections ({connections.length})
+                                </h3>
+                                {loadingConnections ? (
+                                    <div className="text-center text-gray-600">
+                                        Loading...
+                                    </div>
+                                ) : connections.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {connections.map((connection) => (
+                                            <div
+                                                key={connection._id}
+                                                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={
+                                                            connection.profilePic
+                                                        }
+                                                        alt={
+                                                            connection.username
+                                                        }
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">
+                                                            {
+                                                                connection.username
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-gray-500">
+                                                            {connection.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            navigate(
+                                                                `/profile/${connection.username}`
+                                                            )
+                                                        }
+                                                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleRemoveConnection(
+                                                                    connection._id
+                                                                )
+                                                            }
+                                                            className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-gray-600">
+                                        No connections yet
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

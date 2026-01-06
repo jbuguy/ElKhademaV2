@@ -36,6 +36,27 @@ const userSchema = new Schema(
             type: Boolean,
             required: false,
         },
+        following: [{ type: Schema.Types.ObjectId, ref: "User" }],
+        followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+        connections: [{ type: Schema.Types.ObjectId, ref: "User" }],
+        connectionRequests: [
+            {
+                from: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+                status: {
+                    type: String,
+                    enum: ["pending", "accepted", "rejected"],
+                    default: "pending",
+                },
+                createdAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
     },
     { timestamps: true }
 );

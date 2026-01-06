@@ -77,8 +77,14 @@ export const createConversation = async (req, res) => {
     const userId = req.user.id;
     const { members } = req.body;
     const uniqueMembers = [...new Set([...members, userId])];
-    const conversation = await Conversation.create({ members: uniqueMembers });
-    res.status(201).json(conversation);
+    // Check if a conversation with the same members already exists
+    let conversation = await Conversation.findOne({
+        members: { $all: uniqueMembers, $size: uniqueMembers.length },
+    });
+    if (!conversation) {
+        conversation = await Conversation.create({ members: uniqueMembers });
+    }
+    res.status(200).json(conversation);
 };
 
 // Long-polling endpoint: client supplies ?lastMessageId=<id> (optional). Server waits up to 25s for new messages then returns any new messages.
