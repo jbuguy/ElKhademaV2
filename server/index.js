@@ -15,13 +15,14 @@ import userRouter from "./routes/userRoute.js";
 
 dotenv.config();
 const app = express();
-
-app.use(
-    cors({
-        origin: ["http://localhost:5173", "http://localhost:5174"],
-        credentials: true,
-    })
-);
+if (process.env.NODE_ENV != "production") {
+    app.use(
+        cors({
+            origin: ["http://localhost:5173", "http://localhost:5174"],
+            credentials: true,
+        })
+    );
+}
 
 app.use(express.json());
 
