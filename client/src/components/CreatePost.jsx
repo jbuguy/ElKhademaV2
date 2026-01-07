@@ -4,6 +4,7 @@ import { CiImageOn } from "react-icons/ci";
 import { FaRegPlayCircle } from "react-icons/fa";
 import { FaTimes } from "react-icons/fa";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { ImageIcon } from "lucide-react";
 
 export default function CreatePost({ addPost }) {
     const [content, setContent] = useState("");
@@ -67,7 +68,7 @@ export default function CreatePost({ addPost }) {
     const isUploading = postMedia.some((m) => m.uploading);
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 p-6">
+        <div className="bg-white rounded-b-2xl shadow-sm border border-slate-200/50 p-6 mb-6">
             <div className="flex gap-4 mb-4">
                 <img
                     src={user.profilePic}
@@ -75,7 +76,7 @@ export default function CreatePost({ addPost }) {
                 />
                 <textarea
                     rows="2"
-                    className="flex-1 bg-slate-50 rounded-full px-4 py-3 outline-none border border-slate-200 hover:border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all placeholder-slate-400 resize-none"
+                    className="flex-1 bg-slate-50 rounded-t-2xl px-4 py-3 outline-none border border-slate-200 hover:border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all placeholder-slate-400 resize-none"
                     placeholder="Share what's on your mind..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
@@ -144,8 +145,8 @@ export default function CreatePost({ addPost }) {
                             htmlFor="image-upload"
                             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                         >
-                            <CiImageOn size={18} />
-                            <span className="text-sm font-medium">Image</span>
+                            <ImageIcon size={18} />
+                            <span className="text-2md md:text-3md lg:text-4md">Image</span>
                         </label>
                     </div>
                     <div className="relative inline-block">
@@ -161,7 +162,7 @@ export default function CreatePost({ addPost }) {
                             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                         >
                             <FaRegPlayCircle size={18} />
-                            <span className="text-sm font-medium">Video</span>
+                            <span className="text-2md md:text-3md lg:text-4md">Video</span>
                         </label>
                     </div>
                     <button

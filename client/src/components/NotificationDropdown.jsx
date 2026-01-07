@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { FaBell, FaHeart, FaComment, FaShare } from "react-icons/fa";
 import api from "../utils/api";
+import { Bell } from "lucide-react";
 
 const NotificationDropdown = () => {
     const [notifications, setNotifications] = useState([]);
@@ -153,12 +154,11 @@ const NotificationDropdown = () => {
     };
 
     return (
-        <div ref={dropdownRef} className="relative">
+        <div ref={dropdownRef} className="relative flex">
             <button
                 onClick={handleToggle}
-                className="relative border-0 bg-transparent p-0 text-gray-600 hover:text-primary-600 transition-colors duration-200"
             >
-                <FaBell size={20} />
+                <Bell size={20}     />
                 {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
@@ -177,7 +177,7 @@ const NotificationDropdown = () => {
                     <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 flex flex-col">
                         {notifications.length === 0 ? (
                             <div className="p-12 text-center">
-                                <FaBell className="text-6xl text-gray-300 mx-auto mb-4" />
+                                <Bell className="text-6xl text-gray-300 mx-auto mb-4" />
                                 <p className="text-gray-500 font-medium text-lg">
                                     No notifications yet
                                 </p>

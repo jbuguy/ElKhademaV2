@@ -187,7 +187,7 @@ const Checkbox = ({ label, checked, onChange }) => (
 );
 
 const CreateJobCTA = () => (
-    <div className="bg-gradient-to-br from-emerald-500 to-emerald-400 rounded-2xl p-8 text-white shadow-xl sticky top-4 z-30 mb-8 border border-emerald-100">
+    <div className="bg-gradient-to-br from-emerald-500 to-emerald-400 rounded-2xl p-8 text-white shadow-xl sticky top-20 z-30 mb-8 border border-emerald-100">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex-1">
                 <h3 className="text-3xl font-extrabold mb-2 drop-shadow-lg">
@@ -231,7 +231,7 @@ export default function Jobs() {
     const SALARY_MAX = 200000;
     const [salaryRange, setSalaryRange] = useState({ min: 200, max: 4960 });
     const salaryDebounceRef = useRef(null);
-    const [activeThumb, setActiveThumb] = useState(null); // 'min' | 'max' | null
+    const [activeThumb, setActiveThumb] = useState(null); 
 
     const fetchJobs = async (opts = {}) => {
         if (!user) return;
