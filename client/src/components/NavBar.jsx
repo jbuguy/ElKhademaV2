@@ -29,10 +29,17 @@ export function NavBar() {
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-3">
                     <div className="flex items-center">
-                    <img src="../../public/vite.svg" alt="logo" className="h-10 w-10 shrink-0" />
-                    <h1 className="font-bold leading-none tracking-tighter text-gray-900 mt-2.5" style={{letterSpacing:"-5",fontSize:"28px"}}>
-                        hadema
-                    </h1>
+                        <img
+                            src="/vite.svg"
+                            alt="logo"
+                            className="h-10 w-10 shrink-0"
+                        />
+                        <h1
+                            className="font-bold leading-none tracking-tighter text-gray-900 mt-2.5"
+                            style={{ letterSpacing: "-5", fontSize: "28px" }}
+                        >
+                            hadema
+                        </h1>
                     </div>
                 </Link>
 
