@@ -28,12 +28,12 @@ export function NavBar() {
             <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-6">
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">E</span>
-                    </div>
-                    <h1 className="text-2xl font-bold text-emerald-600">
-                        ElKhadema
+                    <div className="flex items-center">
+                    <img src="../../public/vite.svg" alt="logo" className="h-10 w-10 shrink-0" />
+                    <h1 className="font-bold leading-none tracking-tighter text-gray-900 mt-2.5" style={{letterSpacing:"-5",fontSize:"28px"}}>
+                        hadema
                     </h1>
+                    </div>
                 </Link>
 
                 {user ? (
