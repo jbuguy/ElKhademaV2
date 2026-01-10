@@ -62,7 +62,7 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="btn btn-primary w-full"
+                            className="btn text-white bg-green-500 w-full"
                         >
                             {isLoading ? "Signing in..." : "Sign in"}
                         </button>

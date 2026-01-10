@@ -5,6 +5,7 @@ import { generateToken } from "../utils/jwt.js";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { Conversation } from "../models/conversation.model.js";
+import { requireAuth } from "../middleware/auth.js";
 
 /* =========================
    AUTH
@@ -499,6 +500,53 @@ export const removeConnection = async (req, res) => {
         });
 
         res.status(200).json({ message: "Connection removed" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const followUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const myId = req.user.id;
+        if (id === myId) {
+            return res
+                .status(400)
+                .json({ error: "You cannot follow yourself" });
+        }
+        await User.findByIdAndUpdate(id, {
+            $addToSet: { followers: myId },
+        });
+        await User.findByIdAndUpdate(myId, {
+            $addToSet: { following: id },
+        });
+        res.status(200).json({ message: "follow added" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const unfollowUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const myId = req.user.id;
+        await User.findByIdAndUpdate(id, {
+            $pull: { followers: myId },
+        });
+        await User.findByIdAndUpdate(myId, {
+            $pull: { following: id },
+        });
+        res.status(200).json({ message: "follow removed" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const getfollowStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const myId = req.user.id;
+
+        const user = await User.findById(myId);
+        const isFollowing = user.following.includes(id);
+        res.status(200).json({ isFollowing });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

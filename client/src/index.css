@@ -4,7 +4,7 @@
     :root {
         --primary-color: #10b981; /* Emerald 500 */
         --text-dark: #0f172a; /* Slate 900 */
-        --text-muted: #64748b; /* Slate 500 */
+        /* --text-muted: #64748b; Slate 500 */
     }
 
     html {
