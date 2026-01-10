@@ -12,6 +12,7 @@ import notificationRouter from "./routes/notificationRoute.js";
 import postRouter from "./routes/postRoute.js";
 import reportRouter from "./routes/reportRoute.js";
 import userRouter from "./routes/userRoute.js";
+import searchRouter from "./routes/searchRoute.js";
 
 dotenv.config();
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api/jobs", jobsRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/reports", reportRouter);
+app.use("/api/search", searchRouter);
 
 import { fileURLToPath } from "url";
 

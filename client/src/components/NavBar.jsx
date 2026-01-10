@@ -1,33 +1,22 @@
 import { Link, useNavigate, useLocation } from "react-router";
 import { useAuthContext } from "../hooks/useAuthContext.js";
 import { useLogout } from "../hooks/useLogout.js";
-import { useState } from "react";
 import {
     Home,
     Briefcase,
     User,
     Settings,
-    Search,
     LogOut,
     MessageCircle,
     Wrench,
 } from "lucide-react";
 import NotificationDropdown from "./NotificationDropdown.jsx";
+import SearchBar from "./SearchBar.jsx";
 
 export function NavBar() {
     const logout = useLogout();
-    const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuthContext();
-    const [searchQuery, setSearchQuery] = useState("");
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/jobs?search=${encodeURIComponent(searchQuery)}`);
-            setSearchQuery("");
-        }
-    };
 
     const isActive = (path) =>
         location.pathname === path
@@ -50,19 +39,9 @@ export function NavBar() {
                 {user ? (
                     <>
                         {/* Search */}
-                        <form
-                            onSubmit={handleSearch}
-                            className="hidden md:flex items-center bg-white border border-slate-200 rounded-full px-4 py-2 w-150 focus-within:ring-2 focus-within:ring-emerald-500 transition"
-                        >
-                            <Search size={20} className="text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Search jobs..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="ml-3 mt-0.5 flex-1 outline-none text-sm  bg-transparent"
-                            />
-                        </form>
+                        <div className="hidden md:block w-80">
+                            <SearchBar />
+                        </div>
 
                         {/* Navigation Icons */}
                         <nav className="flex items-center gap-2">
