@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { FaBell, FaHeart, FaComment, FaShare } from "react-icons/fa";
 import api from "../utils/api";
 import { Bell } from "lucide-react";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 const NotificationDropdown = () => {
     const [notifications, setNotifications] = useState([]);
@@ -10,6 +11,7 @@ const NotificationDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [showAll, setShowAll] = useState(false);
     const navigate = useNavigate();
+    const { user } = useAuthContext();
     const dropdownRef = useRef(null);
 
     // Fetch notifications
@@ -25,7 +27,11 @@ const NotificationDropdown = () => {
     // Fetch unread count
     const fetchUnreadCount = async () => {
         try {
-            const response = await api.get("/notifications/unread-count");
+            const response = await api.get("/notifications/unread-count", {
+                headers: {
+                    authorization: `Bearer ${user.token}`,
+                },
+            });
             setUnreadCount(response.data.count);
         } catch (error) {
             console.error("Error fetching unread count:", error);
@@ -155,10 +161,8 @@ const NotificationDropdown = () => {
 
     return (
         <div ref={dropdownRef} className="relative flex">
-            <button
-                onClick={handleToggle}
-            >
-                <Bell size={20}     />
+            <button onClick={handleToggle}>
+                <Bell size={20} />
                 {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
@@ -167,7 +171,7 @@ const NotificationDropdown = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 top-12 w-[380px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[70vh] flex flex-col">
+                <div className="absolute right-0 top-12 w-95 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[70vh] flex flex-col">
                     <div className="p-4 border-b border-gray-200 bg-emerald-600 shrink-0">
                         <h3 className="text-xl font-bold text-white">
                             Notifications
@@ -210,9 +214,9 @@ const NotificationDropdown = () => {
                                                 >
                                                     {icon}
                                                 </div>
-                                                <div className="w-[280px] flex flex-col gap-1">
+                                                <div className="w-70 flex flex-col gap-1">
                                                     <p
-                                                        className={`text-sm break-words ${
+                                                        className={`text-sm wrap-break-word ${
                                                             !notification.read
                                                                 ? "font-semibold text-gray-900"
                                                                 : "text-gray-700"
