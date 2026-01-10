@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useAuthContext } from "../hooks/useAuthContext.js";
 import { useLogout } from "../hooks/useLogout.js";
 import {
