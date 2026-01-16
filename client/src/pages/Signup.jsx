@@ -242,28 +242,8 @@ export default function Signup() {
         }
     };
 
-    const isFormValid = () => {
-        if (!email || !password || !confirmPassword || passwordError)
-            return false;
-        if (role === "user") {
-            return userData.firstName && userData.lastName;
-        }
-        if (role === "company") {
-            return (
-                companyData.companyName &&
-                companyData.founderName &&
-                companyData.foundedDate &&
-                companyData.industry &&
-                companyData.companySize &&
-                companyData.website &&
-                companyData.companyDescription
-            );
-        }
-        return false;
-    };
-
-    // User has 3 pages (0, 1, 2), Company has 4 pages (0, 1, 2, 3)
-    const getMaxPage = () => (role === "user" ? 2 : role === "company" ? 3 : 0);
+    // User has 3 pages (0, 1, 2), Company has 5 pages (0, 1, 2, 3, 4)
+    const getMaxPage = () => (role === "user" ? 2 : role === "company" ? 4 : 0);
 
     const handleInputChange = (e, isCompany) => {
         const { name, value } = e.target;
@@ -822,14 +802,14 @@ export default function Signup() {
                         )}
                     </div>
                 </div>
-
+                <div style={{ padding: "20px" }}>
                 <button
-                    onClick={() => {
-                        if (isFormValid()) {
+                    onClick={async () => {
+                        try {
                             if (role === "user") {
-                                signup(email, password, "user");
+                                await signup(email, password, "user", userData);
                             } else if (role === "company") {
-                                signupCompany(
+                                await signupCompany(
                                     email,
                                     password,
                                     "company",
@@ -842,25 +822,30 @@ export default function Signup() {
                                     : "Company signup successful!",
                                 "success"
                             );
+                            setTimeout(() => navigate("/"), 1500);
+                        } catch (err) {
+                            const errorMessage = err?.message || err?.response?.data?.message || "Signup failed";
+                            showNotification(errorMessage, "error");
                         }
                     }}
-                    disabled={!isFormValid()}
+                    disabled={isLoading}
                     style={{
-                        ...buttonStyle("#10B981", !isFormValid()),
+                        ...buttonStyle("#10B981", isLoading),
                         width: "100%",
                         fontSize: "16px",
                         fontWeight: "600",
-                        backgroundColor: isFormValid()
-                            ? isSignupHovered
-                                ? "#0f766e"
-                                : "#10B981"
-                            : undefined,
+                        backgroundColor: isLoading
+                            ? "#0d9488"
+                            : isSignupHovered
+                            ? "#0f766e"
+                            : "#10B981"
                     }}
-                    onMouseEnter={() => setIsSignupHovered(true)}
+                    onMouseEnter={() => !isLoading && setIsSignupHovered(true)}
                     onMouseLeave={() => setIsSignupHovered(false)}
                 >
-                    Sign Up
+                    {isLoading ? "Signing Up..." : "Sign Up"}
                 </button>
+                </div>
 
                 <div style={{ marginTop: "16px", textAlign: "center" }}>
                     <div

@@ -9,6 +9,7 @@ export default function Home() {
   const [posts, setPosts] = useState(null);
   const [conversations, setConversations] = useState(null);
   const { user } = useAuthContext();
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -20,6 +21,19 @@ export default function Home() {
     api.get("/conversation", {
       headers: { authorization: `Bearer ${user.token}` },
     }).then((res) => setConversations(res.data));
+    const fetchProfile = async () => {
+        try {
+            console.log("Fetching profile for username:", user._id);
+            const { data } = await api.get(
+                `/user/profile/id/${user._id}`
+            );
+            setUserProfile(data);
+        } catch (error) {
+            console.error("Error fetching profile:", error);
+        }
+    };
+
+    fetchProfile();
   }, [user]);
 
   const addPost = async (post) => {
@@ -36,8 +50,7 @@ export default function Home() {
           throw new Error(err.response?.data?.error || "Failed to create post");
       }
   };
-
-
+  console.log("User Profile:", userProfile);
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden">
 
@@ -52,7 +65,7 @@ export default function Home() {
             <div className="px-6 pb-8">
               <div className="relative -mt-12 mb-4">
                 <img
-                  src={user?.profilePic || "https://via.placeholder.com/150"}
+                  src={userProfile?.profile.profilePic || "https://via.placeholder.com/150"}
                   alt="Profile"
                   className="w-24 h-24 rounded-3xl border-[6px] border-white object-cover shadow-md"
                 />
@@ -60,9 +73,9 @@ export default function Home() {
 
               <div className="space-y-1">
                 <h2 className="text-2xl font-bold text-slate-900 leading-tight">
-                  {user?.username || "User Name"}
+                  {user?.username?.split("@")[0] || "User Name"}
                 </h2>
-                <p className="text-base text-slate-500">{user?.email}</p>
+                <p className="text-base text-slate-500">{user?.username}</p>
               </div>
 
               <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between text-center">
@@ -75,13 +88,13 @@ export default function Home() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900">0</p>
+                  <p className="text-lg font-bold text-slate-900">{user?.followers?.length || 0}</p>
                   <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
                     Followers
                   </p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900">0</p>
+                  <p className="text-lg font-bold text-slate-900">{user?.following?.length || 0}</p>
                   <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
                     Following
                   </p>
@@ -104,7 +117,7 @@ export default function Home() {
             </div>
           </div>
 
-          <CreatePost addPost={addPost} />
+          <CreatePost addPost={addPost} profile={userProfile} />
 
           {posts && posts.length > 0 ? (
             <Posts posts={posts} />

@@ -6,7 +6,7 @@ import { FaTimes } from "react-icons/fa";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { ImageIcon } from "lucide-react";
 
-export default function CreatePost({ addPost }) {
+export default function CreatePost({ addPost , profile}) {
     const [content, setContent] = useState("");
     const [postMedia, setPostMedia] = useState([]); // { id, url?, type?, uploading }
     const { user } = useAuthContext();
@@ -79,7 +79,7 @@ export default function CreatePost({ addPost }) {
         <div className="bg-white rounded-b-2xl shadow-sm border border-slate-200/50 p-6 mb-6">
             <div className="flex gap-4 mb-4">
                 <img
-                    src={user.profilePic}
+                    src={profile?.profile.profilePic}
                     className="rounded-full h-12 w-12 object-cover flex-shrink-0"
                 />
                 <textarea
