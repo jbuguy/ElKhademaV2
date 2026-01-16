@@ -116,7 +116,7 @@ export const ApplicationModal = ({ isOpen, onClose, job }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full my-8 animate-slide-up">
                 <div className="bg-emerald-600 p-6 rounded-t-xl relative">
                     <button
