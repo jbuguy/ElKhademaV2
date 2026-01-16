@@ -123,20 +123,26 @@ const JobHeader = ({
                     </div>
                 </div>
                 {user.role === "user" ? (
-                    job?.applicants?.find((app) => app.user?._id === user._id || app.user === user._id) ? (
+                    job?.applicants?.find(
+                        (app) =>
+                            app.user?._id === user._id || app.user === user._id
+                    ) ? (
                         <button
                             disabled
                             className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md cursor-default capitalize"
                         >
                             {
                                 job.applicants.find(
-                                    (app) => app.user?._id === user._id || app.user === user._id
+                                    (app) =>
+                                        app.user?._id === user._id ||
+                                        app.user === user._id
                                 ).status
                             }
                         </button>
                     ) : (
                         <button
                             className="bg-white text-emerald-600 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md"
+                            onClick={() => openApplication()}
                         >
                             Apply Now
                         </button>
@@ -334,7 +340,7 @@ const ApplicantCard = ({ applicant, onStatusUpdate }) => {
             }
         };
         fetchUser();
-        }, [applicant.user]);
+    }, [applicant.user]);
     const getStatusColor = (status) => {
         switch (status) {
             case "accepted":
@@ -345,7 +351,7 @@ const ApplicantCard = ({ applicant, onStatusUpdate }) => {
                 return "bg-yellow-100 text-yellow-700 border-yellow-200";
         }
     };
-    console.log(userData)
+    console.log(userData);
     return (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
             <div className="p-4">
@@ -354,14 +360,24 @@ const ApplicantCard = ({ applicant, onStatusUpdate }) => {
                         <div className="flex items-center gap-3 mb-2">
                             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
                                 <span className="text-emerald-600 font-semibold text-lg">
-                                    {userData?.profilePic ? <img src={userData?.profilePic} alt="" /> : "loading"}
+                                    {userData?.profilePic ? (
+                                        <img
+                                            src={userData?.profilePic}
+                                            alt=""
+                                        />
+                                    ) : (
+                                        "loading"
+                                    )}
                                 </span>
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-800">
                                     {isLoadingUser
                                         ? "Loading..."
-                                        : (userData?.firstName || userData?.email) + " " + (userData?.lastName || "")}
+                                        : (userData?.firstName ||
+                                              userData?.email) +
+                                          " " +
+                                          (userData?.lastName || "")}
                                 </h3>
                                 <span
                                     className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
@@ -405,7 +421,7 @@ const ApplicantCard = ({ applicant, onStatusUpdate }) => {
                         <div className="flex flex-wrap gap-2">
                             {applicant.resume && (
                                 <a
-                                    href={`http://localhost:5001/api/media/pdf/${applicant.resume}`} 
+                                    href={`http://localhost:5001/api/media/pdf/${applicant.resume}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
@@ -416,7 +432,7 @@ const ApplicantCard = ({ applicant, onStatusUpdate }) => {
                             )}
                             {applicant.coverLetter && (
                                 <a
-                                    href={`http://localhost:5001/api/media/pdf/${applicant.coverLetter}`} 
+                                    href={`http://localhost:5001/api/media/pdf/${applicant.coverLetter}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
@@ -657,7 +673,7 @@ const InfoRow = ({ icon, label, value }) => (
     </div>
 );
 export default function JobView() {
-    const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+    const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(true);
     const { user } = useAuthContext();
     const { jobId } = useParams();
     const [job, setJob] = useState(null);
@@ -669,14 +685,16 @@ export default function JobView() {
         try {
             await api.patch(
                 `/jobs/${jobId}/applicants/${applicantId}`,
-                { status: newStatus,userId: user._id },
+                { status: newStatus, userId: user._id },
                 {
                     headers: { authorization: `Bearer ${user.token}` },
                 }
             );
             setJob((prevJob) => {
                 const updatedApplicants = prevJob.applicants.map((app) =>
-                    app._id === applicantId ? { ...app, status: newStatus } : app
+                    app._id === applicantId
+                        ? { ...app, status: newStatus }
+                        : app
                 );
                 return { ...prevJob, applicants: updatedApplicants };
             });
@@ -764,13 +782,13 @@ export default function JobView() {
     }
     return (
         <div className="min-h-screen bg-gray-50 py-8">
-            {/* {isApplicationModalOpen && (
+            {isApplicationModalOpen && (
                 <ApplicationModal
                     isOpen={isApplicationModalOpen}
                     onClose={() => setIsApplicationModalOpen(false)}
                     job={job}
                 />
-            )} */}
+            )}
             <DeleteConfirmModal
                 isOpen={showDeleteModal}
                 onClose={handleCancelDelete}
@@ -780,7 +798,7 @@ export default function JobView() {
             <div className="max-w-6xl mx-auto px-4">
                 <JobHeader
                     user={user}
-                    openApplication={() => {}}
+                    openApplication={() => setIsApplicationModalOpen(true)}
                     job={job}
                     poster={poster}
                     handleDeleteClick={handleDeleteClick}
@@ -796,7 +814,10 @@ export default function JobView() {
                         />
                         <SkillsTags skills={job.skills} tags={job.tags} />
                         {user._id === job.postedBy && (
-                            <ApplicantsManager job={job} onStatusUpdate={onStatusUpdate}/>
+                            <ApplicantsManager
+                                job={job}
+                                onStatusUpdate={onStatusUpdate}
+                            />
                         )}
                     </div>
 

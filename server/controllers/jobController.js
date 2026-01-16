@@ -194,17 +194,22 @@ export const applyForJob = async (req, res) => {
     const userId = req.user.id;
 
     try {
-        const job = await Jobs.findById(jobId).populate('postedBy', '_id username');
+        const job = await Jobs.findById(jobId).populate(
+            "postedBy",
+            "_id username"
+        );
         if (!job) {
             return res.status(404).json({ error: "Job not found" });
         }
 
         // Check if user already applied
         const alreadyApplied = job.applicants.some(
-            app => app.user.toString() === userId
+            (app) => app.user.toString() === userId
         );
         if (alreadyApplied) {
-            return res.status(400).json({ error: "You have already applied to this job" });
+            return res
+                .status(400)
+                .json({ error: "You have already applied to this job" });
         }
 
         job.applicants.push({
@@ -215,7 +220,8 @@ export const applyForJob = async (req, res) => {
         await job.save();
 
         // Create notification for company
-        const { createNotification } = await import("./notificationController.js");
+        const { createNotification } =
+            await import("./notificationController.js");
         await createNotification(
             job.postedBy._id,
             userId,
@@ -263,16 +269,15 @@ export const getCompanyApplications = async (req, res) => {
         // Find all jobs posted by this company
         const jobs = await Jobs.find({ postedBy: userId })
             .populate({
-                path: 'applicants.user',
-                select: 'username email profilePic'
+                path: "applicants.user",
+                select: "username email profilePic",
             })
-            .select('title applicants postedBy createdAt location jobType')
-            .sort({ 'applicants.appliedAt': -1 });
-
+            .select("title applicants postedBy createdAt location jobType")
+            .sort({ "applicants.appliedAt": -1 });
         // Flatten applications with job info
         const applications = [];
-        jobs.forEach(job => {
-            job.applicants.forEach(applicant => {
+        jobs.forEach((job) => {
+            job.applicants.forEach((applicant) => {
                 applications.push({
                     _id: applicant._id,
                     jobId: job._id,
@@ -283,7 +288,7 @@ export const getCompanyApplications = async (req, res) => {
                     resume: applicant.resume,
                     coverLetter: applicant.coverLetter,
                     appliedAt: applicant.appliedAt,
-                    status: applicant.status
+                    status: applicant.status,
                 });
             });
         });
