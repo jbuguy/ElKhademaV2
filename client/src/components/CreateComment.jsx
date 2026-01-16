@@ -12,7 +12,8 @@ export default function CreateComment({ addComment }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!content.trim()) return;
+        // Allow submission if there's text OR media, but not if both are empty
+        if (!content.trim() && postMedia.length === 0) return;
         addComment({ content, media: postMedia });
         setContent("");
         setPostMedia([]);
@@ -125,16 +126,14 @@ export default function CreateComment({ addComment }) {
                             </label>
                         </div>
 
-                        {content.trim().length > 0 && (
-                            <button
-                                type="submit"
-                                disabled={isUploading}
-                                className="flex items-center gap-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all disabled:opacity-50"
-                            >
-                                <Send size={14} />
-                                Comment
-                            </button>
-                        )}
+                        <button
+                            type="submit"
+                            disabled={isUploading || (!content.trim() && postMedia.length === 0)}
+                            className="flex items-center gap-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all disabled:opacity-50"
+                        >
+                            <Send size={14} />
+                            Comment
+                        </button>
                     </div>
                 </form>
             </div>

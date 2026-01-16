@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { BiCommentDetail, BiSend } from "react-icons/bi";
 import { FaRegThumbsUp, FaThumbsUp } from "react-icons/fa6";
 import { Link } from "react-router";
-import Comments from "./Comments";
+import Comment from "./Comment";
+import CreateComment from "./CreateComment";
 import PostMenu from "./PostMenu";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import api from "../utils/api";
@@ -21,12 +22,14 @@ const deletePost = async (postId, token) => {
 };
 export default function Post({ post }) {
     const [commentsVisible, setCommentsVisible] = useState(false);
+    const [showAllComments, setShowAllComments] = useState(false);
     const [isLiked, setIsLiked] = useState(post.liked);
     const [likes, setLikes] = useState(post.totalLikes);
     const [showToast, setShowToast] = useState(false);
     const [reportMsg, setReportMsg] = useState("");
     const { user } = useAuthContext();
     const [comments, setComments] = useState([]);
+    const [commentCount, setCommentCount] = useState(0);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const reportPost = async () => {
@@ -46,16 +49,20 @@ export default function Post({ post }) {
             setReportMsg(err.response?.data?.error || err.message);
         }
     };
+    
+    // Load comments on mount to get count
     useEffect(() => {
-        if (!commentsVisible) return;
         api.get(`/post/${post._id}/comments`, {
             headers: { authorization: `Bearer ${user.token}` },
-        }).then((res) => setComments(res.data));
-
-        return () => {
-            return;
-        };
-    }, [commentsVisible]);
+        })
+        .then((res) => {
+            setComments(res.data);
+            setCommentCount(res.data.length);
+        })
+        .catch((err) => {
+            console.error("Error loading comments:", err);
+        });
+    }, [post._id, user.token]);
     const navigate = useNavigate();
 
     const handleDeletePost = async () => {
@@ -91,12 +98,19 @@ export default function Post({ post }) {
     };
 
     const addComment = async (comment) => {
-        const res = await api.post(`/post/${post._id}/comments`, comment, {
-            headers: {
-                authorization: `Bearer ${user.token}`,
-            },
-        });
-        setComments((prev) => [...prev, res.data]);
+        try {
+            const res = await api.post(`/post/${post._id}/comments`, comment, {
+                headers: {
+                    authorization: `Bearer ${user.token}`,
+                },
+            });
+            setComments((prev) => [...prev, res.data]);
+            setCommentCount((prev) => prev + 1);
+            setCommentsVisible(true);
+            setShowAllComments(true);
+        } catch (err) {
+            console.error("Error adding comment:", err);
+        }
     };
 
     const handleShare = async () => {
@@ -203,10 +217,10 @@ export default function Post({ post }) {
                 </button>
                 <button
                     className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg transition-all font-medium"
-                    onClick={() => setCommentsVisible(true)}
+                    onClick={() => setCommentsVisible(!commentsVisible)}
                 >
                     <BiCommentDetail size={18} />
-                    <span className="text-sm">Comment</span>
+                    <span className="text-sm">{commentCount} {commentCount === 1 ? 'Comment' : 'Comments'}</span>
                 </button>
                 <button
                     className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg transition-all font-medium"
@@ -218,12 +232,61 @@ export default function Post({ post }) {
                 
             </div>
 
+            {/* Comments Preview - Show 1-2 comments */}
+            {comments.length > 0 && !commentsVisible && (
+                <div className="px-8 py-4 border-t border-slate-100">
+                    <button
+                        onClick={() => setCommentsVisible(true)}
+                        className="text-slate-500 hover:text-emerald-600 text-sm font-medium transition-colors"
+                    >
+                        View {commentCount === 1 ? '1 comment' : `all ${commentCount} comments`}
+                    </button>
+                    {comments.slice(0, 2).map((comment) => (
+                        <div key={comment._id} className="mt-3 flex gap-3">
+                            <img
+                                src={comment.userId?.profilePic || "https://via.placeholder.com/150"}
+                                alt="profile"
+                                className="rounded-full h-8 w-8 object-cover border border-slate-200"
+                            />
+                            <div className="flex-1">
+                                <p className="text-sm">
+                                    <span className="font-semibold text-slate-900">
+                                        {comment.userId?.displayName || comment.userId?.username}
+                                    </span>
+                                    {' '}
+                                    <span className="text-slate-700">{comment.content}</span>
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Full Comments Section */}
             {commentsVisible && (
-                <Comments
-                    comments={comments}
-                    addComment={addComment}
-                    postId={post._id}
-                />
+                <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50">
+                    <CreateComment addComment={addComment} />
+                    {comments.length > 0 && (
+                        <div className="mt-4 space-y-3">
+                            {(showAllComments ? comments : comments.slice(0, 2)).map((comment) => (
+                                <Comment
+                                    key={comment._id}
+                                    comment={comment}
+                                    replies={comment.replies || []}
+                                    onReply={async () => {}}
+                                />
+                            ))}
+                            {comments.length > 2 && !showAllComments && (
+                                <button
+                                    onClick={() => setShowAllComments(true)}
+                                    className="text-emerald-600 hover:text-emerald-700 text-sm font-medium transition-colors"
+                                >
+                                    View {comments.length - 2} more {comments.length - 2 === 1 ? 'comment' : 'comments'}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             )}
             {showToast && (
                 <Toast
