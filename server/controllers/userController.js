@@ -5,7 +5,7 @@ import { generateToken } from "../utils/jwt.js";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { Conversation } from "../models/conversation.model.js";
-import { requireAuth } from "../middleware/auth.js";
+import mongoose from "mongoose";
 
 /* =========================
    AUTH
@@ -313,9 +313,6 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-/* =========================
-   CONNECTIONS & FOLLOWERS
-========================= */
 
 // GET /user/followers/:username
 export const getFollowers = async (req, res) => {
@@ -506,18 +503,22 @@ export const removeConnection = async (req, res) => {
 };
 export const followUser = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { userId } = req.params;
         const myId = req.user.id;
-        if (id === myId) {
+        if (userId === myId) {
             return res
                 .status(400)
                 .json({ error: "You cannot follow yourself" });
         }
-        await User.findByIdAndUpdate(id, {
-            $addToSet: { followers: myId },
-        });
+        const r = await User.findByIdAndUpdate(
+            userId,
+            {
+                $addToSet: { followers: myId },
+            },
+            { new: true }
+        );
         await User.findByIdAndUpdate(myId, {
-            $addToSet: { following: id },
+            $addToSet: { following: userId },
         });
         res.status(200).json({ message: "follow added" });
     } catch (error) {
@@ -526,13 +527,13 @@ export const followUser = async (req, res) => {
 };
 export const unfollowUser = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { userId } = req.params;
         const myId = req.user.id;
-        await User.findByIdAndUpdate(id, {
+        await User.findByIdAndUpdate(userId, {
             $pull: { followers: myId },
         });
         await User.findByIdAndUpdate(myId, {
-            $pull: { following: id },
+            $pull: { following: userId },
         });
         res.status(200).json({ message: "follow removed" });
     } catch (error) {
@@ -541,11 +542,11 @@ export const unfollowUser = async (req, res) => {
 };
 export const getfollowStatus = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { userId } = req.params;
         const myId = req.user.id;
 
         const user = await User.findById(myId);
-        const isFollowing = user.following.includes(id);
+        const isFollowing = user.following.includes(userId);
         res.status(200).json({ isFollowing });
     } catch (error) {
         res.status(500).json({ error: error.message });

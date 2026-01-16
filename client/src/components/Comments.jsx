@@ -13,8 +13,6 @@ export default function Comments({ comments, addComment, postId }) {
     }, [comments]);
     const { user } = useAuthContext();
 
-    console.log("Rendering Comments component, commentsList:", commentsList);
-
     const handleReply = async (commentId, replyContent) => {
         if (!user) return alert("Please log in to reply");
         try {
@@ -47,7 +45,9 @@ export default function Comments({ comments, addComment, postId }) {
                     {commentsList.length} comment(s)
                 </p>
                 {commentsList.length === 0 && (
-                    <p className="text-slate-400 text-center py-4">No comments yet. Be the first to comment!</p>
+                    <p className="text-slate-400 text-center py-4">
+                        No comments yet. Be the first to comment!
+                    </p>
                 )}
                 {commentsList.map((comment) => (
                     <Comment

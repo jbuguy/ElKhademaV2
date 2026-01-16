@@ -29,8 +29,8 @@ router.post(
 router.post("/accept-connection/:requestId", requireAuth, acceptConnection);
 router.post("/reject-connection/:requestId", requireAuth, rejectConnection);
 router.delete("/remove-connection/:userId", requireAuth, removeConnection);
-router.post("/follow/:userid", requireAuth, followUser);
-router.delete("/follow/:userid", requireAuth, unfollowUser);
-router.get("/follow/:userid", requireAuth, getfollowStatus);
+router.post("/follow/:userId", requireAuth, followUser);
+router.delete("/follow/:userId", requireAuth, unfollowUser);
+router.get("/follow/:userId", requireAuth, getfollowStatus);
 
 export default router;
