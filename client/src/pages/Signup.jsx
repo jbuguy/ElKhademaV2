@@ -389,14 +389,14 @@ export default function Signup() {
                         paddingTop: "24px",
                     }}
                 >
-                    <div style={{ overflow: "hidden" }}>
-                        <div
-                            style={{
+                    <div style={{ overflow: "hidden", minHeight: "400px" }}>
+                            <div
+                                style={{
                                 display: "flex",
                                 transform: `translateX(-${currentPage * 100}%)`,
                                 transition: "transform 0.3s ease-in-out",
-                            }}
-                        >
+                                }}
+                            >
                             {/* Page 0: Credentials + Role */}
                             <div
                                 style={{
@@ -816,7 +816,7 @@ export default function Signup() {
 
                 <div style={{ marginTop: "16px", textAlign: "center" }}>
                     <div
-                        style={{
+                           style={{
                             fontSize: "14px",
                             color: "#6b7280",
                             marginBottom: "8px",
@@ -848,3 +848,4 @@ export default function Signup() {
         </div>
     );
 }
+    
