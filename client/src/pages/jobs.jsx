@@ -229,7 +229,7 @@ export default function Jobs() {
 
     const SALARY_MIN = 0;
     const SALARY_MAX = 200000;
-    const [salaryRange, setSalaryRange] = useState({ min: 200, max: 4960 });
+    const [salaryRange, setSalaryRange] = useState({ min: 200, max: 200000 });
     const salaryDebounceRef = useRef(null);
     const [activeThumb, setActiveThumb] = useState(null); 
 

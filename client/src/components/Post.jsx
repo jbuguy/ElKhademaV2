@@ -4,11 +4,21 @@ import { BiCommentDetail, BiSend } from "react-icons/bi";
 import { FaRegThumbsUp, FaThumbsUp } from "react-icons/fa6";
 import { Link } from "react-router";
 import Comments from "./Comments";
+import PostMenu from "./PostMenu";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import api from "../utils/api";
 import { useAuthContext } from "../hooks/useAuthContext";
 import MediaGrid from "./MediaGrid";
 import Toast from "./Toast";
+import { useNavigate } from "react-router";
 
+const deletePost = async (postId, token) => {
+    return api.delete(`/post/${postId}`, {
+        headers: {
+            authorization: `Bearer ${token}`,
+        },
+    });
+};
 export default function Post({ post }) {
     const [commentsVisible, setCommentsVisible] = useState(false);
     const [isLiked, setIsLiked] = useState(post.liked);
@@ -17,6 +27,7 @@ export default function Post({ post }) {
     const [reportMsg, setReportMsg] = useState("");
     const { user } = useAuthContext();
     const [comments, setComments] = useState([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const reportPost = async () => {
         if (!user) return alert("Please log in to report");
@@ -45,6 +56,18 @@ export default function Post({ post }) {
             return;
         };
     }, [commentsVisible]);
+    const navigate = useNavigate();
+
+    const handleDeletePost = async () => {
+        try {
+            await deletePost(post._id, user.token);
+            setShowDeleteModal(false);
+            navigate(0); 
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete post");
+        }
+    };
 
     const toggleLiked = async () => {
         const newLikedState = !isLiked;
@@ -90,10 +113,14 @@ export default function Post({ post }) {
             console.error("Error sharing post:", error);
         }
     };
-
     return (
         <article className="bg-white rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden hover:shadow-md transition-all">
             {/* Post Header */}
+            <ConfirmDeleteModal
+                open={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDeletePost}
+            />
             <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100">
                 <div className="flex items-center gap-4">
                     <img
@@ -132,6 +159,14 @@ export default function Post({ post }) {
                         </p>
                     </div>
                 </div>
+                <PostMenu
+                    isOwner={
+                        user &&
+                        (user.role === "admin" || user._id === post.userId._id)
+                    }
+                    onDelete={() => setShowDeleteModal(true)}
+                    onReport={reportPost}
+                />
             </div>
 
             {post.sharedFrom && (
@@ -180,12 +215,7 @@ export default function Post({ post }) {
                     <BiSend size={18} />
                     <span className="text-sm">Share</span>
                 </button>
-                <button
-                    className="text-red-500 hover:text-red-700 text-sm font-medium hover:bg-red-50 px-4 py-2 rounded-lg transition-all"
-                    onClick={reportPost}
-                >
-                    Report
-                </button>
+                
             </div>
 
             {commentsVisible && (

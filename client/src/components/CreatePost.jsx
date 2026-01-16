@@ -10,16 +10,24 @@ export default function CreatePost({ addPost }) {
     const [content, setContent] = useState("");
     const [postMedia, setPostMedia] = useState([]); // { id, url?, type?, uploading }
     const { user } = useAuthContext();
+    const [errorMsg, setErrorMsg] = useState("");
 
-    const handleSubmit = (e) => {
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // filter out uploading items
+        setErrorMsg(""); // reset previous error
+
         const readyMedia = postMedia
             .filter((m) => !m.uploading)
             .map((m) => ({ url: m.url, type: m.type }));
-        addPost({ content, media: readyMedia });
-        setContent("");
-        setPostMedia([]);
+
+        try {
+            await addPost({ content, media: readyMedia });
+            setContent("");
+            setPostMedia([]);
+        } catch (err) {
+            setErrorMsg(err.message); // show middleware error
+        }
     };
 
     const handleMediaChange = (e) => {
@@ -84,6 +92,12 @@ export default function CreatePost({ addPost }) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+                {errorMsg && (
+                    <div className="mb-4 px-4 py-2 bg-red-100 text-red-700 rounded-lg">
+                        {errorMsg}
+                    </div>
+                )}
+
                 {postMedia.length > 0 && (
                     <div className="flex gap-2">
                         {postMedia.map((item) => (

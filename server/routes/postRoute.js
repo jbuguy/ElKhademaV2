@@ -1,13 +1,25 @@
-import { Router } from "express"
-import { addComment, addLike, addPost, deleteLike, deletePost, getAllPosts, getComments, getPost, sharePost, updatePost } from "../controllers/postController.js";
+import { Router } from "express";
+import {
+    addComment,
+    addLike,
+    addPost,
+    deleteLike,
+    deletePost,
+    getAllPosts,
+    getComments,
+    getPost,
+    sharePost,
+    updatePost,
+} from "../controllers/postController.js";
 import { requireAuth } from "../middleware/auth.js";
+import { profanityCheck } from "../middleware/profanity.js";
 
 const router = Router();
 router.use(requireAuth);
 router.route("/").get(getAllPosts);
-router.route("/").post(addPost);
+router.route("/").post(profanityCheck, addPost);
 router.route("/:id").delete(deletePost);
-router.route("/:id").put(updatePost);
+router.route("/:id").put(profanityCheck, updatePost);
 router.route("/:id").get(getPost);
 router.route("/:id/comments").get(getComments);
 router.route("/:id/comments").post(addComment);

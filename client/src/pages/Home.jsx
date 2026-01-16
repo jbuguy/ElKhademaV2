@@ -23,13 +23,20 @@ export default function Home() {
   }, [user]);
 
   const addPost = async (post) => {
-    const res = await api.post(
-      "/post",
-      { content: post.content, media: post.media },
-      { headers: { authorization: `Bearer ${user.token}` } }
-    );
-    setPosts((prev) => [res.data, ...prev]);
+      try {
+          const res = await api.post(
+              "/post",
+              { content: post.content, media: post.media },
+              { headers: { authorization: `Bearer ${user.token}` } }
+          );
+          setPosts((prev) => [res.data, ...prev]);
+          return res.data;
+      } catch (err) {
+          // extract error message from middleware
+          throw new Error(err.response?.data?.error || "Failed to create post");
+      }
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden">
