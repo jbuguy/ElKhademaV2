@@ -11,7 +11,7 @@ export const getConversation = async (req, res) => {
     if (!conversation)
         return res.status(404).json({ error: "conversation not found" });
     const isMember = conversation.members.some(
-        (member) => member._id.toString() === userId
+        (member) => member._id.toString() === userId,
     );
     if (!isMember)
         return res.status(404).json({ error: "conversation not found" });
@@ -37,7 +37,7 @@ export const sendMessage = async (req, res) => {
     const { content, media } = req.body;
     const conversation = await Conversation.findById(id);
     const isMember = conversation.members.some(
-        (member) => member.toString() === userId
+        (member) => member.toString() === userId,
     );
     if (!isMember) {
         return res.status(403).json({ error: "Access denied" });
@@ -52,7 +52,6 @@ export const sendMessage = async (req, res) => {
     conversation.lastMessage = message._id;
     await conversation.save();
 
-    // Notify long-poll waiters for this conversation so they can re-query and get the new messages
     try {
         longPoller.notifyNewMessage(id);
     } catch (err) {
@@ -69,38 +68,38 @@ export const editMessage = async (req, res) => {
     const message = await Message.findOneAndUpdate(
         { _id: slug, conversationId: id, userId },
         { content, media },
-        { new: true }
+        { new: true },
     ).lean();
     res.status(200).json(message);
 };
 export const createConversation = async (req, res) => {
     const userId = req.user.id;
     const { members } = req.body;
-    const uniqueMembers = [...new Set([...members, userId])];
-    // Check if a conversation with the same members already exists
+    const uniqueMembers = [...new Set([...members, userId])].sort();
+
     let conversation = await Conversation.findOne({
         members: { $all: uniqueMembers, $size: uniqueMembers.length },
     });
+
     if (!conversation) {
         conversation = await Conversation.create({ members: uniqueMembers });
     }
     res.status(200).json(conversation);
 };
 
-// Long-polling endpoint: client supplies ?lastMessageId=<id> (optional). Server waits up to 25s for new messages then returns any new messages.
 export const pollMessages = async (req, res) => {
     const userId = req.user.id;
-    const { id } = req.params; // conversation id
+    const { id } = req.params;
     const { lastMessageId } = req.query;
 
     const conversation = await Conversation.findById(id).populate(
         "members",
-        "_id"
+        "_id",
     );
     if (!conversation)
         return res.status(404).json({ error: "conversation not found" });
     const isMember = conversation.members.some(
-        (member) => member._id.toString() === userId
+        (member) => member._id.toString() === userId,
     );
     if (!isMember) return res.status(403).json({ error: "access denied" });
 
@@ -110,7 +109,6 @@ export const pollMessages = async (req, res) => {
         if (lastMessage) lastCreatedAt = lastMessage.createdAt || lastCreatedAt;
     }
 
-    // immediate check for new messages
     let messages = await Message.find({
         conversationId: id,
         createdAt: { $gt: lastCreatedAt },
@@ -122,14 +120,10 @@ export const pollMessages = async (req, res) => {
         return res.status(200).json(messages);
     }
 
-    // nothing new yet -> wait up to 25s
     try {
         await longPoller.waitForNewMessages(id, 25000);
-    } catch (err) {
-        // ignore
-    }
+    } catch (err) {}
 
-    // one final check before returning
     messages = await Message.find({
         conversationId: id,
         createdAt: { $gt: lastCreatedAt },
