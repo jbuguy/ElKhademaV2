@@ -11,7 +11,6 @@ export const useJobCreation = () => {
             const payload = {
                 ...job,
             };
-            console.log(payload);
             const response = await api.post("/jobs/create", payload, {
                 headers: {
                     Authorization: `Bearer ${user.token}`,
@@ -58,7 +57,6 @@ export const useJobCreation = () => {
                 ...applicationData,
                 user_id: user._id,
             };
-            console.log(payload);
             const response = await api.post(
                 `/jobs/${applicationData._id}/apply`,
                 payload,
