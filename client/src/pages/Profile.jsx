@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useLocation, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useAuthContext } from "../hooks/useAuthContext";
 import api from "../utils/api";
 import Posts from "../components/Posts";
@@ -14,7 +14,6 @@ import { useGenerateCV } from "../hooks/useGenerateCV";
 
 function Profile() {
     const { username: paramUsername } = useParams();
-    const location = useLocation();
     const navigate = useNavigate();
     const { user: currentUser } = useAuthContext();
 
@@ -62,7 +61,6 @@ function Profile() {
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
-    // Connection states
     const [followers, setFollowers] = useState([]);
     const [following, setFollowing] = useState([]);
     const [connections, setConnections] = useState([]);
@@ -71,7 +69,6 @@ function Profile() {
     const [isConnected, setIsConnected] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState(null); // 'pending', 'connected', null
 
-    // Follow states
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingFollowStatus, setLoadingFollowStatus] = useState(false);
     const [followingLoading, setFollowingLoading] = useState(false);
@@ -99,7 +96,6 @@ function Profile() {
         if (username) fetchPosts();
     }, [username]);
 
-    // Fetch connection data and follow status
     useEffect(() => {
         const fetchConnectionData = async () => {
             if (!username) return;
@@ -132,7 +128,6 @@ function Profile() {
                 setConnections(connectionsRes.data || []);
                 setConnectionRequests(requestsRes.data || []);
 
-                // Check current connection status
                 if (!isOwner && currentUser) {
                     const checkRes = await api
                         .get(`/user/connection-status/${username}`, {
@@ -154,7 +149,6 @@ function Profile() {
         fetchConnectionData();
     }, [username, isOwner, currentUser]);
 
-    // Fetch follow status
     useEffect(() => {
         const fetchFollowStatus = async () => {
             if (!currentUser || isOwner || !user?._id) return;
@@ -271,7 +265,6 @@ function Profile() {
         try {
             setFollowingLoading(true);
             if (isFollowing) {
-                // Unfollow
                 await api.delete(`/user/follow/${user._id}`, {
                     headers: {
                         authorization: `Bearer ${currentUser.token}`,
@@ -282,7 +275,6 @@ function Profile() {
                     prev.filter((f) => f._id !== currentUser._id)
                 );
             } else {
-                // Follow
                 await api.post(
                     `/user/follow/${user._id}`,
                     {},
@@ -360,7 +352,6 @@ function Profile() {
                         onEdit={() => navigate("/profile/editprofile")}
                         onGenerateCV={handleGenerateCV}
                     />
-                    {/* Connection & Message & Follow Buttons */}
                     {!isOwner && currentUser && (
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200/50 flex gap-3 flex-wrap">
                             {connectionStatus === "pending" ? (
@@ -391,7 +382,6 @@ function Profile() {
                                 </button>
                             )}
 
-                            {/* Follow/Unfollow Button */}
                             <button
                                 onClick={handleFollowToggle}
                                 disabled={
@@ -621,7 +611,6 @@ function Profile() {
                                 </div>
                             )}
 
-                            {/* Connections List */}
                             <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
                                 <h3 className="text-xl font-semibold mb-4 text-gray-900">
                                     Connections ({connections.length})
