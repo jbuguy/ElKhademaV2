@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../utils/api";
 import { useAuthContext } from "../hooks/useAuthContext";
 import Toast from "./Toast";
@@ -13,6 +13,25 @@ export default function Comment({ comment, onReply, replies = [] }) {
     const [replyContent, setReplyContent] = useState("");
     const [showReplies, setShowReplies] = useState(false);
     const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+    const [lightboxImage, setLightboxImage] = useState(null);
+
+    // Disable scrolling and hide navbar when lightbox is open
+    useEffect(() => {
+        if (lightboxImage) {
+            document.body.style.overflow = 'hidden';
+            const header = document.querySelector('header') || document.querySelector('nav')?.closest('div');
+            if (header) header.style.display = 'none';
+        } else {
+            document.body.style.overflow = 'unset';
+            const header = document.querySelector('header') || document.querySelector('nav')?.closest('div');
+            if (header) header.style.display = '';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+            const header = document.querySelector('header') || document.querySelector('nav')?.closest('div');
+            if (header) header.style.display = '';
+        };
+    }, [lightboxImage]);
 
     const reportComment = async () => {
         if (!user) return alert("Please log in to report");
@@ -60,7 +79,7 @@ export default function Comment({ comment, onReply, replies = [] }) {
                         className="flex-shrink-0"
                     >
                         <img
-                            src={comment.userId.profilePic}
+                            src={comment.userId.profilePic || "https://via.placeholder.com/150"}
                             alt={`${comment.username} profile`}
                             className="rounded-full h-9 w-9 object-cover border border-emerald-200"
                         />
@@ -86,6 +105,31 @@ export default function Comment({ comment, onReply, replies = [] }) {
                         <div className="mt-2 text-slate-700 text-sm leading-relaxed">
                             {comment.content}
                         </div>
+                        
+                        {/* Display comment media */}
+                        {comment.media && comment.media.length > 0 && (
+                            <div className="mt-3 flex gap-2 flex-wrap">
+                                {comment.media.map((item, index) => (
+                                    item.type === "video" ? (
+                                        <video
+                                            key={index}
+                                            src={item.url}
+                                            controls
+                                            className="max-w-[250px] max-h-[200px] rounded-lg border border-slate-200 object-cover"
+                                        />
+                                    ) : (
+                                        <img
+                                            key={index}
+                                            src={item.url}
+                                            alt="comment media"
+                                            onClick={() => setLightboxImage(item.url)}
+                                            className="max-w-[250px] max-h-[200px] rounded-lg border border-slate-200 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                        />
+                                    )
+                                ))}
+                            </div>
+                        )}
+                        
                         <div className="mt-3 flex items-center gap-4">
                             <button
                                 onClick={() => setShowReplyForm(!showReplyForm)}
@@ -195,6 +239,27 @@ export default function Comment({ comment, onReply, replies = [] }) {
             )}
 
             {msg && <Toast message={msg} onClose={() => setMsg("")} />}
+            
+            {/* Lightbox Modal */}
+            {lightboxImage && (
+                <div
+                    className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4"
+                    onClick={() => setLightboxImage(null)}
+                >
+                    <img
+                        src={lightboxImage}
+                        alt="Full size"
+                        className="max-w-full max-h-full object-contain"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                        onClick={() => setLightboxImage(null)}
+                        className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 transition-colors"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

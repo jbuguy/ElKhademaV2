@@ -14,7 +14,6 @@ export const createJob = async (req, res) => {
         skills,
         category,
         status,
-        postedBy,
         deadline,
     } = req.body;
     try {
@@ -31,11 +30,12 @@ export const createJob = async (req, res) => {
             skills,
             category,
             status,
-            postedBy,
+            postedBy: req.user.id, // Use authenticated user's ID
             deadline,
         });
         res.status(201).json(job);
     } catch (error) {
+        console.error("Error creating job:", error);
         res.status(400).json({ error: error.message });
     }
 };
@@ -191,18 +191,45 @@ export const updateJobById = async (req, res) => {
 export const applyForJob = async (req, res) => {
     const { jobId } = req.params;
     const applicationData = req.body;
+    const userId = req.user.id;
 
     try {
-        const job = await Jobs.findById(jobId);
+        const job = await Jobs.findById(jobId).populate(
+            "postedBy",
+            "_id username"
+        );
         if (!job) {
             return res.status(404).json({ error: "Job not found" });
         }
+
+        // Check if user already applied
+        const alreadyApplied = job.applicants.some(
+            (app) => app.user.toString() === userId
+        );
+        if (alreadyApplied) {
+            return res
+                .status(400)
+                .json({ error: "You have already applied to this job" });
+        }
+
         job.applicants.push({
-            user: applicationData.user_id,
+            user: userId,
             resume: applicationData.resume,
             coverLetter: applicationData.coverLetter,
         });
         await job.save();
+
+        // Create notification for company
+        const { createNotification } =
+            await import("./notificationController.js");
+        await createNotification(
+            job.postedBy._id,
+            userId,
+            "application",
+            jobId,
+            { jobTitle: job.title }
+        );
+
         res.status(200).json({ message: "Application submitted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -230,6 +257,43 @@ export const changeApplicantStatus = async (req, res) => {
         res.status(200).json({
             message: "Applicant status updated successfully",
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const getCompanyApplications = async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        // Find all jobs posted by this company
+        const jobs = await Jobs.find({ postedBy: userId })
+            .populate({
+                path: "applicants.user",
+                select: "username email profilePic",
+            })
+            .select("title applicants postedBy createdAt location jobType")
+            .sort({ "applicants.appliedAt": -1 });
+        // Flatten applications with job info
+        const applications = [];
+        jobs.forEach((job) => {
+            job.applicants.forEach((applicant) => {
+                applications.push({
+                    _id: applicant._id,
+                    jobId: job._id,
+                    jobTitle: job.title,
+                    jobLocation: job.location,
+                    jobType: job.jobType,
+                    applicant: applicant.user,
+                    resume: applicant.resume,
+                    coverLetter: applicant.coverLetter,
+                    appliedAt: applicant.appliedAt,
+                    status: applicant.status,
+                });
+            });
+        });
+
+        res.status(200).json({ applications });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

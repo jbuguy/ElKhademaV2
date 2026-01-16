@@ -1,7 +1,7 @@
 import { Search, MapPin, ChevronUp, ChevronDown } from "lucide-react";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuthContext } from "../hooks/useAuthContext";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import api from "../utils/api.js";
 
 const Hero = () => (
@@ -67,24 +67,29 @@ const SearchBar = ({
     </div>
 );
 export const JobCard = ({ job }) => {
+    const navigate = useNavigate();
     const [posterProfile, setPosterProfile] = useState(null);
+    const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+    
     useEffect(() => {
-        if (!job?.postedBy) return;
+        if (!job?.postedBy || isLoadingProfile) return;
 
         const fetchProfile = async () => {
+            setIsLoadingProfile(true);
             try {
-                console.log("Fetching profile for username:", job.postedBy);
                 const { data } = await api.get(
                     `/user/profile/id/${job.postedBy}`
                 );
                 setPosterProfile(data);
             } catch (error) {
                 console.error("Error fetching profile:", error);
+            } finally {
+                setIsLoadingProfile(false);
             }
         };
 
         fetchProfile();
-    }, [job.postedBy]);
+    }, [job?.postedBy]);
     const color = useMemo(() => {
         const targetName = job.postedBy || "";
         const hue =
@@ -96,21 +101,28 @@ export const JobCard = ({ job }) => {
         return `hsl(${hue}, 70%, 50%)`;
     }, [job.postedBy]);
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 hover:shadow-lg transition mb-6">
+        <div 
+            onClick={() => navigate(`/jobs/${job._id}`)}
+            className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 hover:shadow-lg hover:border-emerald-200 transition cursor-pointer mb-6"
+        >
             <div className="flex justify-between items-start mb-4 gap-4">
                 <div className="flex gap-4">
                     <div
                         className={`w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-2xl overflow-hidden ring-2 ring-emerald-100`}
                         style={{ backgroundColor: color }}
                     >
-                        {posterProfile?.profile.profilePic ? (
+                        {posterProfile?.profile?.profilePic && posterProfile.profile.profilePic.trim() !== "" ? (
                             <img
                                 src={posterProfile.profile.profilePic}
-                                alt="Logo"
+                                alt="Company Logo"
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.textContent = job.postedBy.slice(0, 2).toUpperCase();
+                                }}
                             />
                         ) : (
-                            job.postedBy.slice(0, 2).toUpperCase()
+                            job.postedBy?.slice(0, 2).toUpperCase() || "?"
                         )}
                     </div>
                     <div>
@@ -163,48 +175,63 @@ export const JobCard = ({ job }) => {
 };
 
 const FilterSection = ({ title, children }) => (
-    <div className="mb-8">
-        <h4 className="font-bold text-gray-800 mb-4">{title}</h4>
-        <div className="space-y-3">{children}</div>
+    <div className="pb-6 border-b border-slate-200 last:border-b-0 last:pb-0">
+        <h4 className="font-bold text-slate-800 mb-4 text-base">{title}</h4>
+        <div className="space-y-2.5">{children}</div>
     </div>
 );
 const Checkbox = ({ label, checked, onChange }) => (
-    <label className="inline-flex items-start gap-3 cursor-pointer group">
+    <label className="inline-flex items-center gap-3 cursor-pointer group hover:bg-emerald-50/50 px-2 py-1.5 rounded-lg transition-colors">
         <div
-            className={`w-5 h-5 rounded border flex items-center justify-center transition ${
+            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                 checked
-                    ? "bg-[#286ed6] border-[#a6bcdb]"
-                    : "border-gray-300 bg-white"
+                    ? "bg-emerald-600 border-emerald-600 scale-105"
+                    : "border-slate-300 bg-white group-hover:border-emerald-400"
             }`}
         >
-            {checked && <div className="w-2 h-2 bg-white rounded-sm" />}
+            {checked && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+            )}
         </div>
-        <span className="text-gray-600 text-sm group-hover:text-gray-800 transition">
+        <span className="text-slate-700 text-sm font-medium group-hover:text-slate-900 transition">
             {label}
         </span>
         <input type="checkbox" hidden checked={checked} onChange={onChange} />
     </label>
 );
 
-const CreateJobCTA = () => (
-    <div className="bg-gradient-to-br from-emerald-500 to-emerald-400 rounded-2xl p-8 text-white shadow-xl sticky top-20 z-30 mb-8 border border-emerald-100">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex-1">
-                <h3 className="text-3xl font-extrabold mb-2 drop-shadow-lg">
-                    Looking to Hire?
-                </h3>
-                <p className="text-white/90 text-lg font-medium">
-                    Post your job opportunity and connect with top talent
-                </p>
+const CreateJobCTA = () => {
+    const { user } = useAuthContext();
+    
+    return (
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-400 rounded-2xl p-8 text-white shadow-xl sticky top-20 z-30 mb-8 border border-emerald-100">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1">
+                    <h3 className="text-3xl font-extrabold mb-2 drop-shadow-lg">
+                        Looking to Hire?
+                    </h3>
+                    <p className="text-white/90 text-lg font-medium">
+                        Post your job opportunity and connect with top talent
+                    </p>
+                </div>
+                <div className="flex gap-3">
+                    <Link to="/applications">
+                        <button className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 px-6 py-3 rounded-xl font-bold transition-colors shadow-lg whitespace-nowrap border border-white/20">
+                            View Applications
+                        </button>
+                    </Link>
+                    <Link to="/jobs/form">
+                        <button className="bg-white text-emerald-600 hover:bg-emerald-50 px-10 py-3 rounded-xl font-bold transition-colors shadow-lg whitespace-nowrap border border-emerald-200">
+                            Post a Job
+                        </button>
+                    </Link>
+                </div>
             </div>
-            <Link to="/jobs/form">
-                <button className="bg-white text-emerald-600 hover:bg-emerald-50 px-10 py-3 rounded-xl font-bold transition-colors shadow-lg whitespace-nowrap border border-emerald-200">
-                    Post a Job
-                </button>
-            </Link>
         </div>
-    </div>
-);
+    );
+};
 export default function Jobs() {
     const { user } = useAuthContext();
 
@@ -328,8 +355,9 @@ export default function Jobs() {
                     }}
                 />
 
-                <main className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-12 gap-8">
-                    <div className="md:col-span-3">
+                <main className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div className="lg:col-span-3">
+                        <div className="sticky top-4 bg-white rounded-2xl shadow-lg border border-slate-100 p-6 space-y-6">
                         <FilterSection title="Job Type">
                             <Checkbox
                                 label="Full Time"
@@ -384,187 +412,60 @@ export default function Jobs() {
                         </FilterSection>
 
                         <FilterSection title="Salary">
-                            <div className="flex justify-between text-sm text-slate-500 mb-2">
+                            <div className="flex justify-between text-base font-semibold text-slate-700 mb-4 px-1">
                                 <span>${salaryRange.min.toLocaleString()}</span>
                                 <span>${salaryRange.max.toLocaleString()}</span>
                             </div>
 
-                            <div className="space-y-3">
-                                <div className="relative">
-                                    {/* Lower handle */}
-                                    <input
-                                        type="range"
-                                        min={SALARY_MIN}
-                                        max={SALARY_MAX}
-                                        value={salaryRange.min}
-                                        onChange={(e) => {
-                                            const val = Number(e.target.value);
-                                            // Prevent min exceeding max
-                                            const nextMin = Math.min(
-                                                val,
-                                                salaryRange.max - 1
-                                            );
-                                            setSalaryRange({
-                                                ...salaryRange,
-                                                min: nextMin,
-                                            });
-                                        }}
-                                        onPointerDown={() =>
-                                            setActiveThumb("min")
-                                        }
-                                        onPointerUp={() => setActiveThumb(null)}
-                                        style={{
-                                            zIndex:
-                                                activeThumb === "min" ? 2 : 1,
-                                        }}
-                                        className="salary-range lower w-full appearance-none h-1 bg-transparent"
-                                    />
-
-                                    {/* Upper handle */}
-                                    <input
-                                        type="range"
-                                        min={SALARY_MIN}
-                                        max={SALARY_MAX}
-                                        value={salaryRange.max}
-                                        onChange={(e) => {
-                                            const val = Number(e.target.value);
-                                            const nextMax = Math.max(
-                                                val,
-                                                salaryRange.min + 1
-                                            );
-                                            setSalaryRange({
-                                                ...salaryRange,
-                                                max: nextMax,
-                                            });
-                                        }}
-                                        className="salary-range upper w-full appearance-none h-1 bg-transparent absolute top-0 left-0"
-                                    />
-
-                                    {/* Visual track */}
-                                    <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 rounded-full">
-                                        <div
-                                            className="h-full bg-emerald-400 rounded-full"
-                                            style={{
-                                                marginLeft: `${
-                                                    (salaryRange.min /
-                                                        SALARY_MAX) *
-                                                    100
-                                                }%`,
-                                                marginRight: `${
-                                                    100 -
-                                                    (salaryRange.max /
-                                                        SALARY_MAX) *
-                                                        100
-                                                }%`,
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 text-sm">
-                                    <div className="w-1/2 flex items-center gap-2">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 text-sm">
+                                    <div className="flex-1">
+                                        <label className="text-xs text-slate-500 mb-1 block font-medium">Min Salary</label>
                                         <input
                                             type="number"
-                                            className="w-full border rounded-lg px-2 py-1 no-spin bg-slate-50"
+                                            className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 no-spin bg-white hover:border-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition font-medium"
                                             value={salaryRange.min}
                                             onChange={(e) => {
-                                                const val =
-                                                    Number(e.target.value) || 0;
+                                                const val = Number(e.target.value);
                                                 setSalaryRange({
                                                     ...salaryRange,
-                                                    min: Math.min(
-                                                        val,
-                                                        salaryRange.max - 1
-                                                    ),
+                                                    min: val,
                                                 });
                                             }}
+                                            onBlur={(e) => {
+                                                const val = Number(e.target.value) || SALARY_MIN;
+                                                setSalaryRange({
+                                                    ...salaryRange,
+                                                    min: Math.min(Math.max(val, SALARY_MIN), salaryRange.max - 1),
+                                                });
+                                            }}
+                                            placeholder="0"
+                                            min={SALARY_MIN}
                                         />
-                                        <div className="flex flex-col gap-1">
-                                            <button
-                                                type="button"
-                                                aria-label="increase min"
-                                                onClick={() =>
-                                                    setSalaryRange((s) => ({
-                                                        ...s,
-                                                        min: Math.min(
-                                                            s.max - 1,
-                                                            s.min + 100
-                                                        ),
-                                                    }))
-                                                }
-                                                className="p-1 border rounded bg-white"
-                                            >
-                                                <ChevronUp size={14} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                aria-label="decrease min"
-                                                onClick={() =>
-                                                    setSalaryRange((s) => ({
-                                                        ...s,
-                                                        min: Math.max(
-                                                            SALARY_MIN,
-                                                            s.min - 100
-                                                        ),
-                                                    }))
-                                                }
-                                                className="p-1 border rounded bg-white"
-                                            >
-                                                <ChevronDown size={14} />
-                                            </button>
-                                        </div>
                                     </div>
 
-                                    <div className="w-1/2 flex items-center gap-2 justify-end">
-                                        <div className="flex flex-col gap-1">
-                                            <button
-                                                type="button"
-                                                aria-label="increase max"
-                                                onClick={() =>
-                                                    setSalaryRange((s) => ({
-                                                        ...s,
-                                                        max: Math.min(
-                                                            SALARY_MAX,
-                                                            s.max + 100
-                                                        ),
-                                                    }))
-                                                }
-                                                className="p-1 border rounded bg-white"
-                                            >
-                                                <ChevronUp size={14} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                aria-label="decrease max"
-                                                onClick={() =>
-                                                    setSalaryRange((s) => ({
-                                                        ...s,
-                                                        max: Math.max(
-                                                            salaryRange.min + 1,
-                                                            s.max - 100
-                                                        ),
-                                                    }))
-                                                }
-                                                className="p-1 border rounded bg-white"
-                                            >
-                                                <ChevronDown size={14} />
-                                            </button>
-                                        </div>
+                                    <div className="flex-1">
+                                        <label className="text-xs text-slate-500 mb-1 block font-medium">Max Salary</label>
                                         <input
                                             type="number"
-                                            className="w-32 border rounded-lg px-2 py-1 no-spin bg-slate-50"
+                                            className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 no-spin bg-white hover:border-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition font-medium"
                                             value={salaryRange.max}
                                             onChange={(e) => {
-                                                const val =
-                                                    Number(e.target.value) || 0;
+                                                const val = Number(e.target.value);
                                                 setSalaryRange({
                                                     ...salaryRange,
-                                                    max: Math.max(
-                                                        val,
-                                                        salaryRange.min + 1
-                                                    ),
+                                                    max: val,
                                                 });
                                             }}
+                                            onBlur={(e) => {
+                                                const val = Number(e.target.value) || SALARY_MAX;
+                                                setSalaryRange({
+                                                    ...salaryRange,
+                                                    max: Math.max(val, salaryRange.min + 1),
+                                                });
+                                            }}
+                                            placeholder="200000"
+                                            min={salaryRange.min + 1}
                                         />
                                     </div>
                                 </div>
@@ -603,41 +504,38 @@ export default function Jobs() {
                                 }
                             />
                         </FilterSection>
+                        </div>
                     </div>
 
-                    <div
-                        className="md:col-span-9 overflow-auto px-3"
-                        style={{ height: "100vh" }}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                            <p className="text-slate-400 text-sm">
-                                Showing {total} results
+                    <div className="lg:col-span-9">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+                            <p className="text-slate-600 text-sm font-medium">
+                                <span className="text-emerald-600 font-bold">{total}</span> jobs found
                             </p>
-                            <div className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                                <div className="form-group flex items-center gap-2">
-                                    <label
-                                        htmlFor="sortby"
-                                        className="font-medium"
-                                    >
-                                        Sort by
-                                    </label>
-                                    <select
-                                        className="form-control rounded-lg border border-slate-200 px-2 py-1 bg-white"
-                                        name="sortby"
-                                        id="sortby"
-                                    >
-                                        <option>Newest</option>
-                                        <option>Hotest</option>
-                                        <option>Most Viewed</option>
-                                    </select>
-                                </div>
+                            <div className="flex items-center gap-3 text-sm">
+                                <label
+                                    htmlFor="sortby"
+                                    className="font-medium text-slate-600"
+                                >
+                                    Sort by:
+                                </label>
+                                <select
+                                    className="form-control rounded-lg border-2 border-slate-200 px-4 py-2 bg-white hover:border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition font-medium text-slate-700 cursor-pointer"
+                                    name="sortby"
+                                    id="sortby"
+                                >
+                                    <option>Newest</option>
+                                    <option>Hottest</option>
+                                    <option>Most Viewed</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div className="space-y-8">
+                        <div className="space-y-4">
                             {loading ? (
-                                <div className="text-center py-12 text-slate-400 text-lg font-medium">
-                                    Loading jobs...
+                                <div className="text-center py-20">
+                                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-emerald-600 mb-4"></div>
+                                    <p className="text-slate-500 text-lg font-medium">Finding perfect jobs for you...</p>
                                 </div>
                             ) : jobs && jobs.length > 0 ? (
                                 jobs.map((job) => (
@@ -647,8 +545,10 @@ export default function Jobs() {
                                     />
                                 ))
                             ) : (
-                                <div className="text-center py-12 text-slate-400 text-lg font-medium">
-                                    No jobs found
+                                <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-slate-100">
+                                    <div className="text-6xl mb-4">🔍</div>
+                                    <p className="text-slate-600 text-xl font-semibold mb-2">No jobs found</p>
+                                    <p className="text-slate-400 text-sm">Try adjusting your filters or search criteria</p>
                                 </div>
                             )}
                         </div>

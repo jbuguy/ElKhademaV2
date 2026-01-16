@@ -64,7 +64,7 @@ export function useProfileForm({ username: initialUsername } = {}) {
                         : "",
                     location: p.location || "",
                     phoneNumber: p.phoneNumber || "",
-                    email: p.email || "",
+                    email: p.email || profileRes.data.user?.email || "",
                     gender: p.gender || "",
                     skills: p.skills || [],
                     pastJobs: p.pastJobs || [],

@@ -11,15 +11,19 @@ import {
     Award,
 } from "lucide-react";
 import { JobCard } from "./jobs";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useJobCreation } from "../hooks/useJobCreation.js";
 
-const Hero = ( {isEditing}) => (
+const Hero = ({ isEditing }) => (
     <div className="bg-emerald-600 text-white py-8 px-4 rounded-t-xl">
         <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold mb-2">{isEditing ? "Edit " : "Post a"}  Job</h1>
+            <h1 className="text-3xl font-bold mb-2">
+                {isEditing ? "Edit " : "Post a"} Job
+            </h1>
             <p className="text-teal-100">
-                {isEditing ? "Edit your job listing" : "Fill in the details to create your job listing"}
+                {isEditing
+                    ? "Edit your job listing"
+                    : "Fill in the details to create your job listing"}
             </p>
         </div>
     </div>
@@ -228,7 +232,7 @@ const JobLocationForm = ({ job, handleChange }) => {
 };
 const JobSalaryForm = ({ job, handleChange, setJob }) => {
     useEffect(() => {
-    const { min, max, currency } = job.salary;
+        const { min, max, currency } = job.salary;
 
         const format = (num) => {
             if (!num) return "";
@@ -237,17 +241,17 @@ const JobSalaryForm = ({ job, handleChange, setJob }) => {
 
         let calculatedRange = "Not disclosed";
 
-    if (min || max) {
-      calculatedRange = `${currency} ${format(min) || "0"} - ${format(max) || "0"}`;
-    }
+        if (min || max) {
+            calculatedRange = `${currency} ${format(min) || "0"} - ${format(max) || "0"}`;
+        }
 
-    setJob((prev) => ({
-      ...prev,
-      salary: {
-        ...prev.salary,
-        salaryRange: calculatedRange,
-      },
-    }));
+        setJob((prev) => ({
+            ...prev,
+            salary: {
+                ...prev.salary,
+                salaryRange: calculatedRange,
+            },
+        }));
     }, [job.salary.min, job.salary.max, job.salary.currency]);
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -392,8 +396,8 @@ const JobSalaryForm = ({ job, handleChange, setJob }) => {
     );
 };
 const JobRequirements = ({ job, setJob }) => {
-    const addRequirement = (value) => {
-        const newRequirements = [...job.requirements, value];
+    const addRequirement = (event) => {
+        const newRequirements = [...job.requirements, event.target.value];
         setJob((prev) => ({ ...prev, requirements: newRequirements }));
     };
     const updateRequirement = (index, value) => {
@@ -443,8 +447,8 @@ const JobRequirements = ({ job, setJob }) => {
     );
 };
 const JobResponsibilitiesForm = ({ job, setJob }) => {
-    const addResponsibility = (value) => {
-        const newResponsibility = [...job.responsibilities, value];
+    const addResponsibility = (event) => {
+        const newResponsibility = [...job.responsibilities, event.target.value];
         setJob((prev) => ({ ...prev, responsibilities: newResponsibility }));
     };
     const removeResponsibility = (index) => {
@@ -632,8 +636,8 @@ const Previewjob = ({ job }) => (
         </div>
     </div>
 );
-const SubmitButtons = ({ job, setJob ,isEditing }) => {
-    const { createjob , updatejob } = useJobCreation();
+const SubmitButtons = ({ job, setJob, isEditing }) => {
+    const { createjob, updatejob } = useJobCreation();
     const [notification, setNotification] = useState({
         show: false,
         message: "",
@@ -660,17 +664,18 @@ const SubmitButtons = ({ job, setJob ,isEditing }) => {
                 setTimeout(() => {
                     Navigate("/jobs");
                 }, 3000);
-            }else{
-            await createjob(job);
-            setNotification({
-                show: true,
-                message: "Job posted successfully!",
-                type: "success",
-            });
+            } else {
+                await createjob(job);
+                setNotification({
+                    show: true,
+                    message: "Job posted successfully!",
+                    type: "success",
+                });
 
-            setTimeout(() => {
-                Navigate("/jobs");
-            }, 3000);}
+                setTimeout(() => {
+                    Navigate("/jobs");
+                }, 3000);
+            }
         } catch (err) {
             setNotification({ show: true, message: err, type: "error" });
         }
@@ -695,7 +700,10 @@ const SubmitButtons = ({ job, setJob ,isEditing }) => {
             <div className="flex gap-4">
                 <button
                     onClick={async () => {
-                        await setJob((prev) => ({ ...prev, status: "published" }));
+                        await setJob((prev) => ({
+                            ...prev,
+                            status: "published",
+                        }));
                         handleSubmit();
                     }}
                     className="flex-1 bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-medium transition-colors"
@@ -703,15 +711,19 @@ const SubmitButtons = ({ job, setJob ,isEditing }) => {
                     {isEditing ? "Update Job" : "Publish Job"}
                 </button>
                 {!isEditing && (
-                <button
-                    onClick={async () => {
-                        await setJob((prev) => ({ ...prev, status: "draft" }));
-                        handleSubmit();
-                    }}
-                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-                >
-                    Save as Draft
-                </button>)}
+                    <button
+                        onClick={async () => {
+                            await setJob((prev) => ({
+                                ...prev,
+                                status: "draft",
+                            }));
+                            handleSubmit();
+                        }}
+                        className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                    >
+                        Save as Draft
+                    </button>
+                )}
             </div>
         </>
     );
@@ -721,35 +733,37 @@ export default function JobCreation() {
     const Navigate = useNavigate();
     const location = useLocation();
     const jobToEdit = location.state?.jobToEdit;
-    const [job, setJob] = useState(jobToEdit||{
-        title: "",
-        postedBy: user._id,
-        description: "",
-        category: "",
-        jobType: "Full Time",
-        experienceLevel: "Mid Level",
-        deadline: "",
-        location: {
-            city: "",
-            country: "",
-            isRemote: false,
-            address: "",
-        },
-        salary: {
-            min: "",
-            max: "",
-            salaryRange: "",
-            currency: "USD",
-            period: "yearly",
-            isNegotiable: false,
-            hideSalary: false,
-        },
-        requirements: [""],
-        responsibilities: [""],
-        tags: [],
-        skills: [],
-        status: "",
-    });
+    const [job, setJob] = useState(
+        jobToEdit || {
+            title: "",
+            postedBy: user._id,
+            description: "",
+            category: "",
+            jobType: "Full Time",
+            experienceLevel: "Mid Level",
+            deadline: "",
+            location: {
+                city: "",
+                country: "",
+                isRemote: false,
+                address: "",
+            },
+            salary: {
+                min: "",
+                max: "",
+                salaryRange: "",
+                currency: "USD",
+                period: "yearly",
+                isNegotiable: false,
+                hideSalary: false,
+            },
+            requirements: [""],
+            responsibilities: [""],
+            tags: [],
+            skills: [],
+            status: "",
+        }
+    );
     const isEditing = Boolean(jobToEdit);
 
     const handleChange = (e) => {
@@ -774,8 +788,8 @@ export default function JobCreation() {
         });
     };
     if (jobToEdit && user._id !== jobToEdit.postedBy) {
-        Navigate("/jobs")
-    };
+        Navigate("/jobs");
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -816,7 +830,11 @@ export default function JobCreation() {
                                     <SkillsForm job={job} setJob={setJob} />
                                 </div>
                             </div>
-                            <SubmitButtons job={job} setJob={setJob} isEditing={isEditing}/>
+                            <SubmitButtons
+                                job={job}
+                                setJob={setJob}
+                                isEditing={isEditing}
+                            />
                         </div>
                     </div>
                     <Previewjob key={job.id} job={job} />

@@ -70,14 +70,14 @@ export const ApplicationModal = ({ isOpen, onClose, job }) => {
             resumeData.append("pdf", formData.resumeFile);
             coverLetterData.append("pdf", formData.coverLetterFile);
 
-            const uploadRes1 = await fetch("http://localhost:8080/api/media/pdf", {
+            const uploadRes1 = await fetch("http://localhost:5001/api/media/pdf", {
                 method: "POST",
                 body: resumeData,
             });
             const  resumeFile  = await uploadRes1.json();
 
 
-            const uploadRes2 = await fetch("http://localhost:8080/api/media/pdf", {
+            const uploadRes2 = await fetch("http://localhost:5001/api/media/pdf", {
                 method: "POST",
                 body: coverLetterData,
             });

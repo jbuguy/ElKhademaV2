@@ -19,6 +19,7 @@ import EditProfile from "./pages/EditProfile.jsx";
 import JobView from "./pages/JobView.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import SearchResults from "./pages/SearchResults.jsx";
+import CompanyApplications from "./pages/CompanyApplications.jsx";
 
 import ChatWidget from "./components/ChatWidget.jsx";
 
@@ -101,6 +102,20 @@ function AppContent() {
                     <Route
                         path="/jobs/:jobId"
                         element={user ? <JobView /> : <Navigate to="/login" />}
+                    />
+                    <Route
+                        path="/applications"
+                        element={
+                            user ? (
+                                user.role === "company" ? (
+                                    <CompanyApplications />
+                                ) : (
+                                    <Navigate to="/jobs" />
+                                )
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
                     />
                     <Route
                         path="/search"
