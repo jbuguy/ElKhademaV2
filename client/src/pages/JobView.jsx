@@ -673,7 +673,7 @@ const InfoRow = ({ icon, label, value }) => (
     </div>
 );
 export default function JobView() {
-    const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(true);
+    const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
     const { user } = useAuthContext();
     const { jobId } = useParams();
     const [job, setJob] = useState(null);
