@@ -18,7 +18,7 @@ router.post("/signature", (req, res) => {
         params.folder = "avatars";
     }
     console.log("PARAMS FROM BACKEND:", params);
-    const signature = cloudinary.v2.utils.api_sign_request(
+    const signature = cloudinary.utils.api_sign_request(
         params,
         process.env.CLOUD_API_SECRET
     );

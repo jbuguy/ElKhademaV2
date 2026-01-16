@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams, useLocation, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useAuthContext } from "../hooks/useAuthContext";
 import api from "../utils/api";
 import Posts from "../components/Posts";
 import CreatePost from "../components/CreatePost";
 import ProfileHeader from "../components/ProfileHeader";
 import ProfileTabs from "../components/ProfileTabs";
-import ProfileEditForm from "../components/ProfileEditForm";
 import ProfileAbout from "../components/ProfileAbout";
 import useProfileForm from "../hooks/useProfileForm";
 import { UserPlus, UserCheck, X, MessageCircle, Heart } from "lucide-react";
@@ -15,7 +14,6 @@ import { useGenerateCV } from "../hooks/useGenerateCV";
 
 function Profile() {
     const { username: paramUsername } = useParams();
-    const location = useLocation();
     const navigate = useNavigate();
     const { user: currentUser } = useAuthContext();
 
@@ -48,47 +46,21 @@ function Profile() {
 
     const isOwner = Boolean(
         currentUser &&
-            (currentUser.username === username ||
-                currentUser.email?.split("@")[0] === username)
+        (currentUser.username === username ||
+            currentUser.email?.split("@")[0] === username)
     );
 
     const {
         profile,
         user,
-        formData,
-        setFormData,
-        profileImage,
-        setProfileImage,
-        videoCvFile,
-        setVideoCvFile,
-        videoCvPreview,
-        setVideoCvPreview,
-        removeVideo,
-        setRemoveVideo,
         loading: formLoading,
-        error: formError,
-        handleSubmit: hookHandleSubmit,
-        handleAddSkill,
-        handleSkillChange,
-        handleRemoveSkill,
-        handleAddJob,
-        handleJobChange,
-        handleRemoveJob,
-        handleAddEducation,
-        handleEducationChange,
-        handleRemoveEducation,
-        setUser: setHookUser,
-        setProfile: setHookProfile,
     } = useProfileForm({ username });
 
     const [posts, setPosts] = useState([]);
-    const [isEditing, setIsEditing] = useState(false);
     const [activeTab, setActiveTab] = useState("posts");
     const [loadingPosts, setLoadingPosts] = useState(true);
-    const [error, setError] = useState(null);
     const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
-    // Connection states
     const [followers, setFollowers] = useState([]);
     const [following, setFollowing] = useState([]);
     const [connections, setConnections] = useState([]);
@@ -97,7 +69,6 @@ function Profile() {
     const [isConnected, setIsConnected] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState(null); // 'pending', 'connected', null
 
-    // Follow states
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingFollowStatus, setLoadingFollowStatus] = useState(false);
     const [followingLoading, setFollowingLoading] = useState(false);
@@ -125,7 +96,6 @@ function Profile() {
         if (username) fetchPosts();
     }, [username]);
 
-    // Fetch connection data and follow status
     useEffect(() => {
         const fetchConnectionData = async () => {
             if (!username) return;
@@ -158,7 +128,6 @@ function Profile() {
                 setConnections(connectionsRes.data || []);
                 setConnectionRequests(requestsRes.data || []);
 
-                // Check current connection status
                 if (!isOwner && currentUser) {
                     const checkRes = await api
                         .get(`/user/connection-status/${username}`, {
@@ -180,7 +149,6 @@ function Profile() {
         fetchConnectionData();
     }, [username, isOwner, currentUser]);
 
-    // Fetch follow status
     useEffect(() => {
         const fetchFollowStatus = async () => {
             if (!currentUser || isOwner || !user?._id) return;
@@ -297,7 +265,6 @@ function Profile() {
         try {
             setFollowingLoading(true);
             if (isFollowing) {
-                // Unfollow
                 await api.delete(`/user/follow/${user._id}`, {
                     headers: {
                         authorization: `Bearer ${currentUser.token}`,
@@ -308,7 +275,6 @@ function Profile() {
                     prev.filter((f) => f._id !== currentUser._id)
                 );
             } else {
-                // Follow
                 await api.post(
                     `/user/follow/${user._id}`,
                     {},
@@ -328,45 +294,6 @@ function Profile() {
             );
         } finally {
             setFollowingLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (isOwner && profile) {
-            if (location.state?.openEdit) {
-                setIsEditing(true);
-                setActiveTab("about");
-                if (!profile.isProfileComplete) setNeedsProfileCompletion(true);
-            }
-        }
-    }, [isOwner, profile, location.state?.openEdit]);
-
-    const handleSubmit = async (e) => {
-        try {
-            await hookHandleSubmit(e, {
-                onSuccess: (resData) => {
-                    setHookProfile(resData);
-
-                    if (formData.profilePic) {
-                        setHookUser((u) => ({
-                            ...u,
-                            profilePic: formData.profilePic,
-                        }));
-                    }
-
-                    setNeedsProfileCompletion(false);
-                    setIsEditing(false);
-                    setProfileImage(null);
-
-                    if (location.state?.openEdit)
-                        navigate("/", { replace: true });
-                },
-            });
-        } catch (err) {
-            setError(
-                err.response?.data?.error ||
-                    "Failed to update profile. Please try again."
-            );
         }
     };
 
@@ -422,13 +349,10 @@ function Profile() {
                         user={user}
                         profile={profile}
                         isOwner={isOwner}
-                        isEditing={isEditing}
                         onEdit={() => navigate("/profile/editprofile")}
                         onGenerateCV={handleGenerateCV}
                     />
-
-                    {/* Connection & Message & Follow Buttons */}
-                    {!isOwner && currentUser && !isEditing && (
+                    {!isOwner && currentUser && (
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200/50 flex gap-3 flex-wrap">
                             {connectionStatus === "pending" ? (
                                 <button
@@ -458,7 +382,6 @@ function Profile() {
                                 </button>
                             )}
 
-                            {/* Follow/Unfollow Button */}
                             <button
                                 onClick={handleFollowToggle}
                                 disabled={
@@ -488,52 +411,16 @@ function Profile() {
                             </button>
                         </div>
                     )}
-
-                    {!isEditing && (
-                        <ProfileTabs
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
-                            isEditing={isEditing}
-                        />
-                    )}
-
-                    {isEditing && (
-                        <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-8">
-                            <ProfileEditForm
-                                error={formError || error}
-                                profileImage={profileImage}
-                                setProfileImage={setProfileImage}
-                                videoCvFile={videoCvFile}
-                                setVideoCvFile={setVideoCvFile}
-                                videoCvPreview={videoCvPreview}
-                                setVideoCvPreview={setVideoCvPreview}
-                                removeVideo={removeVideo}
-                                setRemoveVideo={setRemoveVideo}
-                                profile={profile}
-                                formData={formData}
-                                setFormData={setFormData}
-                                handleSubmit={handleSubmit}
-                                handleAddSkill={handleAddSkill}
-                                handleSkillChange={handleSkillChange}
-                                handleRemoveSkill={handleRemoveSkill}
-                                handleAddJob={handleAddJob}
-                                handleJobChange={handleJobChange}
-                                handleRemoveJob={handleRemoveJob}
-                                handleAddEducation={handleAddEducation}
-                                handleEducationChange={handleEducationChange}
-                                handleRemoveEducation={handleRemoveEducation}
-                                setIsEditing={setIsEditing}
-                            />
-                        </div>
-                    )}
-
-                    {!isEditing && activeTab === "about" && (
+                    <ProfileTabs
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                    />
+                    {activeTab === "about" && (
                         <div className="space-y-4">
                             <ProfileAbout profile={profile} />
                         </div>
                     )}
-
-                    {!isEditing && activeTab === "posts" && (
+                    {activeTab === "posts" && (
                         <div className="space-y-4">
                             {isOwner && <CreatePost addPost={addPost} />}
                             {posts && posts.length > 0 ? (
@@ -547,9 +434,8 @@ function Profile() {
                             )}
                         </div>
                     )}
-
                     {/* Followers Tab */}
-                    {!isEditing && activeTab === "followers" && (
+                    {activeTab === "followers" && (
                         <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
                             <h3 className="text-xl font-semibold mb-4 text-gray-900">
                                 Followers ({followers.length})
@@ -600,9 +486,8 @@ function Profile() {
                             )}
                         </div>
                     )}
-
                     {/* Following Tab */}
-                    {!isEditing && activeTab === "following" && (
+                    {activeTab === "following" && (
                         <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
                             <h3 className="text-xl font-semibold mb-4 text-gray-900">
                                 Following ({following.length})
@@ -653,9 +538,8 @@ function Profile() {
                             )}
                         </div>
                     )}
-
                     {/* Connections Tab */}
-                    {!isEditing && activeTab === "connections" && (
+                    {activeTab === "connections" && (
                         <div className="space-y-6">
                             {/* Connection Requests */}
                             {isOwner && connectionRequests.length > 0 && (
@@ -727,7 +611,6 @@ function Profile() {
                                 </div>
                             )}
 
-                            {/* Connections List */}
                             <div className="rounded-2xl shadow-sm border border-slate-200/50 bg-white p-6">
                                 <h3 className="text-xl font-semibold mb-4 text-gray-900">
                                     Connections ({connections.length})

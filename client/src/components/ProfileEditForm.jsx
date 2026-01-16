@@ -4,11 +4,9 @@ export default function ProfileEditForm({
     error,
     profileImage,
     setProfileImage,
-    videoCvFile,
     setVideoCvFile,
     videoCvPreview,
     setVideoCvPreview,
-    removeVideo,
     setRemoveVideo,
     profile,
     formData,
@@ -412,7 +410,7 @@ export default function ProfileEditForm({
                     <button
                         type="button"
                         onClick={handleAddSkill}
-                        className="btn btn-primary"
+                        className="btn bg-emerald-600 text-white"
                     >
                         + Add Skill
                     </button>
@@ -537,7 +535,7 @@ export default function ProfileEditForm({
                     <button
                         type="button"
                         onClick={handleAddJob}
-                        className="btn btn-primary"
+                        className="btn bg-emerald-600 text-white"
                     >
                         + Add Work Experience
                     </button>
@@ -663,7 +661,7 @@ export default function ProfileEditForm({
                     <button
                         type="button"
                         onClick={handleAddEducation}
-                        className="btn btn-primary"
+                        className="btn bg-emerald-600 text-white"
                     >
                         + Add Education
                     </button>
@@ -671,7 +669,7 @@ export default function ProfileEditForm({
             )}
 
             <div className="flex items-center gap-3">
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn bg-emerald-600 text-white">
                     Save Changes
                 </button>
                 <button
