@@ -216,6 +216,16 @@ export const sharePost = async (req, res) => {
                     getDisplayName(originalProfile);
             }
 
+            // Create notification for the original post owner
+            if (originalPost.userId.toString() !== userId) {
+                await createNotification(
+                    originalPost.userId,
+                    userId,
+                    "share",
+                    originalPost._id
+                );
+            }
+
             res.status(201).json(sharedPostObj);
         } catch (error) {
             console.error("Error sharing post:", error);

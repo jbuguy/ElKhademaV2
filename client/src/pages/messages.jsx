@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router";
+import { useParams, useLocation } from "react-router";
 import { IoMdSend, IoMdSearch } from "react-icons/io";
 import { useAuthContext } from "../hooks/useAuthContext";
 import api from "../utils/api";
@@ -7,6 +7,7 @@ import api from "../utils/api";
 export default function MessagesPage() {
     const { user } = useAuthContext();
     const { conversationId } = useParams();
+    const location = useLocation();
     const [conversations, setConversations] = useState([]);
     const [activeChat, setActiveChat] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -16,8 +17,51 @@ export default function MessagesPage() {
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef(null);
 
+    // Handle starting a new chat from state
     useEffect(() => {
-        if (!user) return;
+        if (!user || !location.state?.startChatWith) return;
+
+        const startNewChat = async () => {
+            try {
+                const targetUser = location.state.startChatWith;
+                
+                // Create or get existing conversation
+                const response = await api.post("/conversation", {
+                    members: [targetUser._id]
+                }, {
+                    headers: {
+                        authorization: `Bearer ${user.token}`,
+                    },
+                });
+
+                // Refresh conversations and set active chat
+                const convsResponse = await api.get("/conversation", {
+                    headers: {
+                        authorization: `Bearer ${user.token}`,
+                    },
+                });
+                
+                setConversations(convsResponse.data);
+                const newConv = convsResponse.data.find(c => c._id === response.data._id);
+                if (newConv) {
+                    setActiveChat(newConv);
+                }
+                setLoading(false);
+                
+                // Clear the state
+                window.history.replaceState({}, document.title);
+            } catch (error) {
+                console.error("Error starting new chat:", error);
+                setLoading(false);
+            }
+        };
+
+        startNewChat();
+    }, [user, location.state]);
+
+    useEffect(() => {
+        if (!user || location.state?.startChatWith) return; // Skip if handling startChatWith
+        
         api.get("/conversation", {
             headers: {
                 authorization: `Bearer ${user.token}`,
@@ -39,7 +83,7 @@ export default function MessagesPage() {
                 console.error(err);
                 setLoading(false);
             });
-    }, [user, conversationId]);
+    }, [user, conversationId, location.state]);
 
     useEffect(() => {
         if (!activeChat?._id || !user) return;

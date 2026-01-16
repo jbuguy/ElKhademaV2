@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { FaBell, FaHeart, FaComment, FaShare } from "react-icons/fa";
+import { Briefcase } from "lucide-react";
 import api from "../utils/api";
 import { Bell } from "lucide-react";
 import { useAuthContext } from "../hooks/useAuthContext";
@@ -27,11 +28,7 @@ const NotificationDropdown = () => {
     // Fetch unread count
     const fetchUnreadCount = async () => {
         try {
-            const response = await api.get("/notifications/unread-count", {
-                headers: {
-                    authorization: `Bearer ${user.token}`,
-                },
-            });
+            const response = await api.get("/notifications/unread-count");
             setUnreadCount(response.data.count);
         } catch (error) {
             console.error("Error fetching unread count:", error);
@@ -47,8 +44,14 @@ const NotificationDropdown = () => {
                 await fetchNotifications();
             }
             setIsOpen(false);
-            const postId = notification.post?._id || notification.post;
-            navigate(`/post/${postId}`);
+            
+            // Navigate based on notification type
+            if (notification.type === "application") {
+                navigate("/applications");
+            } else {
+                const postId = notification.post?._id || notification.post;
+                navigate(`/post/${postId}`);
+            }
         } catch (error) {
             console.error("Error marking notification as read:", error);
         }
@@ -109,12 +112,27 @@ const NotificationDropdown = () => {
             document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Fetch unread count on mount and every 30 seconds
+    // Fetch unread count and notifications on mount and every 3 seconds
     useEffect(() => {
         fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 30000);
+        fetchNotifications();
+        const interval = setInterval(() => {
+            fetchUnreadCount();
+            fetchNotifications();
+        }, 3000); // Poll every 3 seconds
         return () => clearInterval(interval);
     }, []);
+
+    // Poll more frequently when dropdown is open (every 1 second)
+    useEffect(() => {
+        if (isOpen) {
+            const fastInterval = setInterval(() => {
+                fetchNotifications();
+                fetchUnreadCount();
+            }, 1000); // Poll every 1 second when open
+            return () => clearInterval(fastInterval);
+        }
+    }, [isOpen]);
 
     // Get notification message and icon
     const getNotificationContent = (notification) => {
@@ -131,11 +149,17 @@ const NotificationDropdown = () => {
                 icon = <FaComment className="text-blue-500" />;
                 message = `${senderName} commented on your post`;
                 color = "bg-blue-50";
+            case "application":
+                icon = <Briefcase className="text-purple-500" size={16} />;
+                const jobTitle = notification.metadata?.jobTitle || "a job";
+                message = `${senderName} applied to ${jobTitle}`;
+                color = "bg-purple-50";
+                break;
                 break;
             case "share":
-                icon = <FaShare className="text-primary-600" />;
+                icon = <FaShare className="text-emerald-600" />;
                 message = `${senderName} shared your post`;
-                color = "bg-primary-50";
+                color = "bg-emerald-50";
                 break;
             default:
                 icon = <FaBell className="text-gray-500" />;
@@ -204,7 +228,7 @@ const NotificationDropdown = () => {
                                             }
                                             className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-all duration-200 flex items-start ${
                                                 !notification.read
-                                                    ? "bg-primary-50 border-l-4 border-l-primary-600"
+                                                    ? "bg-emerald-50 border-l-4 border-l-emerald-600"
                                                     : ""
                                             }`}
                                         >
@@ -231,7 +255,7 @@ const NotificationDropdown = () => {
                                                             )}
                                                         </span>
                                                         {!notification.read && (
-                                                            <span className="w-2 h-2 bg-primary-600 rounded-full"></span>
+                                                            <span className="w-2 h-2 bg-emerald-600 rounded-full"></span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -248,7 +272,7 @@ const NotificationDropdown = () => {
                             {!showAll && hasMoreNotifications && (
                                 <button
                                     onClick={() => setShowAll(true)}
-                                    className="flex-1 py-2.5 px-4 text-sm font-semibold text-primary-600 hover:bg-white border-2 border-primary-600 rounded-lg transition-all duration-200 whitespace-nowrap"
+                                    className="flex-1 py-2.5 px-4 text-sm font-semibold text-emerald-600 hover:bg-white border-2 border-emerald-600 rounded-lg transition-all duration-200 whitespace-nowrap"
                                 >
                                     See More
                                 </button>
@@ -256,7 +280,7 @@ const NotificationDropdown = () => {
                             {showAll && (
                                 <button
                                     onClick={() => setShowAll(false)}
-                                    className="flex-1 py-2.5 px-4 text-sm font-semibold text-primary-600 hover:bg-white border-2 border-primary-600 rounded-lg transition-all duration-200 whitespace-nowrap"
+                                    className="flex-1 py-2.5 px-4 text-sm font-semibold text-emerald-600 hover:bg-white border-2 border-emerald-600 rounded-lg transition-all duration-200 whitespace-nowrap"
                                 >
                                     See Less
                                 </button>
@@ -264,7 +288,7 @@ const NotificationDropdown = () => {
                             {unreadCount > 0 && (
                                 <button
                                     onClick={handleMarkAllRead}
-                                    className="flex-1 py-2.5 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all duration-200 shadow-sm whitespace-nowrap"
+                                    className="flex-1 py-2.5 px-4 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-sm whitespace-nowrap"
                                 >
                                     Mark All Read
                                 </button>

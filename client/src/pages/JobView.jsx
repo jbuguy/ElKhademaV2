@@ -123,20 +123,19 @@ const JobHeader = ({
                     </div>
                 </div>
                 {user.role === "user" ? (
-                    job?.applicants?.find((app) => app.user === user._id) ? (
+                    job?.applicants?.find((app) => app.user?._id === user._id || app.user === user._id) ? (
                         <button
                             disabled
                             className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md cursor-default capitalize"
                         >
                             {
                                 job.applicants.find(
-                                    (app) => app.user === user._id
+                                    (app) => app.user?._id === user._id || app.user === user._id
                                 ).status
                             }
                         </button>
                     ) : (
                         <button
-                            onClick={openApplication}
                             className="bg-white text-emerald-600 px-8 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md"
                         >
                             Apply Now
@@ -406,7 +405,7 @@ const ApplicantCard = ({ applicant, onStatusUpdate }) => {
                         <div className="flex flex-wrap gap-2">
                             {applicant.resume && (
                                 <a
-                                    href={`http://localhost:8080/api/media/pdf/${applicant.resume}`} 
+                                    href={`http://localhost:5001/api/media/pdf/${applicant.resume}`} 
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
@@ -417,7 +416,7 @@ const ApplicantCard = ({ applicant, onStatusUpdate }) => {
                             )}
                             {applicant.coverLetter && (
                                 <a
-                                    href={`http://localhost:8080/api/media/pdf/${applicant.coverLetter}`} 
+                                    href={`http://localhost:5001/api/media/pdf/${applicant.coverLetter}`} 
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
@@ -765,13 +764,13 @@ export default function JobView() {
     }
     return (
         <div className="min-h-screen bg-gray-50 py-8">
-            {isApplicationModalOpen && (
+            {/* {isApplicationModalOpen && (
                 <ApplicationModal
                     isOpen={isApplicationModalOpen}
                     onClose={() => setIsApplicationModalOpen(false)}
                     job={job}
                 />
-            )}
+            )} */}
             <DeleteConfirmModal
                 isOpen={showDeleteModal}
                 onClose={handleCancelDelete}
@@ -781,9 +780,7 @@ export default function JobView() {
             <div className="max-w-6xl mx-auto px-4">
                 <JobHeader
                     user={user}
-                    openApplication={() => {
-                        setIsApplicationModalOpen(true);
-                    }}
+                    openApplication={() => {}}
                     job={job}
                     poster={poster}
                     handleDeleteClick={handleDeleteClick}
