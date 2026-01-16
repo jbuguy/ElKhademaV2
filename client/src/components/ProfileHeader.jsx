@@ -2,7 +2,6 @@ export default function ProfileHeader({
     user,
     profile,
     isOwner,
-    isEditing,
     onEdit,
     onGenerateCV,
 }) {
@@ -24,24 +23,21 @@ export default function ProfileHeader({
                             user.username}
                     </h2>
                     <p className="text-slate-500 mb-5">@{user.username}</p>
-
-                    {!isEditing && (
-                        <div className="flex items-center gap-3">
-                            {isOwner && (
-                                <button
-                                    onClick={onEdit}
-                                    className="btn bg-emerald-600 text-white"
-                                >
-                                    Edit Profile
-                                </button>
-                            )}
-                            {profile.profileType !== "company" && (
-                                <button onClick={onGenerateCV} className="btn">
-                                    Generate CV
-                                </button>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {isOwner && (
+                            <button
+                                onClick={onEdit}
+                                className="btn bg-emerald-600 text-white"
+                            >
+                                Edit Profile
+                            </button>
+                        )}
+                        {profile.profileType !== "company" && (
+                            <button onClick={onGenerateCV} className="btn">
+                                Generate CV
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

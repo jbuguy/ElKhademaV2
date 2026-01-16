@@ -1,18 +1,15 @@
 import { useNavigate } from "react-router";
-import { useAuthContext } from "../hooks/useAuthContext";
 import useProfileForm from "../hooks/useProfileForm";
 import ProfileEditForm from "../components/ProfileEditForm";
 
 function EditProfile() {
     const navigate = useNavigate();
-    const { user: currentUser } = useAuthContext();
 
     const {
         profile,
         user,
         profileImage,
         setProfileImage,
-        profileImagePreview,
         videoCvFile,
         setVideoCvFile,
         videoCvPreview,
