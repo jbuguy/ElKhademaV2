@@ -252,7 +252,6 @@ export const changeApplicantStatus = async (req, res) => {
             return res.status(404).json({ error: "Applicant not found" });
         }
         applicant.status = status;
-        console.log(job, status);
         await job.save();
         res.status(200).json({
             message: "Applicant status updated successfully",

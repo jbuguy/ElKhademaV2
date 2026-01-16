@@ -63,31 +63,32 @@ export const ApplicationModal = ({ isOpen, onClose, job }) => {
 
         setIsSubmitting(true);
 
-        try {   
+        try {
             const resumeData = new FormData();
             const coverLetterData = new FormData();
-            
+
             resumeData.append("pdf", formData.resumeFile);
             coverLetterData.append("pdf", formData.coverLetterFile);
 
-            const uploadRes1 = await fetch("http://localhost:5001/api/media/pdf", {
-                method: "POST",
-                body: resumeData,
-            });
-            const  resumeFile  = await uploadRes1.json();
+            const uploadRes1 = await fetch(
+                "http://localhost:5001/api/media/pdf",
+                {
+                    method: "POST",
+                    body: resumeData,
+                }
+            );
+            const resumeFile = await uploadRes1.json();
 
+            const uploadRes2 = await fetch(
+                "http://localhost:5001/api/media/pdf",
+                {
+                    method: "POST",
+                    body: coverLetterData,
+                }
+            );
+            const coverLetterFile = await uploadRes2.json();
 
-            const uploadRes2 = await fetch("http://localhost:5001/api/media/pdf", {
-                method: "POST",
-                body: coverLetterData,
-            });
-            const  coverLetterFile  = await uploadRes2.json();
-            
-
-            if (
-                !resumeFile.fileId ||
-                !coverLetterFile.fileId
-            ) {
+            if (!resumeFile.fileId || !coverLetterFile.fileId) {
                 throw new Error("File upload failed");
             }
             const payload = {
@@ -95,10 +96,7 @@ export const ApplicationModal = ({ isOpen, onClose, job }) => {
                 resume: resumeFile.fileId,
                 coverLetter: coverLetterFile.fileId,
             };
-
-            console.log("3. Submitting Application to backend:", payload);
             await applyjob(payload);
-
             handleClose();
         } catch (error) {
             console.error("Application Failed:", error);
@@ -388,8 +386,8 @@ const StepIndicator = ({ number, label, active, completed }) => (
                 completed
                     ? "bg-white text-emerald-500"
                     : active
-                    ? "bg-white text-emerald-500"
-                    : "bg-white bg-opacity-30 text-white"
+                      ? "bg-white text-emerald-500"
+                      : "bg-white bg-opacity-30 text-white"
             }`}
         >
             {completed ? <CheckCircle size={20} /> : number}
