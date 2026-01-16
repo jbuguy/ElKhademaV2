@@ -6,12 +6,11 @@ import { FaTimes } from "react-icons/fa";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { ImageIcon } from "lucide-react";
 
-export default function CreatePost({ addPost , profile}) {
+export default function CreatePost({ addPost }) {
     const [content, setContent] = useState("");
     const [postMedia, setPostMedia] = useState([]); // { id, url?, type?, uploading }
     const { user } = useAuthContext();
     const [errorMsg, setErrorMsg] = useState("");
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -79,7 +78,7 @@ export default function CreatePost({ addPost , profile}) {
         <div className="bg-white rounded-b-2xl shadow-sm border border-slate-200/50 p-6 mb-6">
             <div className="flex gap-4 mb-4">
                 <img
-                    src={profile?.profile.profilePic}
+                    src={user.profilePic}
                     className="rounded-full h-12 w-12 object-cover flex-shrink-0"
                 />
                 <textarea
@@ -160,7 +159,9 @@ export default function CreatePost({ addPost , profile}) {
                             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                         >
                             <ImageIcon size={18} />
-                            <span className="text-2md md:text-3md lg:text-4md">Image</span>
+                            <span className="text-2md md:text-3md lg:text-4md">
+                                Image
+                            </span>
                         </label>
                     </div>
                     <div className="relative inline-block">
@@ -176,7 +177,9 @@ export default function CreatePost({ addPost , profile}) {
                             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                         >
                             <FaRegPlayCircle size={18} />
-                            <span className="text-2md md:text-3md lg:text-4md">Video</span>
+                            <span className="text-2md md:text-3md lg:text-4md">
+                                Video
+                            </span>
                         </label>
                     </div>
                     <button
