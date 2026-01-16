@@ -262,7 +262,8 @@ export default function Signup() {
         return false;
     };
 
-    const getMaxPage = () => (role === "user" ? 1 : role === "company" ? 3 : 0);
+    // User has 3 pages (0, 1, 2), Company has 4 pages (0, 1, 2, 3)
+    const getMaxPage = () => (role === "user" ? 2 : role === "company" ? 3 : 0);
 
     const handleInputChange = (e, isCompany) => {
         const { name, value } = e.target;
@@ -389,14 +390,14 @@ export default function Signup() {
                         paddingTop: "24px",
                     }}
                 >
-                    <div style={{ overflow: "hidden", minHeight: "400px" }}>
-                            <div
-                                style={{
+                    <div style={{ overflow: "hidden" }}>
+                        <div
+                            style={{
                                 display: "flex",
                                 transform: `translateX(-${currentPage * 100}%)`,
                                 transition: "transform 0.3s ease-in-out",
-                                }}
-                            >
+                            }}
+                        >
                             {/* Page 0: Credentials + Role */}
                             <div
                                 style={{
@@ -495,93 +496,151 @@ export default function Signup() {
                                 </div>
                             </div>
 
-                            {/* Rest of the pages remain the same */}
+                            {/* USER PAGES */}
                             {role === "user" && (
-                                <div
-                                    style={{
-                                        width: "100%",
-                                        flexShrink: 0,
-                                        padding: "0 4px",
-                                    }}
-                                >
-                                    <h3
+                                <>
+                                    {/* User Page 1: Profile Picture + Basic Info */}
+                                    <div
                                         style={{
-                                            fontSize: "18px",
-                                            fontWeight: "600",
-                                            marginBottom: "16px",
-                                            color: "#1f2937",
+                                            width: "100%",
+                                            flexShrink: 0,
+                                            padding: "0 4px",
                                         }}
                                     >
-                                        Personal Information
-                                    </h3>
-                                    <ImageUpload
-                                        preview={userData.profilePicPreview}
-                                        label="profilePic"
-                                        isLoading={uploadingProfilePic}
-                                        onChange={(e) =>
-                                            handleMediaUpload(e, false)
-                                        }
-                                        buttonLabel="Choose Picture"
-                                    />
-                                    <FormField
-                                        label="First Name"
-                                        name="firstName"
-                                        value={userData.firstName}
-                                        onChange={(e) =>
-                                            handleInputChange(e, false)
-                                        }
-                                    />
-                                    <FormField
-                                        label="Last Name"
-                                        name="lastName"
-                                        value={userData.lastName}
-                                        onChange={(e) =>
-                                            handleInputChange(e, false)
-                                        }
-                                    />
-                                    <FormField
-                                        label="Gender"
-                                        name="gender"
-                                        type="select"
-                                        value={userData.gender}
-                                        onChange={(e) =>
-                                            handleInputChange(e, false)
-                                        }
-                                        options={genders}
-                                    />
-                                    <FormField
-                                        label="Birthday"
-                                        name="birthday"
-                                        type="date"
-                                        value={userData.birthday}
-                                        onChange={(e) =>
-                                            handleInputChange(e, false)
-                                        }
-                                    />
-                                    <FormField
-                                        label="Phone Number"
-                                        name="phoneNumber"
-                                        type="tel"
-                                        value={userData.phoneNumber}
-                                        onChange={(e) =>
-                                            handleInputChange(e, false)
-                                        }
-                                        placeholder="+1 (555) 123-4567"
-                                    />
-                                    <FormField
-                                        label="Location"
-                                        name="location"
-                                        value={userData.location}
-                                        onChange={(e) =>
-                                            handleInputChange(e, false)
-                                        }
-                                        placeholder="City, Country"
-                                    />
-                                </div>
+                                        <h3
+                                            style={{
+                                                fontSize: "18px",
+                                                fontWeight: "600",
+                                                marginBottom: "16px",
+                                                color: "#1f2937",
+                                            }}
+                                        >
+                                            Personal Information
+                                        </h3>
+                                        <ImageUpload
+                                            preview={userData.profilePicPreview}
+                                            label="profilePic"
+                                            isLoading={uploadingProfilePic}
+                                            onChange={(e) =>
+                                                handleMediaUpload(e, false)
+                                            }
+                                            buttonLabel="Choose Picture"
+                                        />
+                                        <FormField
+                                            label="First Name"
+                                            name="firstName"
+                                            value={userData.firstName}
+                                            onChange={(e) =>
+                                                handleInputChange(e, false)
+                                            }
+                                        />
+                                        <FormField
+                                            label="Last Name"
+                                            name="lastName"
+                                            value={userData.lastName}
+                                            onChange={(e) =>
+                                                handleInputChange(e, false)
+                                            }
+                                        />
+                                        <FormField
+                                            label="Gender"
+                                            name="gender"
+                                            type="select"
+                                            value={userData.gender}
+                                            onChange={(e) =>
+                                                handleInputChange(e, false)
+                                            }
+                                            options={genders}
+                                        />
+                                    </div>
+
+                                    {/* User Page 2: Additional Info */}
+                                    <div
+                                        style={{
+                                            width: "100%",
+                                            flexShrink: 0,
+                                            padding: "0 4px",
+                                        }}
+                                    >
+                                        <h3
+                                            style={{
+                                                fontSize: "18px",
+                                                fontWeight: "600",
+                                                marginBottom: "16px",
+                                                color: "#1f2937",
+                                            }}
+                                        >
+                                            Additional Details
+                                        </h3>
+                                        <FormField
+                                            label="Birthday"
+                                            name="birthday"
+                                            type="date"
+                                            value={userData.birthday}
+                                            onChange={(e) =>
+                                                handleInputChange(e, false)
+                                            }
+                                        />
+                                        <FormField
+                                            label="Phone Number"
+                                            name="phoneNumber"
+                                            type="tel"
+                                            value={userData.phoneNumber}
+                                            onChange={(e) =>
+                                                handleInputChange(e, false)
+                                            }
+                                            placeholder="+1 (555) 123-4567"
+                                        />
+                                        <FormField
+                                            label="Location"
+                                            name="location"
+                                            value={userData.location}
+                                            onChange={(e) =>
+                                                handleInputChange(e, false)
+                                            }
+                                            placeholder="City, Country"
+                                        />
+                                    </div>
+                                </>
                             )}
 
+                            {/* COMPANY PAGES */}
                             {role === "company" && (
                                 <>
+                                    {/* Company Page 1: Logo Only */}
+                                    <div
+                                        style={{
+                                            width: "100%",
+                                            flexShrink: 0,
+                                            padding: "0 4px",
+                                        }}
+                                    >
+                                        <h3
+                                            style={{
+                                                fontSize: "18px",
+                                                fontWeight: "600",
+                                                marginBottom: "16px",
+                                                color: "#1f2937",
+                                            }}
+                                        >
+                                            Company Logo
+                                        </h3>
+                                        <ImageUpload
+                                            preview={
+                                                companyData.profilePicPreview
+                                            }
+                                            label="companyProfilePic"
+                                            isLoading={
+                                                uploadingCompanyProfilePic
+                                            }
+                                            onChange={(e) =>
+                                                handleMediaUpload(e, true)
+                                            }
+                                            buttonLabel="Choose Logo"
+                                        />
+                                    </div>
+
+                                    {/* Company Page 2: Company Details */}
                                     <div
                                         style={{
                                             width: "100%",
@@ -599,19 +658,6 @@ export default function Signup() {
                                         >
                                             Company Details
                                         </h3>
-                                        <ImageUpload
-                                            preview={
-                                                companyData.profilePicPreview
-                                            }
-                                            label="companyProfilePic"
-                                            isLoading={
-                                                uploadingCompanyProfilePic
-                                            }
-                                            onChange={(e) =>
-                                                handleMediaUpload(e, true)
-                                            }
-                                            buttonLabel="Choose Logo"
-                                        />
                                         <FormField
                                             label="Company Name"
                                             name="companyName"
@@ -639,6 +685,7 @@ export default function Signup() {
                                         />
                                     </div>
 
+                                    {/* Company Page 3: Business Information */}
                                     <div
                                         style={{
                                             width: "100%",
@@ -676,8 +723,19 @@ export default function Signup() {
                                             }
                                             options={sizeOptions}
                                         />
+                                        <FormField
+                                            label="Website"
+                                            name="website"
+                                            type="url"
+                                            value={companyData.website}
+                                            onChange={(e) =>
+                                                handleInputChange(e, true)
+                                            }
+                                            placeholder="https://example.com"
+                                        />
                                     </div>
 
+                                    {/* Company Page 4: Description */}
                                     <div
                                         style={{
                                             width: "100%",
@@ -706,16 +764,6 @@ export default function Signup() {
                                                 handleInputChange(e, true)
                                             }
                                             maxLength={1000}
-                                        />
-                                        <FormField
-                                            label="Website"
-                                            name="website"
-                                            type="url"
-                                            value={companyData.website}
-                                            onChange={(e) =>
-                                                handleInputChange(e, true)
-                                            }
-                                            placeholder="https://example.com"
                                         />
                                     </div>
                                 </>
@@ -816,7 +864,7 @@ export default function Signup() {
 
                 <div style={{ marginTop: "16px", textAlign: "center" }}>
                     <div
-                           style={{
+                        style={{
                             fontSize: "14px",
                             color: "#6b7280",
                             marginBottom: "8px",
@@ -848,4 +896,3 @@ export default function Signup() {
         </div>
     );
 }
-    
