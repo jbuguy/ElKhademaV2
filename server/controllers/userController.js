@@ -40,7 +40,6 @@ export const loginUser = async (req, res) => {
 export const registerUser = async (req, res) => {
     try {
         const { email, password, role = "user", userData } = req.body;
-        console.log(JSON.stringify(req.body));
 
         const exists = await User.findOne({ email });
         if (exists)
