@@ -49,6 +49,7 @@ export default function Home() {
             );
         }
     };
+    console.log(userProfile)
     return (
         <div className="min-h-screen bg-slate-50 relative overflow-hidden">
             {/* --- MAIN CONTENT --- */}
@@ -127,7 +128,7 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <CreatePost addPost={addPost} profile={userProfile} />
+                    <CreatePost addPost={addPost} Profile={userProfile} />
 
                     {posts && posts.length > 0 ? (
                         <Posts posts={posts} />
