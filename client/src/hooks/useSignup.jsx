@@ -12,10 +12,56 @@ export const useSignup = () => {
   const signup = async (email, password, role = "user", userData) => {
     setIsLoading(true);
     setError(null);
+
     try {
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error("Invalid email format");
+      }
+
+      // Password validation
+      if (password.length < 8) {
+        throw new Error("Security check: Password must be at least 8 characters");
+      }
+
+      // User data validation
+      if (userData.firstName.trim().length < 2) {
+        throw new Error("First name must be at least 2 characters long");
+      }
+
+      if (userData.lastName.trim().length < 2) {
+        throw new Error("Last name must be at least 2 characters long");
+      }
+      console.log(userData.phoneNumber.trim().length)
+      if (!userData.phoneNumber || userData.phoneNumber.trim().length != 8) {
+        throw new Error("Phone number must be at 8 characters");
+      }
+
+      if (!userData.birthday) {
+        throw new Error("Birthday is required");
+      }
+
+      const birthDate = new Date(userData.birthday);
+      const today = new Date();
+      if (birthDate > today) {
+        throw new Error("Birthday cannot be in the future");
+      }
+
+      if (!userData.location || userData.location.trim().length < 2) {
+        throw new Error("Location must be at least 2 characters long");
+      }
+
+      if (!userData.gender || userData.gender === "") {
+        throw new Error("Please select a valid gender");
+      }
+
       const res = await api.post("/user/signup", { email, password, role });
       localStorage.setItem("user", JSON.stringify(res.data));
       dispatch({ type: "LOGIN", payload: res.data });
+      
+      const uploadResult = await uploadMedia(userData.profilePic, "image");
+      userData.profilePic = uploadResult?.secure_url;
 
       const payload = { ...userData };
       await api.put("/user/profile", payload, {
