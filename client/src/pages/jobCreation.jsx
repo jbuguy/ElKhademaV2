@@ -644,7 +644,7 @@ const SubmitButtons = ({ job, setJob, isEditing }) => {
         type: "",
     });
     const Navigate = useNavigate();
-    const handleSubmit = async () => {
+    const handleSubmit = async (status) => {
         if (!job.title || !job.category || !job.description) {
             setNotification({
                 show: true,
@@ -654,8 +654,9 @@ const SubmitButtons = ({ job, setJob, isEditing }) => {
             return;
         }
         try {
+            const jobToSubmit = { ...job, status };
             if (isEditing) {
-                await updatejob(job);
+                await updatejob(jobToSubmit);
                 setNotification({
                     show: true,
                     message: "Job updated successfully!",
@@ -665,7 +666,7 @@ const SubmitButtons = ({ job, setJob, isEditing }) => {
                     Navigate("/jobs");
                 }, 3000);
             } else {
-                await createjob(job);
+                await createjob(jobToSubmit);
                 setNotification({
                     show: true,
                     message: "Job posted successfully!",
@@ -699,26 +700,14 @@ const SubmitButtons = ({ job, setJob, isEditing }) => {
             </div>
             <div className="flex gap-4">
                 <button
-                    onClick={async () => {
-                        await setJob((prev) => ({
-                            ...prev,
-                            status: "published",
-                        }));
-                        handleSubmit();
-                    }}
+                    onClick={() => handleSubmit("published")}
                     className="flex-1 bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-medium transition-colors"
                 >
                     {isEditing ? "Update Job" : "Publish Job"}
                 </button>
                 {!isEditing && (
                     <button
-                        onClick={async () => {
-                            await setJob((prev) => ({
-                                ...prev,
-                                status: "draft",
-                            }));
-                            handleSubmit();
-                        }}
+                        onClick={() => handleSubmit("draft")}
                         className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
                     >
                         Save as Draft
