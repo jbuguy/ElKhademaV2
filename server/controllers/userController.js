@@ -39,7 +39,8 @@ export const loginUser = async (req, res) => {
 
 export const registerUser = async (req, res) => {
     try {
-        const { email, password, role = "user" } = req.body;
+        const { email, password, role = "user", userData } = req.body;
+        console.log(JSON.stringify(req.body));
 
         const exists = await User.findOne({ email });
         if (exists)
@@ -49,12 +50,14 @@ export const registerUser = async (req, res) => {
             email,
             password,
             username: email, // default username
+            profilePic: userData?.profilePic,
             role,
         });
 
         await Profile.create({
             userId: user._id,
             profileType: role,
+            profilePic: userData?.profilePic,
             email,
         });
 
@@ -87,7 +90,7 @@ export const getProfileByUsername = async (req, res) => {
         const profile = await Profile.findOneAndUpdate(
             { userId: user._id },
             {},
-            { new: true, upsert: true }
+            { new: true, upsert: true },
         );
 
         res.status(200).json({ user, profile });
@@ -105,7 +108,7 @@ export const getProfileById = async (req, res) => {
         const profile = await Profile.findOneAndUpdate(
             { userId: user._id },
             {},
-            { new: true, upsert: true }
+            { new: true, upsert: true },
         );
 
         res.status(200).json({ user, profile });
@@ -197,7 +200,7 @@ export const googleAuth = async (req, res) => {
             await Profile.findOneAndUpdate(
                 { userId: user._id },
                 { $set: { email, profilePic: picture, firstName, lastName } },
-                { new: true, upsert: true }
+                { new: true, upsert: true },
             );
         }
 
@@ -252,7 +255,7 @@ export const getProfilePosts = async (req, res) => {
             ...post,
             liked: viewerId
                 ? post.likes?.some(
-                      (id) => id.toString() === viewerId.toString()
+                      (id) => id.toString() === viewerId.toString(),
                   )
                 : false,
             totalLikes: post.likes?.length || 0,
@@ -296,7 +299,7 @@ export const updateProfile = async (req, res) => {
         const profile = await Profile.findOneAndUpdate(
             { userId },
             profileUpdates,
-            { new: true, upsert: true }
+            { new: true, upsert: true },
         );
 
         /* ---------- Update User ---------- */
@@ -373,7 +376,7 @@ export const getConnectionStatus = async (req, res) => {
             status = "connected";
         } else if (
             targetUser.connectionRequests.some(
-                (req) => req.from.toString() === currentUser._id.toString()
+                (req) => req.from.toString() === currentUser._id.toString(),
             )
         ) {
             status = "pending";
@@ -390,7 +393,7 @@ export const getConnectionRequests = async (req, res) => {
     try {
         const user = await User.findById(req.user.id).populate(
             "connectionRequests.from",
-            "username profilePic email"
+            "username profilePic email",
         );
 
         res.status(200).json(user.connectionRequests);
@@ -515,7 +518,7 @@ export const followUser = async (req, res) => {
             {
                 $addToSet: { followers: myId },
             },
-            { new: true }
+            { new: true },
         );
         await User.findByIdAndUpdate(myId, {
             $addToSet: { following: userId },
