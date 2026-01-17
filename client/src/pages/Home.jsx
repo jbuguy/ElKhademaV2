@@ -84,7 +84,7 @@ export default function Home() {
                             <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between text-center">
                                 <div>
                                     <p className="text-lg font-bold text-slate-900">
-                                        {posts?.length || 0}
+                                        0
                                     </p>
                                     <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
                                         Posts
